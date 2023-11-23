@@ -16,7 +16,7 @@ class TestGameFunctions(unittest.TestCase):
         game.move_userstory_card(0)
 
         # до выпуска MVP нельзя купить комнату или робота
-        workers = Global.available_developers_count
+        workers = Global.available_developers_count  # это число, не массив
         start_money = Global.get_money()
         game.buy_room(1)
         self.assertEqual(workers, Global.available_developers_count)
