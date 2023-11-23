@@ -16,13 +16,13 @@ class TestGameFunctions(unittest.TestCase):
         game.move_userstory_card(0)
 
         # до выпуска MVP нельзя купить комнату или робота
-        workers = Global.available_developers_count  # это число, не массив
+        workers_count = Global.available_developers_count  # это число, не массив
         start_money = Global.get_money()
         game.buy_room(1)
-        self.assertEqual(workers, Global.available_developers_count)
+        self.assertEqual(workers_count, Global.available_developers_count)
         self.assertEqual(start_money, Global.get_money())
         game.buy_robot(0)
-        self.assertEqual(workers, Global.available_developers_count)
+        self.assertEqual(workers_count, Global.available_developers_count)
         self.assertEqual(start_money, Global.get_money())
 
         self.assertFalse(game.hud.release_available)
