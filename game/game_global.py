@@ -15,7 +15,7 @@ def stepify(s, step):
     return (s // step) * step
 
 
-UCType = Enum("UCType", ["S", "M", "L", "XL", "BUG", "TECH_DEBT"])
+UserCardType = Enum("UserCardType", ["S", "M", "L", "XL", "BUG", "TECH_DEBT"])
 UserCardColor = Enum("UserCardColor",
                      ["BLUE", "GREEN", "ORANGE", "PINK", "PURPLE", "RED", "YELLOW"])
 colors_for_use = [UserCardColor.BLUE, UserCardColor.GREEN, UserCardColor.ORANGE,
@@ -42,8 +42,8 @@ current_tech_debt = {}  # todo (не перезадается в годоте в
 is_first_bug = True  # не перезадается в годоте в reload_game, но это не так критично
 is_first_tech_debt = True  # не перезадается в годоте в reload_game, но это не так критично
 
-used_colors = {UCType.S: [], UCType.M: [], UCType.L: [],
-               UCType.XL: [], UCType.BUG: [], UCType.TECH_DEBT: []}
+used_colors = {UserCardType.S: [], UserCardType.M: [], UserCardType.L: [],
+               UserCardType.XL: [], UserCardType.BUG: [], UserCardType.TECH_DEBT: []}
 
 MONEY_GOAL = 1000000
 AMOUNT_CREDIT_PAYMENT = 9000
@@ -55,7 +55,7 @@ BLANK_SPRINT_LOYALTY_DECREMENT = {
     9: -0.1,
     12: -0.15
 }
-min_key_bs_lty = min(BLANK_SPRINT_LOYALTY_DECREMENT.keys())
+min_key_blank_sprint_loyalty = min(BLANK_SPRINT_LOYALTY_DECREMENT.keys())
 
 BLANK_SPRINT_CUSTOMERS_DECREMENT = {
     6: -0.5,
@@ -63,12 +63,12 @@ BLANK_SPRINT_CUSTOMERS_DECREMENT = {
     12: -1.5
 }
 
-US_LTY = {UCType.S: [0.025, 0.08], UCType.M: [0.075, 0.175],
-          UCType.L: [0.125, 0.35], UCType.XL: [0.25, 0.5]}
-US_USR = {UCType.S: [1, 3.5], UCType.M: [2.5, 7],
-          UCType.L: [5, 14], UCType.XL: [10, 28]}
-US_FLOATING_PROFIT = {3: [1, 1.3], 6: [0.7, 0.9], 9: [0.2, 0.6], 12: [-0.2, 0.1]}
-sorted_keys_us_fp = sorted(US_FLOATING_PROFIT.keys())
+USERSTORY_LOYALTY = {UserCardType.S: [0.025, 0.08], UserCardType.M: [0.075, 0.175],
+                     UserCardType.L: [0.125, 0.35], UserCardType.XL: [0.25, 0.5]}
+USERSTORY_CUSTOMER = {UserCardType.S: [1, 3.5], UserCardType.M: [2.5, 7],
+                      UserCardType.L: [5, 14], UserCardType.XL: [10, 28]}
+USERSTORY_FLOATING_PROFIT = {3: [1, 1.3], 6: [0.7, 0.9], 9: [0.2, 0.6], 12: [-0.2, 0.1]}
+sorted_keys_userstory_floating_profit = sorted(USERSTORY_FLOATING_PROFIT.keys())
 
 statistical_research_cost = 80000
 user_survey_cost = 160000
@@ -116,7 +116,9 @@ def reload_game():
 def set_money(count):
     global _money
     _money = count
-    sg_money_changed(_money)
+
+    # проверка на то, что деньги не ушли в минус/не была достигнута цель игры
+    check_money(_money)
 
 
 def get_money():
@@ -136,7 +138,7 @@ def buy_robot():
     global _money, available_developers_count
     _money -= NEW_WORKER_COST
     available_developers_count += 1
-    sg_money_changed(_money)
+    check_money(_money)
 
 
 def buy_room():
@@ -146,7 +148,7 @@ def buy_room():
     current_room_multiplier *= NEW_ROOM_MULTIPLIER
     current_rooms_counter += 1
     available_developers_count += 1
-    sg_money_changed(_money)
+    check_money(_money)
 
 
 def has_enough_money(need_money: int) -> bool:
@@ -154,7 +156,7 @@ def has_enough_money(need_money: int) -> bool:
     return _money >= need_money
 
 
-def get_unused_color(uc_type: UCType):
+def get_unused_color(uc_type: UserCardType):
     global used_colors
     if len(used_colors[uc_type]) == 7:
         print("Не осталось не использованных цветов.")
@@ -169,20 +171,12 @@ def get_unused_color(uc_type: UCType):
     return color
 
 
-def release_color(us_type: UCType, color: UserCardColor):
+def release_color(us_type: UserCardType, color: UserCardColor):
     global used_colors
     used_colors[us_type].remove(color)
 
 
-# def _is_new_year(): так как здесь нет графики, этот метод не нужен
-
-
-def sg_money_changed(value):
-    # print("sg_money_changed")
-    _on_money_changed(value)
-
-
-def _on_money_changed(money_val):
+def check_money(money_val):
     if money_val < 0:
         game_over(False)
     elif money_val >= MONEY_GOAL:
@@ -224,26 +218,22 @@ def interpolate(value, table: dict):
     return None
 
 
-# class CardColor
-# графика, текстурки
-
-
 if __name__ == "__main__":
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # print(get_unused_color(UCType(2)))
-    # # print(UCType["S"])
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
-    # print(release_color(UCType(2), used_colors[UCType(2)][0]))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # print(get_unused_color(UserCardType(2)))
+    # # print(UserCardType["S"])
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
+    # print(release_color(UserCardType(2), used_colors[UserCardType(2)][0]))
     print(12)
 
     d = {"d": 5, "f": 12}
