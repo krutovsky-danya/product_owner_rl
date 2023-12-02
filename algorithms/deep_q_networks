@@ -78,3 +78,86 @@ class DQN:
 
         self.epsilon -= self.epsilon_decrease
         self.epsilon = max(self.epsilon_min, self.epsilon)
+
+
+class TargetDQN(DQN):
+    def __init__(
+        self,
+        state_dim,
+        action_dim,
+        gamma=0.99,
+        lr=1e-3,
+        batch_size=64,
+        target_update=10,
+        epsilon_decrease=0.01,
+        epilon_min=0.01,
+    ):
+        super().__init__(
+            state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epilon_min
+        )
+        self.q_target = QFunction(state_dim, action_dim)
+
+        state_dict = self.q_function.network.state_dict()
+        self.q_target.network.load_state_dict(state_dict)
+
+        for p in self.q_target.network.parameters():
+            p.requires_grad = False
+
+        self.target_update = target_update
+        self.fit_calls = 0
+
+    @torch.no_grad()
+    def get_max_q_values(self, next_states):
+        return torch.max(self.q_target(next_states), dim=1).values
+
+    def fit(self, state, action, reward, done, next_state):
+        super().fit(state, action, reward, done, next_state)
+
+        self.fit_calls += 1
+        if self.fit_calls >= self.target_update:
+            self.update_target()
+            self.remaing_fit_calls = 0
+
+
+class HardTargetDQN(TargetDQN):
+    def update_target(self):
+        state_dict = self.q_function.network.state_dict()
+        self.q_target.network.load_state_dict(state_dict)
+
+
+class SoftTargetDQN(TargetDQN):
+    def __init__(
+        self,
+        state_dim,
+        action_dim,
+        gamma=0.99,
+        lr=1e-3,
+        tau=0.1,
+        batch_size=64,
+        epsilon_decrease=0.01,
+        epilon_min=0.01,
+    ):
+        super().__init__(
+            state_dim,
+            action_dim,
+            gamma,
+            lr,
+            batch_size,
+            1,
+            epsilon_decrease,
+            epilon_min,
+        )
+        self.tau = tau
+
+    def update_target(self):
+        # theta' = tau * theta + (1 - tau) * theta'
+        for i, layer in enumerate(self.q_target.network):
+            if not isinstance(layer, nn.Linear):
+                continue
+            q_layer = self.q_function.network[i]
+
+            weight = self.tau * q_layer.weight + (1 - self.tau) * layer.weight
+            layer.weight = torch.nn.Parameter(weight)
+
+            bias = self.tau * q_layer.bias + (1 - self.tau) * layer.bias
+            layer.bias = torch.nn.Parameter(bias)
