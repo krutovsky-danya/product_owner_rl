@@ -90,13 +90,14 @@ def _next_sprint():
 def _update_tech_debt_impact():
     impact_count = 0
     for card in cards_in_sprint:
-        if card.card_type != Global.UCType.TECH_DEBT:
+        if card.card_type != Global.UserCardType.TECH_DEBT:
             impact_count += 1
     full_tech_debt_debuff = 0
-    for key in Global.current_tech_debt.keys():
-        tech_debt_debuff = impact_count * Global.current_tech_debt[key].hours_debuff_increment
-        Global.current_tech_debt[key].full_hours_debuff += tech_debt_debuff
-        full_tech_debt_debuff += Global.current_tech_debt[key].full_hours_debuff
+    current_tech_debt = Global.current_tech_debt
+    for key in current_tech_debt.keys():
+        tech_debt_debuff = impact_count * current_tech_debt[key].hours_debuff_increment
+        current_tech_debt[key].full_hours_debuff += tech_debt_debuff
+        full_tech_debt_debuff += current_tech_debt[key].full_hours_debuff
 
     _update_tech_debt_impact_stories(Global.current_stories, full_tech_debt_debuff)
     _update_tech_debt_impact_stories(Global.available_stories, full_tech_debt_debuff)
@@ -105,7 +106,7 @@ def _update_tech_debt_impact():
 def _update_tech_debt_impact_stories(stories, full_tech_debt_debuff: int):
     for i in stories.values():
         us: UserStoryCardInfo = i
-        if us.card_type == Global.UCType.TECH_DEBT:
+        if us.card_type == Global.UserCardType.TECH_DEBT:
             continue
         for card in us.related_cards:
             card.hours = card.base_hours + full_tech_debt_debuff
@@ -120,13 +121,13 @@ def _update_loyalty():
         bug.loyalty_debuff += bug.loyalty_increment
         Global.customers += bug.customers_debuff
         bug.customers_debuff += bug.customers_increment
-    if Global.blank_sprint_counter >= Global.min_key_bs_lty:
+    if Global.blank_sprint_counter >= Global.min_key_blank_sprint_loyalty:
         delta_loyalty = Global.interpolate(Global.blank_sprint_counter,
                                            Global.BLANK_SPRINT_LOYALTY_DECREMENT)
         Global.set_loyalty(Global.get_loyalty() + delta_loyalty)
-        d_customers = Global.interpolate(Global.blank_sprint_counter,
-                                         Global.BLANK_SPRINT_CUSTOMERS_DECREMENT)
-        Global.customers += d_customers
+        delta_customers = Global.interpolate(Global.blank_sprint_counter,
+                                             Global.BLANK_SPRINT_CUSTOMERS_DECREMENT)
+        Global.customers += delta_customers
 
 
 def _get_credit_payment() -> int:
@@ -188,9 +189,9 @@ def _update_profit():
 
 def _update_profit_ordinary_card(us: UserStoryCardInfo):
     sprints_spent = Global.current_sprint - us.spawn_sprint
-    for us_fp_key in Global.sorted_keys_us_fp:
-        us_fp = Global.US_FLOATING_PROFIT[us_fp_key]
-        if sprints_spent <= us_fp_key or us_fp_key == Global.sorted_keys_us_fp[-1]:
+    for us_fp_key in Global.sorted_keys_userstory_floating_profit:
+        us_fp = Global.USERSTORY_FLOATING_PROFIT[us_fp_key]
+        if sprints_spent <= us_fp_key or us_fp_key == Global.sorted_keys_userstory_floating_profit[-1]:
             ran_usr_to_bring = us.customers_to_bring * random.uniform(us_fp[0], us_fp[1])
             Global.customers += Global.stepify(ran_usr_to_bring, 0.01)
             ran_lty_to_bring = us.loyalty * random.uniform(us_fp[0], us_fp[1])

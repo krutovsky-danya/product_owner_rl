@@ -13,9 +13,9 @@ class UserStoryCardInfo:
         self.is_decomposed = False
         self.completed_part = 0
         self.spawn_sprint = Global.current_sprint
-        self.card_type = Global.UCType.S
+        self.card_type = Global.UserCardType.S
         self._set_card_type(label_val)
-        if not (self.card_type == Global.UCType.BUG or self.card_type == Global.UCType.TECH_DEBT):
+        if not (self.card_type == Global.UserCardType.BUG or self.card_type == Global.UserCardType.TECH_DEBT):
             self._set_loyalty_and_customers_ordinary_us()
         self.color = Global.get_unused_color(self.card_type)
         self.related_cards = []
@@ -24,27 +24,27 @@ class UserStoryCardInfo:
     def _set_card_type(self, label_val: str):
         if label_val == "S":
             self.time_to_complete = 38
-            self.card_type = Global.UCType.S
+            self.card_type = Global.UserCardType.S
         elif label_val == "M":
             self.time_to_complete = 76
-            self.card_type = Global.UCType.M
+            self.card_type = Global.UserCardType.M
         elif label_val == "L":
             self.time_to_complete = 152
-            self.card_type = Global.UCType.L
+            self.card_type = Global.UserCardType.L
         elif label_val == "XL":
             self.time_to_complete = 304
-            self.card_type = Global.UCType.XL
+            self.card_type = Global.UserCardType.XL
         elif label_val == "Bug":
             self.time_to_complete = random.randint(1, 38)
-            self.card_type = Global.UCType.BUG
+            self.card_type = Global.UserCardType.BUG
         elif label_val == "TechDebt":
             self.time_to_complete = random.randint(1, 5)
-            self.card_type = Global.UCType.TECH_DEBT
+            self.card_type = Global.UserCardType.TECH_DEBT
 
     def _set_loyalty_and_customers_ordinary_us(self):
-        r_lty = random.uniform(Global.US_LTY[self.card_type][0], Global.US_LTY[self.card_type][1])
+        r_lty = random.uniform(Global.USERSTORY_LOYALTY[self.card_type][0], Global.USERSTORY_LOYALTY[self.card_type][1])
         self.loyalty = Global.stepify(r_lty, 0.005)
-        r_user = random.uniform(Global.US_USR[self.card_type][0], Global.US_USR[self.card_type][1])
+        r_user = random.uniform(Global.USERSTORY_CUSTOMER[self.card_type][0], Global.USERSTORY_CUSTOMER[self.card_type][1])
         self.customers_to_bring = Global.stepify(r_user, 0.5)
 
     def generate_related_cards(self):
