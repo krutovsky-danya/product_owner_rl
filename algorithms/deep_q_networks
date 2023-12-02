@@ -1,0 +1,19 @@
+from torch import nn
+
+
+class QFunction(nn.Module):
+    def __init__(self, state_dim, action_n):
+        super().__init__()
+        self.state_dim = state_dim
+        self.action_n = action_n
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, action_n),
+        )
+
+    def forward(self, states):
+        return self.network(states)
