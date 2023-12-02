@@ -161,3 +161,15 @@ class SoftTargetDQN(TargetDQN):
 
             bias = self.tau * q_layer.bias + (1 - self.tau) * layer.bias
             layer.bias = torch.nn.Parameter(bias)
+
+
+class DoubleDQN(SoftTargetDQN):
+    def get_max_q_values(self, next_states):
+        next_states_q = self.q_function(next_states)
+        best_action = torch.argmax(next_states_q, axis=1)
+
+        max_q_values = self.q_target(next_states)[
+            np.arange(0, self.batch_size), best_action
+        ]
+
+        return max_q_values
