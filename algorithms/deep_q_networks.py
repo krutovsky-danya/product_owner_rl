@@ -45,6 +45,7 @@ class DQN:
         self.memory = []
         self.optimzaer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
 
+    @torch.no_grad()
     def get_action(self, state):
         q_values = self.q_function(torch.FloatTensor(state))
         argmax_action = torch.argmax(q_values)
@@ -53,6 +54,7 @@ class DQN:
         action = np.random.choice(np.arange(self.action_dim), p=probs)
         return action
 
+    @torch.no_grad()
     def get_max_q_values(self, next_states):
         return torch.max(self.q_function(next_states), dim=1).values
 
