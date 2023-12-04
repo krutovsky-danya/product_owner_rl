@@ -9,7 +9,7 @@ class Card:
                              color_val=Global.UserCardColor.BLUE,
                              us_id_val=1,
                              label_val="S",
-                             card_type_val=Global.UCType.S)
+                             card_type_val=Global.UserCardType.S)
         self.is_movable = True
 
     def add_data(self, card_info: CardInfo):
