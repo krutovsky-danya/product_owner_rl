@@ -21,6 +21,24 @@ cards_in_sprint = []
 is_first_release = True
 force_td_spawn = False
 
+class ProductOwnerGame:
+    def __init__(self):
+        self.backlog = Backlog()
+        self.userstories = UserStories()
+        self.hud = HUD()
+        self.office = Offices()
+
+        self.sprint_cost = 0
+        self.completed_us = []
+        self.cards_in_sprint = []
+        self.is_first_release = True
+        self.force_td_spawn = False
+    
+    def _on_backlog_start_sprint(self, cards_info):
+        self.cards_in_sprint = cards_info
+        self.hud.increase_progress(cards_in_sprint)
+        self._next_sprint()
+
 
 def load_game():  # !
     global backlog, userstories, hud, office, sprint_cost, \
