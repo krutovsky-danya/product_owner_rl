@@ -97,12 +97,12 @@ class TargetDQN(DQN):
         super().__init__(
             state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epilon_min
         )
-        self.q_target = QFunction(state_dim, action_dim)
+        self.target_q_function = QFunction(state_dim, action_dim)
 
         state_dict = self.q_function.network.state_dict()
-        self.q_target.network.load_state_dict(state_dict)
+        self.target_q_function.network.load_state_dict(state_dict)
 
-        for p in self.q_target.network.parameters():
+        for p in self.target_q_function.network.parameters():
             p.requires_grad = False
 
         self.target_update = target_update
@@ -113,7 +113,7 @@ class TargetDQN(DQN):
 
     @torch.no_grad()
     def get_max_q_values(self, next_states):
-        return torch.max(self.q_target(next_states), dim=1).values
+        return torch.max(self.target_q_function(next_states), dim=1).values
 
     def fit(self, state, action, reward, done, next_state):
         super().fit(state, action, reward, done, next_state)
@@ -127,7 +127,7 @@ class TargetDQN(DQN):
 class HardTargetDQN(TargetDQN):
     def update_target(self):
         state_dict = self.q_function.network.state_dict()
-        self.q_target.network.load_state_dict(state_dict)
+        self.target_q_function.network.load_state_dict(state_dict)
 
 
 class SoftTargetDQN(TargetDQN):
@@ -167,7 +167,7 @@ class DoubleDQN(SoftTargetDQN):
         next_states_q = self.q_function(next_states)
         best_actions = torch.argmax(next_states_q, axis=1)
 
-        max_q_values = self.q_target(next_states)[
+        max_q_values = self.target_q_function(next_states)[
             np.arange(0, self.batch_size), best_actions
         ]
 
