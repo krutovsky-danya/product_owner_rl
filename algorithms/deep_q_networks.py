@@ -107,6 +107,9 @@ class TargetDQN(DQN):
 
         self.target_update = target_update
         self.fit_calls = 0
+    
+    def update_target(self):
+        pass
 
     @torch.no_grad()
     def get_max_q_values(self, next_states):
@@ -118,7 +121,7 @@ class TargetDQN(DQN):
         self.fit_calls += 1
         if self.fit_calls >= self.target_update:
             self.update_target()
-            self.remaing_fit_calls = 0
+            self.fit_calls = 0
 
 
 class HardTargetDQN(TargetDQN):
