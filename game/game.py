@@ -21,23 +21,23 @@ cards_in_sprint = []
 is_first_release = True
 force_td_spawn = False
 
-class ProductOwnerGame:
-    def __init__(self):
-        self.backlog = Backlog()
-        self.userstories = UserStories()
-        self.hud = HUD()
-        self.office = Offices()
-
-        self.sprint_cost = 0
-        self.completed_us = []
-        self.cards_in_sprint = []
-        self.is_first_release = True
-        self.force_td_spawn = False
-    
-    def _on_backlog_start_sprint(self, cards_info):
-        self.cards_in_sprint = cards_info
-        self.hud.increase_progress(cards_in_sprint)
-        self._next_sprint()
+# class ProductOwnerGame:
+#     def __init__(self):
+#         self.backlog = Backlog()
+#         self.userstories = UserStories()
+#         self.hud = HUD()
+#         self.office = Offices()
+#
+#         self.sprint_cost = 0
+#         self.completed_us = []
+#         self.cards_in_sprint = []
+#         self.is_first_release = True
+#         self.force_td_spawn = False
+#
+#     def _on_backlog_start_sprint(self, cards_info):
+#         self.cards_in_sprint = cards_info
+#         self.hud.increase_progress(cards_in_sprint)
+#         self._next_sprint()
 
 
 def load_game():  # !
@@ -251,8 +251,6 @@ def _is_ready_to_spawn_tech_debt():
 
 
 def buy_robot(room_num):  # !
-    # todo снять привязку к номерам комнат. Добавлять робота в комнату, где ещё есть место
-    # (в комнату с минимальным номером из тех, что удовлетворяют этому условию)
     room = office.offices[Global.clamp(room_num, 0, len(office.offices) - 1)]
     has_bought = room.on_buy_robot_button_pressed()
     if has_bought:
@@ -260,7 +258,6 @@ def buy_robot(room_num):  # !
 
 
 def buy_room(room_num):  # !
-    # todo снять привязку к номерам комнат. Добавлять комнату при покупке
     room = office.offices[Global.clamp(room_num, 0, len(office.offices) - 1)]
     has_bought = room.on_buy_room_button_pressed()
     if has_bought:
@@ -274,25 +271,34 @@ def _on_userstory_card_dropped(card, is_on_left: bool):
         userstories.on_release_card_dropped(card)
 
 
-def move_userstory_card(card_num):  # !
+def move_userstory_card(card):  # !
     # зависит от того, что мы будем с этим делать:
     # предполагается ли, что модель может закинуть карточку в декомпозицию,
     # а потом вытащить её от туда? то же самое с бэклогом
     if userstories.available:
-        stories = userstories.stories_list
-        if len(stories) > 0:
-            card = stories[Global.clamp(card_num, 0, len(stories) - 1)]
+        if isinstance(card, int):
+            stories = userstories.stories_list
+            if len(stories) > 0:
+                card = stories[Global.clamp(card, 0, len(stories) - 1)]
+                if card.is_movable:
+                    _on_userstory_card_dropped(card, False)
+        elif card is not None:
             if card.is_movable:
                 _on_userstory_card_dropped(card, False)
 
 
-def move_backlog_card(card_num):  # !
+def move_backlog_card(card):  # !
     cards = backlog.backlog
     if len(cards) > 0:
-        card = cards[Global.clamp(card_num, 0, len(cards) - 1)]
-        if card.is_movable:
-            backlog.backlog.remove(card)
-            backlog.sprint.append(card)
+        if isinstance(card, int):
+            card = cards[Global.clamp(card, 0, len(cards) - 1)]
+            if card.is_movable:
+                backlog.backlog.remove(card)
+                backlog.sprint.append(card)
+        elif card is not None:
+            if card.is_movable:
+                backlog.backlog.remove(card)
+                backlog.sprint.append(card)
 
 
 def press_statistical_research():  # !
