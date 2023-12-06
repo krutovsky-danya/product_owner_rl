@@ -156,25 +156,19 @@ class SoftTargetDQN(TargetDQN):
 
     def update_target(self):
         # theta' = tau * theta + (1 - tau) * theta'
-        for i, layer in enumerate(self.q_target.network):
-            if not isinstance(layer, nn.Linear):
-                continue
-            q_layer = self.q_function.network[i]
-
-            weight = self.tau * q_layer.weight + (1 - self.tau) * layer.weight
-            layer.weight = torch.nn.Parameter(weight)
-
-            bias = self.tau * q_layer.bias + (1 - self.tau) * layer.bias
-            layer.bias = torch.nn.Parameter(bias)
+        target_dict = self.target_q_function.state_dict()
+        for name, param in self.q_function.named_parameters():
+            target_dict[name] = self.tau * param.data + (1 - self.tau) * target_dict[name]
+        self.target_q_function.load_state_dict(target_dict)
 
 
 class DoubleDQN(SoftTargetDQN):
     def get_max_q_values(self, next_states):
         next_states_q = self.q_function(next_states)
-        best_action = torch.argmax(next_states_q, axis=1)
+        best_actions = torch.argmax(next_states_q, axis=1)
 
         max_q_values = self.q_target(next_states)[
-            np.arange(0, self.batch_size), best_action
+            np.arange(0, self.batch_size), best_actions
         ]
 
         return max_q_values
