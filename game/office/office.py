@@ -1,18 +1,19 @@
 from game.rooms.devroom.room import OfficeRoom
-from game import game_global as Global
+from game.game_variables import GlobalContext
 
 
 class Offices:
-    def __init__(self):
+    def __init__(self, context: GlobalContext):
+        self.context = context
         self.offices = []
-        self.offices.append(OfficeRoom(Global.available_developers_count))
+        self.offices.append(OfficeRoom(self.context.available_developers_count, self.context))
         for _ in range(9):
-            self.offices.append(OfficeRoom())
+            self.offices.append(OfficeRoom(0, self.context))
 
         self.ready()
 
     def ready(self):
-        if Global.is_new_game:
+        if self.context.is_new_game:
             self.toggle_purchases(False)
 
     def toggle_purchases(self, mode: bool):

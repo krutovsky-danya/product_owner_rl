@@ -1,16 +1,17 @@
-from game import game_global as Global
+from game.game_variables import GlobalContext
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from game.backlog_card.card_info import CardInfo
 
 
 class HUD:
-    def __init__(self):
+    def __init__(self, context: GlobalContext):
+        self.context = context
         self.release_available = False
 
     def increase_progress(self, cards_to_update):
         for i in cards_to_update:
             card: CardInfo = i
-            us: UserStoryCardInfo = Global.current_stories[card.us_id]
+            us: UserStoryCardInfo = self.context.current_stories[card.us_id]
             us.completed_part += card.base_hours / us.time_to_complete
             if abs(1 - us.completed_part) < 1e-3 or us.completed_part > 1.0:
                 self.release_available = True
