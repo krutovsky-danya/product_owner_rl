@@ -201,7 +201,15 @@ class ProductOwnerEnv:
     def _get_reward(self):
         sprint_penalty = -1
         money_reward = self.game.context.get_money() / 10 ** 6 - 1
-        return sprint_penalty + money_reward
+        done = self.game.context.done
+        if done:
+            if self.game.context.get_money() > 1e6:
+                reward_for_endgame = 500
+            else:
+                reward_for_endgame = -500
+        else:
+            reward_for_endgame = 0
+        return sprint_penalty + money_reward + reward_for_endgame
 
     def _perform_action(self, action: int):
         # we'll assume that action in range(0, max_action_num)
@@ -269,4 +277,4 @@ class ProductOwnerEnv:
 if __name__ == "__main__":
     g = [(12, 14, 1), 100]
     f = [12, 13, 6, 7, *g]
-    print(10 ** 5)
+    print(1e6)
