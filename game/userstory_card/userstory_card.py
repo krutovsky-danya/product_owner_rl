@@ -2,7 +2,7 @@ from game.userstory_card.userstory_card_info import UserStoryCardInfo
 
 
 class UserStoryCard:
-    def __init__(self, info=UserStoryCardInfo()):
+    def __init__(self, info: UserStoryCardInfo):
         self.is_movable = True
         self.info = info
 
