@@ -12,6 +12,14 @@ from game.userstory_card.userstory_card_info import UserStoryCardInfo
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT
 
+USERSTORY_COMMON_FEATURE_COUNT = 4
+USERSTORY_BUG_FEATURE_COUNT = 2
+USERSTORY_TECH_DEBT_FEATURE_COUNT = 1
+
+BACKLOG_COMMON_FEATURE_COUNT = 3
+BACKLOG_BUG_FEATURE_COUNT = 2
+BACKLOG_TECH_DEBT_FEATURE_COUNT = 2
+
 
 class ProductOwnerEnv:
     def __init__(self, count_common_cards=4, count_bug_cards=2, count_td_cards=1,
@@ -51,11 +59,8 @@ class ProductOwnerEnv:
 
     def _get_completed_cards_count(self):
         completed_cards = self.game.completed_us
-        completed_us_count = 0
-        completed_bug_count = 0
-        completed_td_count = 0
+        completed_us_count, completed_bug_count, completed_td_count = 0, 0, 0
         for card_info in completed_cards:
-            card_info: UserStoryCardInfo = card_info
             if card_info.card_type == BUG:
                 completed_bug_count += 1
             elif card_info.card_type == TECH_DEBT:
@@ -65,17 +70,14 @@ class ProductOwnerEnv:
         return completed_us_count, completed_bug_count, completed_td_count
 
     def _get_userstories_descriptions(self):
-        return self._get_cards_descriptions(4, 2, 1, False,
-                                            self.count_common_us, self.count_bug_us,
-                                            self.count_td_us)
+        return self._get_cards_descriptions(self.count_common_us, self.count_bug_us,
+                                            self.count_td_us, is_backlog=False)
 
     def _get_backlog_cards_descriptions(self):
-        return self._get_cards_descriptions(3, 2, 2, True,
-                                            self.count_common_cards, self.count_bug_cards,
-                                            self.count_td_cards)
+        return self._get_cards_descriptions(self.count_common_cards, self.count_bug_cards,
+                                            self.count_td_cards, is_backlog=True)
 
-    def _get_cards_descriptions(self, features_common, features_bug, features_td, is_backlog,
-                                count_common, count_bug, count_td):
+    def _get_cards_descriptions(self, count_common, count_bug, count_td, is_backlog):
         cards = self.game.backlog.backlog if is_backlog else self.game.userstories.stories_list
         commons, bugs, tech_debts = self._split_cards_in_types(cards)
 
@@ -86,12 +88,8 @@ class ProductOwnerEnv:
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td, is_backlog)
 
-        return self._get_transforms_to_descriptions(
-            sampled_cards_common, sampled_cards_bugs, sampled_cards_td,
-            count_common, count_bug, count_td,
-            features_common, features_bug, features_td,
-            is_backlog
-        )
+        return self._get_transforms_to_descriptions(sampled_cards_common, sampled_cards_bugs,
+                                                    sampled_cards_td, is_backlog)
 
     def _split_cards_in_types(self, cards):
         commons = []
@@ -108,33 +106,6 @@ class ProductOwnerEnv:
 
         return commons, bugs, tech_debts
 
-    def _transform_to_descriptions(self, cards, size, is_common, features_count, is_backlog):
-        res = [0] * size * features_count
-
-        for i in range(len(cards)):
-            if is_backlog:
-                card_info: CardInfo = cards[i].info
-                res[features_count * i] = card_info.base_hours
-                res[features_count * i + 1] = card_info.hours
-                if is_common:
-                    res[features_count * i + 2] = card_info.card_type.value
-            else:
-                card_info: UserStoryCardInfo = cards[i].info
-                if is_common:
-                    res[features_count * i] = card_info.customers_to_bring
-                    res[features_count * i + 1] = card_info.loyalty
-                    res[features_count * i + 2] = card_info.spawn_sprint
-                    res[features_count * i + 3] = card_info.card_type.value
-                elif card_info.card_type == BUG:
-                    card_info: BugUserStoryInfo = cards[i].info
-                    res[features_count * i] = card_info.loyalty_debuff
-                    res[features_count * i + 1] = card_info.customers_debuff
-                else:
-                    card_info: TechDebtInfo = cards[i].info
-                    res[features_count * i] = card_info.full_hours_debuff
-
-        return res
-
     def _set_sampled_cards(self, common, bugs, tech_debt, is_backlog):
         if is_backlog:
             self.sampled_cards_common = common
@@ -145,18 +116,80 @@ class ProductOwnerEnv:
             self.sampled_userstories_bugs = bugs
             self.sampled_userstories_td = tech_debt
 
-    def _get_transforms_to_descriptions(self,
-                                        sampled_cards_common, sampled_cards_bugs, sampled_cards_td,
-                                        count_common, count_bug, count_td,
-                                        features_common, features_bug, features_td, is_backlog):
-        description_common = self._transform_to_descriptions(sampled_cards_common, count_common,
-                                                             True, features_common, is_backlog)
-        description_bugs = self._transform_to_descriptions(sampled_cards_bugs, count_bug, False,
-                                                           features_bug, is_backlog)
-        description_tech_debts = self._transform_to_descriptions(sampled_cards_td, count_td,
-                                                                 False, features_td, is_backlog)
+    def _get_transforms_to_descriptions(self, sampled_cards_common, sampled_cards_bugs, sampled_cards_td,
+                                        is_backlog):
+        if is_backlog:
+            description_common = self._get_transforms_to_descriptions_backlog_common(sampled_cards_common)
+            description_bugs = self._get_transforms_to_descriptions_backlog_bug(sampled_cards_bugs)
+            description_tech_debts = self._get_transforms_to_descriptions_backlog_tech_debt(sampled_cards_td)
+        else:
+            description_common = self._get_transforms_to_descriptions_userstory_common(sampled_cards_common)
+            description_bugs = self._get_transforms_to_descriptions_userstory_bug(sampled_cards_bugs)
+            description_tech_debts = self._get_transforms_to_descriptions_userstory_tech_debt(sampled_cards_td)
 
         return description_common + description_bugs + description_tech_debts
+
+    def _get_transforms_to_descriptions_backlog_common(self, cards):
+        res = [0] * self.count_common_cards * BACKLOG_COMMON_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: CardInfo = cards[i].info
+            res[BACKLOG_COMMON_FEATURE_COUNT * i] = card_info.base_hours
+            res[BACKLOG_COMMON_FEATURE_COUNT * i + 1] = card_info.hours
+            res[BACKLOG_COMMON_FEATURE_COUNT * i + 2] = card_info.card_type.value
+
+        return res
+
+    def _get_transforms_to_descriptions_backlog_bug(self, cards):
+        res = [0] * self.count_bug_cards * BACKLOG_BUG_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: CardInfo = cards[i].info
+            res[BACKLOG_BUG_FEATURE_COUNT * i] = card_info.base_hours
+            res[BACKLOG_BUG_FEATURE_COUNT * i + 1] = card_info.hours
+
+        return res
+
+    def _get_transforms_to_descriptions_backlog_tech_debt(self, cards):
+        res = [0] * self.count_td_cards * BACKLOG_TECH_DEBT_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: CardInfo = cards[i].info
+            res[BACKLOG_BUG_FEATURE_COUNT * i] = card_info.base_hours
+            res[BACKLOG_BUG_FEATURE_COUNT * i + 1] = card_info.hours
+
+        return res
+
+    def _get_transforms_to_descriptions_userstory_common(self, cards):
+        res = [0] * self.count_common_us * USERSTORY_COMMON_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: UserStoryCardInfo = cards[i].info
+            res[USERSTORY_COMMON_FEATURE_COUNT * i] = card_info.customers_to_bring
+            res[USERSTORY_COMMON_FEATURE_COUNT * i + 1] = card_info.loyalty
+            res[USERSTORY_COMMON_FEATURE_COUNT * i + 2] = card_info.spawn_sprint
+            res[USERSTORY_COMMON_FEATURE_COUNT * i + 3] = card_info.card_type.value
+
+        return res
+
+    def _get_transforms_to_descriptions_userstory_bug(self, cards):
+        res = [0] * self.count_bug_us * USERSTORY_BUG_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: BugUserStoryInfo = cards[i].info
+            res[USERSTORY_BUG_FEATURE_COUNT * i] = card_info.loyalty_debuff
+            res[USERSTORY_BUG_FEATURE_COUNT * i + 1] = card_info.customers_debuff
+
+        return res
+
+    def _get_transforms_to_descriptions_userstory_tech_debt(self, cards):
+        res = [0] * self.count_td_us * USERSTORY_TECH_DEBT_FEATURE_COUNT
+
+        for i in range(len(cards)):
+            card_info: TechDebtInfo = cards[i].info
+            res[USERSTORY_TECH_DEBT_FEATURE_COUNT * i] = card_info.full_hours_debuff
+
+        return res
 
     def step(self, action: int):
         # new_state, reward, done, info
