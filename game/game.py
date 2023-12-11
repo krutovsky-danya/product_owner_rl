@@ -232,24 +232,33 @@ class ProductOwnerGame:
         else:
             self.userstories.on_release_card_dropped(card)
 
-    def move_userstory_card(self, card_num):  # !
+    def move_userstory_card(self, card):  # !
         # зависит от того, что мы будем с этим делать:
         # предполагается ли, что модель может закинуть карточку в декомпозицию,
         # а потом вытащить её от туда? то же самое с бэклогом
         if self.userstories.available:
-            stories = self.userstories.stories_list
-            if len(stories) > 0:
-                card = stories[clamp(card_num, 0, len(stories) - 1)]
+            if isinstance(card, int):
+                stories = self.userstories.stories_list
+                if len(stories) > 0:
+                    card = stories[clamp(card, 0, len(stories) - 1)]
+                    if card.is_movable:
+                        self._on_userstory_card_dropped(card, False)
+            elif card is not None:
                 if card.is_movable:
                     self._on_userstory_card_dropped(card, False)
 
-    def move_backlog_card(self, card_num):  # !
+    def move_backlog_card(self, card):  # !
         cards = self.backlog.backlog
         if len(cards) > 0:
-            card = cards[clamp(card_num, 0, len(cards) - 1)]
-            if card.is_movable:
-                self.backlog.backlog.remove(card)
-                self.backlog.sprint.append(card)
+            if isinstance(card, int):
+                card = cards[clamp(card, 0, len(cards) - 1)]
+                if card.is_movable:
+                    self.backlog.backlog.remove(card)
+                    self.backlog.sprint.append(card)
+            elif card is not None:
+                if card.is_movable:
+                    self.backlog.backlog.remove(card)
+                    self.backlog.sprint.append(card)
 
     def press_statistical_research(self):  # !
         if self.userstories.statistical_research_available:

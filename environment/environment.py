@@ -1,5 +1,5 @@
-from game import game
-from game import game_global as Global
+from game.game import ProductOwnerGame
+from game.game_constants import UserCardType
 import torch
 import numpy as np
 import random
@@ -9,20 +9,20 @@ from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 
-BUG = Global.UserCardType.BUG
-TECH_DEBT = Global.UserCardType.TECH_DEBT
+BUG = UserCardType.BUG
+TECH_DEBT = UserCardType.TECH_DEBT
 
 
 class ProductOwnerEnv:
     def __init__(self, count_common_cards=4, count_bug_cards=2, count_td_cards=1,
                  count_common_userstories=4, count_bug_userstories=2, count_td_userstories=1):
-        game.load_game()
+        self.game = ProductOwnerGame()
         self.count_common_cards = count_common_cards
         self.count_bug_cards = count_bug_cards
         self.count_td_cards = count_td_cards
         self.count_common_us = count_common_userstories
         self.count_bug_us = count_bug_userstories
-        self.count_td_us= count_td_userstories
+        self.count_td_us = count_td_userstories
 
         self.sampled_cards_common = None
         self.sampled_cards_bugs = None
@@ -33,15 +33,16 @@ class ProductOwnerEnv:
         self.current_state = self._get_state()
 
     def reset(self):
-        game.load_game()
+        self.game = ProductOwnerGame()
         self.current_state = self._get_state()
         return self.current_state
 
     def _get_state(self, in_tensor=True):
-        state = [Global.current_sprint, Global.get_money() / 10 ** 5,
-                 Global.customers, Global.get_loyalty(), Global.credit / 10 ** 5,
-                 Global.available_developers_count, Global.current_rooms_counter,
-                 Global.current_sprint_hours, *self._get_completed_cards_count(),
+        context = self.game.context
+        state = [context.current_sprint, context.get_money() / 10 ** 5,
+                 context.customers, context.get_loyalty(), context.credit / 10 ** 5,
+                 context.available_developers_count, context.current_rooms_counter,
+                 context.current_sprint_hours, *self._get_completed_cards_count(),
                  *self._get_userstories_descriptions(), *self._get_backlog_cards_descriptions()]
         if in_tensor:
             return torch.tensor(state)
@@ -49,7 +50,7 @@ class ProductOwnerEnv:
             return np.array(state)
 
     def _get_completed_cards_count(self):
-        completed_cards = game.completed_us
+        completed_cards = self.game.completed_us
         completed_us_count = 0
         completed_bug_count = 0
         completed_td_count = 0
@@ -75,7 +76,7 @@ class ProductOwnerEnv:
 
     def _get_cards_descriptions(self, features_common, features_bug, features_td, is_backlog,
                                 count_common, count_bug, count_td):
-        cards = game.backlog.backlog if is_backlog else game.userstories.stories_list
+        cards = self.game.backlog.backlog if is_backlog else self.game.userstories.stories_list
         commons, bugs, tech_debts = self._split_cards_in_types(cards)
 
         sampled_cards_common = random.sample(commons, min(count_common, len(commons)))
@@ -98,9 +99,9 @@ class ProductOwnerEnv:
         tech_debts = []
         for card in cards:
             card_info = card.info
-            if card_info.card_type == Global.UserCardType.BUG:
+            if card_info.card_type == BUG:
                 bugs.append(card)
-            elif card_info.card_type == Global.UserCardType.TECH_DEBT:
+            elif card_info.card_type == TECH_DEBT:
                 tech_debts.append(card)
             else:
                 commons.append(card)
@@ -124,7 +125,7 @@ class ProductOwnerEnv:
                     res[features_count * i + 1] = card_info.loyalty
                     res[features_count * i + 2] = card_info.spawn_sprint
                     res[features_count * i + 3] = card_info.card_type.value
-                elif card_info.card_type == Global.UserCardType.BUG:
+                elif card_info.card_type == BUG:
                     card_info: BugUserStoryInfo = cards[i].info
                     res[features_count * i] = card_info.loyalty_debuff
                     res[features_count * i + 1] = card_info.customers_debuff
@@ -162,31 +163,31 @@ class ProductOwnerEnv:
         self._perform_action(action)
         reward = self._get_reward()
         self.current_state = self._get_state()
-        return self.current_state, reward, Global.done, None
+        return self.current_state, reward, self.game.context.done, None
 
     def _get_reward(self):
         sprint_penalty = -1
-        money_reward = Global.get_money() / 10 ** 6 - 1
+        money_reward = self.game.context.get_money() / 10 ** 6 - 1
         return sprint_penalty + money_reward
 
     def _perform_action(self, action: int):
         # we'll assume that action in range(0, max_action_num)
         if action == 0:
-            game.backlog_start_sprint()
+            self.game.backlog_start_sprint()
         elif action == 1:
-            game.userstories_start_release()
+            self.game.userstories_start_release()
         elif action == 2:
-            game.hud_release_product()
+            self.game.hud_release_product()
         elif action == 3:
             room_num = self._get_min_not_full_room_number()
-            game.buy_robot(room_num)
+            self.game.buy_robot(room_num)
         elif action == 4:
             room_num = self._get_min_available_to_buy_room_number()
-            game.buy_room(room_num)
+            self.game.buy_room(room_num)
         elif action == 5:
-            game.press_statistical_research()
+            self.game.press_statistical_research()
         elif action == 6:
-            game.press_user_survey()
+            self.game.press_user_survey()
         else:
             self._perform_action_card(action - 7)
 
@@ -204,7 +205,7 @@ class ProductOwnerEnv:
             card = self.sampled_cards_bugs[action - self.count_common_cards]
         else:
             card = self.sampled_cards_td[action - self.count_common_cards - self.count_bug_cards]
-        game.move_backlog_card(card)
+        self.game.move_backlog_card(card)
 
     def _perform_action_userstory(self, action: int):
         if action < self.count_common_us:
@@ -213,10 +214,10 @@ class ProductOwnerEnv:
             card = self.sampled_userstories_bugs[action - self.count_common_us]
         else:
             card = self.sampled_userstories_td[action - self.count_common_us - self.count_bug_us]
-        game.move_userstory_card(card)
+        self.game.move_userstory_card(card)
 
     def _get_min_not_full_room_number(self):
-        offices = game.office.offices
+        offices = self.game.office.offices
         for i in range(len(offices)):
             room = offices[i]
             if room.can_buy_robot:
@@ -224,7 +225,7 @@ class ProductOwnerEnv:
         return -1
 
     def _get_min_available_to_buy_room_number(self):
-        offices = game.office.offices
+        offices = self.game.office.offices
         for i in range(len(offices)):
             room = offices[i]
             if room.can_buy_room:
