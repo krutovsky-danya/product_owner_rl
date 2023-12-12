@@ -1,35 +1,75 @@
+import os
 import torch
-
+import datetime
 from algorithms.deep_q_networks import DQN
 
+from typing import List
 
-def study_dqn(env, agent: DQN, episode_n, trajectory_max_len=1000000, silent=False):
-    rewards_log = []
-    q_value_log = []
 
-    for episode in range(episode_n):
+class BaseStudyDQN:
+    def __init__(self, env, agent, trajecory_max_len) -> None:
+        self.env = env
+        self.agent: DQN = agent
+        self.trajectory_max_len = trajecory_max_len
+
+    def play_trajectory(self, init_state):
         total_reward = 0
+        state = init_state
+        for t in range(self.trajectory_max_len):
+            action = self.agent.get_action(state)
+            next_state, reward, done, _ = self.env.step(action)
 
-        state = env.reset()
-
-        with torch.no_grad():
-            q_values = agent.q_function(torch.tensor(state))
-            q_value_log.append(q_values.max())
-        for t in range(trajectory_max_len):
-            action = agent.get_action(state)
-            next_state, reward, done, _ = env.step(action)
-
-            total_reward += reward
-
-            agent.fit(state, action, reward, done, next_state)
+            self.agent.fit(state, action, reward, done, next_state)
 
             state = next_state
+            total_reward += reward
 
             if done:
                 break
+        
+        return total_reward
+    
+    def study_agent(self, episode_n):
+        for episode in range(episode_n):
+            state = self.env.reset()
+            self.play_trajectory(state)
 
-        rewards_log.append(total_reward)
-        if not silent:
-            print(f"episode: {episode}, total_reward: {total_reward}")
+class LoggingStudy(BaseStudyDQN):
+    def __init__(self, env, agent, trajecory_max_len, save_rate=1000) -> None:
+        super().__init__(env, agent, trajecory_max_len)
+        self.episode = 0
+        self.rewards_log: List[int] = []
+        self.q_value_log: List[int] = []
+        self.time_log: List[datetime.datetime] = []
+        self.save_rate = save_rate
+    
+    def play_trajectory(self, init_state):
+        with torch.no_grad():
+            state = torch.tensor(init_state)
+            q_values: torch.Tensor = self.agent.q_function(state)
+            self.q_value_log.append(q_values.max())
+        
+        reward = super().play_trajectory(init_state)
 
-    return rewards_log, q_value_log
+        self.rewards_log.append(reward)
+
+        print(f"episode: {self.episode}, total_reward: {reward}")
+        self.episode += 1
+    
+    def study_agent(self, episode_n):
+        epoche_n = (episode_n + self.save_rate - 1) // self.save_rate
+
+        os.makedirs('dqn', exist_ok=True)
+
+        for epoche in range(epoche_n):
+            path = f'dqn/model_{epoche}.pt'
+            super().study_agent(self.save_rate)
+            save_dqn_agent(self.agent, path=path)
+
+def save_dqn_agent(agent: DQN, path):
+    torch.save(agent, path)
+
+def load_dqn_agent(path):
+    agent = torch.load(path)
+    agent.eval()
+    return agent

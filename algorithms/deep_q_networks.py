@@ -23,7 +23,7 @@ class QFunction(nn.Module):
         return self.network(states)
 
 
-class DQN:
+class DQN(nn.Module):
     def __init__(
         self,
         state_dim,
@@ -34,6 +34,7 @@ class DQN:
         epsilon_decrease=0.02,
         epsilon_min=0.01,
     ):
+        super().__init__()
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.q_function = QFunction(self.state_dim, self.action_dim)
