@@ -36,6 +36,12 @@ class TestEnvFunctions(unittest.TestCase):
             self.start_sprint()
 
         self.release_product()
+    
+    def test_state_dim(self):
+        state_dim = self.env.state_dim
+        state = self.env.reset()
+
+        assert len(state) == state_dim
 
     def buy_statistical_research(self, current_money, us_count):
         state = self.env.step(5)  # buy statistical research

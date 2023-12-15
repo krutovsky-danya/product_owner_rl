@@ -1,6 +1,8 @@
+from game.game_constants import UserCardType
+
 class CardInfo:
     def __init__(self, hours_val: int, color_val, us_id_val: int,
-                 label_val: str, card_type_val):
+                 label_val: str, card_type_val: UserCardType):
         self.color = color_val
         self.base_hours = hours_val
         self.hours = hours_val

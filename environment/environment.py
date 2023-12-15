@@ -3,6 +3,7 @@ from game.game_constants import UserCardType
 import torch
 import numpy as np
 import random
+from typing import List
 
 from game.backlog_card.card_info import CardInfo
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
@@ -39,6 +40,18 @@ class ProductOwnerEnv:
         self.sampled_userstories_bugs = None
         self.sampled_userstories_td = None
         self.current_state = self._get_state()
+
+        self.state_dim = 11 + \
+            self.count_common_cards * BACKLOG_COMMON_FEATURE_COUNT + \
+            self.count_bug_cards * BACKLOG_BUG_FEATURE_COUNT + \
+            self.count_td_cards * BACKLOG_TECH_DEBT_FEATURE_COUNT + \
+            self.count_common_us * USERSTORY_COMMON_FEATURE_COUNT + \
+            self.count_bug_us * USERSTORY_BUG_FEATURE_COUNT + \
+            self.count_td_us * USERSTORY_TECH_DEBT_FEATURE_COUNT
+        
+        self.action_n = 7 + \
+            self.count_common_us + self.count_bug_us + self.count_td_us + \
+            self.count_common_cards + self.count_bug_cards + self.count_td_cards
 
     def reset(self):
         self.game = ProductOwnerGame()
