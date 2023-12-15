@@ -5,6 +5,7 @@ sys.path.insert(0, '..')
 import unittest
 from environment.environment import ProductOwnerEnv
 from game.game_constants import GlobalConstants
+import torch
 
 
 IS_SILENT = False
@@ -142,6 +143,12 @@ class TestEnvFunctions(unittest.TestCase):
         self.assertFalse(game_sim.is_first_release)
         self.assertFalse(game_sim.context.is_new_game)
         self.assertTrue(len(game_sim.completed_us) == 0)
+
+    def test_act_upon_not_existing_card(self):
+        state = self.env.reset()
+        new_state, reward, done, _ = self.env.step(self.env.action_n - 1)
+
+        assert torch.all(state == new_state).item()
 
 
 if __name__ == "__main__":

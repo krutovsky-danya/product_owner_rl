@@ -254,21 +254,28 @@ class ProductOwnerEnv:
 
     def _perform_action_backlog_card(self, action: int):
         if action < self.count_common_cards:
-            card = self.sampled_cards_common[action]
+            card = self._get_card(self.sampled_cards_common, action)
         elif action - self.count_common_cards < self.count_bug_cards:
-            card = self.sampled_cards_bugs[action - self.count_common_cards]
+            card = self._get_card(self.sampled_cards_bugs, action - self.count_common_cards)
         else:
-            card = self.sampled_cards_td[action - self.count_common_cards - self.count_bug_cards]
-        self.game.move_backlog_card(card)
+            card = self._get_card(self.sampled_cards_td, action - self.count_common_cards - self.count_bug_cards)
+        if card is not None:
+            self.game.move_backlog_card(card)
 
     def _perform_action_userstory(self, action: int):
         if action < self.count_common_us:
-            card = self.sampled_userstories_common[action]
+            card = self._get_card(self.sampled_userstories_common, action)
         elif action - self.count_common_us < self.count_bug_us:
-            card = self.sampled_userstories_bugs[action - self.count_common_us]
+            card = self._get_card(self.sampled_userstories_bugs, action - self.count_common_us)
         else:
-            card = self.sampled_userstories_td[action - self.count_common_us - self.count_bug_us]
-        self.game.move_userstory_card(card)
+            card = self._get_card(self.sampled_userstories_td, action - self.count_common_us - self.count_bug_us)
+        if card is not None:
+            self.game.move_userstory_card(card)
+
+    def _get_card(self, sampled, index):
+        if index < len(sampled):
+            return sampled[index]
+        return None
 
     def _get_min_not_full_room_number(self):
         offices = self.game.office.offices
