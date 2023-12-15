@@ -58,7 +58,7 @@ class ProductOwnerEnv:
         self.current_state = self._get_state()
         return self.current_state
 
-    def _get_state(self, in_tensor=True):
+    def _get_state(self, in_tensor=False):
         context = self.game.context
         state = [context.current_sprint, context.get_money() / 10 ** 5,
                  context.customers, context.get_loyalty(), context.credit / 10 ** 5,
@@ -68,7 +68,7 @@ class ProductOwnerEnv:
         if in_tensor:
             return torch.tensor(state)
         else:
-            return np.array(state)
+            return np.array(state, dtype=np.float32)
 
     def _get_completed_cards_count(self):
         completed_cards = self.game.completed_us

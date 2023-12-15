@@ -5,10 +5,10 @@ sys.path.insert(0, '..')
 import unittest
 from environment.environment import ProductOwnerEnv
 from game.game_constants import GlobalConstants
-import torch
+import numpy as np
 
 
-IS_SILENT = False
+IS_SILENT = True
 
 
 class TestEnvFunctions(unittest.TestCase):
@@ -148,7 +148,7 @@ class TestEnvFunctions(unittest.TestCase):
         state = self.env.reset()
         new_state, reward, done, _ = self.env.step(self.env.action_n - 1)
 
-        assert torch.all(state == new_state).item()
+        assert np.all(state == new_state)
 
 
 if __name__ == "__main__":

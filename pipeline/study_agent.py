@@ -57,12 +57,13 @@ class LoggingStudy(BaseStudyDQN):
         self.episode += 1
     
     def study_agent(self, episode_n):
+        agent_name = type(self.agent).__name__
         epoche_n = (episode_n + self.save_rate - 1) // self.save_rate
 
-        os.makedirs('dqn', exist_ok=True)
+        os.makedirs(agent_name, exist_ok=True)
 
         for epoche in range(epoche_n):
-            path = f'dqn/model_{epoche}.pt'
+            path = f'{agent_name}/model_{epoche}.pt'
             super().study_agent(self.save_rate)
             save_dqn_agent(self.agent, path=path)
 

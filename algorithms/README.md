@@ -1,0 +1,1 @@
+You can read aboub Double DQN [here](https://arxiv.org/pdf/1509.06461.pdf)
