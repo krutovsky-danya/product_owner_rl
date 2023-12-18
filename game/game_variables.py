@@ -50,7 +50,7 @@ class GlobalContext:
             print("win")
             save_to_leaderboard(self.current_sprint)
         else:
-            print("loose")
+            print("lose")
 
     def get_loyalty(self):
         return self._loyalty

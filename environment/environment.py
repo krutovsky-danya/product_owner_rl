@@ -39,9 +39,8 @@ class ProductOwnerEnv:
         self.sampled_userstories_common = None
         self.sampled_userstories_bugs = None
         self.sampled_userstories_td = None
-        self.current_state = self._get_state()
 
-        self.state_dim = 11 + \
+        self.state_dim = 16 + \
             self.count_common_cards * BACKLOG_COMMON_FEATURE_COUNT + \
             self.count_bug_cards * BACKLOG_BUG_FEATURE_COUNT + \
             self.count_td_cards * BACKLOG_TECH_DEBT_FEATURE_COUNT + \
@@ -49,8 +48,12 @@ class ProductOwnerEnv:
             self.count_bug_us * USERSTORY_BUG_FEATURE_COUNT + \
             self.count_td_us * USERSTORY_TECH_DEBT_FEATURE_COUNT
         
+        self.current_state = self._get_state()
+
+        self.userstory_max_action_num = self.count_common_us + \
+            self.count_bug_us + self.count_td_us
         self.action_n = 7 + \
-            self.count_common_us + self.count_bug_us + self.count_td_us + \
+            self.userstory_max_action_num + \
             self.count_common_cards + self.count_bug_cards + self.count_td_cards
 
     def reset(self):
@@ -60,11 +63,25 @@ class ProductOwnerEnv:
 
     def _get_state(self, in_tensor=False):
         context = self.game.context
-        state = [context.current_sprint, context.get_money() / 10 ** 5,
-                 context.customers, context.get_loyalty(), context.credit / 10 ** 5,
-                 context.available_developers_count, context.current_rooms_counter,
-                 context.current_sprint_hours, *self._get_completed_cards_count(),
-                 *self._get_userstories_descriptions(), *self._get_backlog_cards_descriptions()]
+        state = [
+            context.current_sprint,
+            context.get_money() / 10 ** 5,
+            context.customers,
+            context.get_loyalty(),
+            context.credit / 10 ** 5,
+            context.available_developers_count,
+            context.current_rooms_counter,
+            context.current_sprint_hours,
+            self.game.backlog.can_start_sprint(),
+            self.game.userstories.release_available,
+            self.game.hud.release_available,
+            self.game.userstories.statistical_research_available,
+            self.game.userstories.user_survey_available,
+            *self._get_completed_cards_count(),
+            *self._get_userstories_descriptions(),
+            *self._get_backlog_cards_descriptions()
+        ]
+        assert len(state) == self.state_dim
         if in_tensor:
             return torch.tensor(state)
         else:
@@ -94,9 +111,11 @@ class ProductOwnerEnv:
         cards = self.game.backlog.backlog if is_backlog else self.game.userstories.stories_list
         commons, bugs, tech_debts = self._split_cards_in_types(cards)
 
-        sampled_cards_common = random.sample(commons, min(count_common, len(commons)))
+        sampled_cards_common = random.sample(
+            commons, min(count_common, len(commons)))
         sampled_cards_bugs = random.sample(bugs, min(count_bug, len(bugs)))
-        sampled_cards_td = random.sample(tech_debts, min(count_td, len(tech_debts)))
+        sampled_cards_td = random.sample(
+            tech_debts, min(count_td, len(tech_debts)))
 
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td, is_backlog)
@@ -132,13 +151,19 @@ class ProductOwnerEnv:
     def _get_transforms_to_descriptions(self, sampled_cards_common, sampled_cards_bugs, sampled_cards_td,
                                         is_backlog):
         if is_backlog:
-            description_common = self._get_transforms_to_descriptions_backlog_common(sampled_cards_common)
-            description_bugs = self._get_transforms_to_descriptions_backlog_bug(sampled_cards_bugs)
-            description_tech_debts = self._get_transforms_to_descriptions_backlog_tech_debt(sampled_cards_td)
+            description_common = self._get_transforms_to_descriptions_backlog_common(
+                sampled_cards_common)
+            description_bugs = self._get_transforms_to_descriptions_backlog_bug(
+                sampled_cards_bugs)
+            description_tech_debts = self._get_transforms_to_descriptions_backlog_tech_debt(
+                sampled_cards_td)
         else:
-            description_common = self._get_transforms_to_descriptions_userstory_common(sampled_cards_common)
-            description_bugs = self._get_transforms_to_descriptions_userstory_bug(sampled_cards_bugs)
-            description_tech_debts = self._get_transforms_to_descriptions_userstory_tech_debt(sampled_cards_td)
+            description_common = self._get_transforms_to_descriptions_userstory_common(
+                sampled_cards_common)
+            description_bugs = self._get_transforms_to_descriptions_userstory_bug(
+                sampled_cards_bugs)
+            description_tech_debts = self._get_transforms_to_descriptions_userstory_tech_debt(
+                sampled_cards_td)
 
         return description_common + description_bugs + description_tech_debts
 
@@ -149,7 +174,8 @@ class ProductOwnerEnv:
             card_info: CardInfo = cards[i].info
             res[BACKLOG_COMMON_FEATURE_COUNT * i] = card_info.base_hours
             res[BACKLOG_COMMON_FEATURE_COUNT * i + 1] = card_info.hours
-            res[BACKLOG_COMMON_FEATURE_COUNT * i + 2] = card_info.card_type.value
+            res[BACKLOG_COMMON_FEATURE_COUNT *
+                i + 2] = card_info.card_type.value
 
         return res
 
@@ -178,10 +204,12 @@ class ProductOwnerEnv:
 
         for i in range(len(cards)):
             card_info: UserStoryCardInfo = cards[i].info
-            res[USERSTORY_COMMON_FEATURE_COUNT * i] = card_info.customers_to_bring
+            res[USERSTORY_COMMON_FEATURE_COUNT *
+                i] = card_info.customers_to_bring
             res[USERSTORY_COMMON_FEATURE_COUNT * i + 1] = card_info.loyalty
             res[USERSTORY_COMMON_FEATURE_COUNT * i + 2] = card_info.spawn_sprint
-            res[USERSTORY_COMMON_FEATURE_COUNT * i + 3] = card_info.card_type.value
+            res[USERSTORY_COMMON_FEATURE_COUNT *
+                i + 3] = card_info.card_type.value
 
         return res
 
@@ -200,20 +228,28 @@ class ProductOwnerEnv:
 
         for i in range(len(cards)):
             card_info: TechDebtInfo = cards[i].info
-            res[USERSTORY_TECH_DEBT_FEATURE_COUNT * i] = card_info.full_hours_debuff
+            res[USERSTORY_TECH_DEBT_FEATURE_COUNT *
+                i] = card_info.full_hours_debuff
 
         return res
 
     def step(self, action: int):
         # new_state, reward, done, info
-        self._perform_action(action)
-        reward = self._get_reward()
+        reward = 0
+        credit_before = self.game.context.credit
+        reward_bit = self._perform_action(action)
+        credit_after = self.game.context.credit
+        if credit_before > 0 and credit_after <= 0:
+            print('Credit paid')
+            reward += 100
+        reward += self._get_reward()
+        reward += reward_bit
         self.current_state = self._get_state()
         return self.current_state, reward, self.game.context.done, None
 
     def _get_reward(self):
-        sprint_penalty = -1
-        money_reward = self.game.context.get_money() / 10 ** 6 - 1
+        # sprint_penalty = +1
+        # money_reward = self.game.context.get_money() / 10 ** 6
         done = self.game.context.done
         if done:
             if self.game.context.get_money() > 1e6:
@@ -222,55 +258,121 @@ class ProductOwnerEnv:
                 reward_for_endgame = -500
         else:
             reward_for_endgame = 0
-        return sprint_penalty + money_reward + reward_for_endgame
+        return reward_for_endgame
 
+    def _perform_start_sprint_action(self) -> int:
+        self.game.backlog_start_sprint()
+        return 1
+
+    def _perform_decomposition(self) -> int:
+        is_release_available = self.game.userstories.release_available
+        self.game.userstories_start_release()
+        if is_release_available:
+            return 1
+        return -10
+    
+    def _perform_release(self) -> int:
+        is_release_available = self.game.hud.release_available
+        self.game.hud_release_product()
+        if is_release_available:
+            return 1
+        return -10
+
+    def _perform_buy_robot(self) -> int:
+        room_num = self._get_min_not_full_room_number()
+        if room_num == -1:
+            return -10
+        worker_count_before = self.game.context.available_developers_count
+        self.game.buy_robot(room_num)
+        worker_count = self.game.context.available_developers_count
+        if worker_count_before == worker_count:
+            return -10
+        return 1
+    
+    def _perform_buy_room(self) -> int:
+        room_num = self._get_min_available_to_buy_room_number()
+        if room_num == -1:
+            return -10
+        worker_count_before = self.game.context.available_developers_count
+        self.game.buy_room(room_num)
+        worker_count = self.game.context.available_developers_count
+        if worker_count_before == worker_count:
+            return -10
+        return 1
+    
+    def _perform_get_statistical_research(self) -> int:
+        if not self.game.userstories.statistical_research_available:
+            return -10
+        stories_before = len(self.game.userstories.stories_list)
+        self.game.press_statistical_research()
+        stories_after = len(self.game.userstories.stories_list)
+        if stories_before == stories_after:
+            return -10
+        return 1
+    
+    def _perform_user_survey(self) -> int:
+        if not self.game.userstories.user_survey_available:
+            return -10
+        stories_before = len(self.game.userstories.stories_list)
+        self.game.press_user_survey()
+        stories_after = len(self.game.userstories.stories_list)
+        if stories_before == stories_after:
+            return -10
+        return 1
+    
     def _perform_action(self, action: int):
         # we'll assume that action in range(0, max_action_num)
         if action == 0:
-            self.game.backlog_start_sprint()
-        elif action == 1:
-            self.game.userstories_start_release()
-        elif action == 2:
-            self.game.hud_release_product()
-        elif action == 3:
-            room_num = self._get_min_not_full_room_number()
-            self.game.buy_robot(room_num)
-        elif action == 4:
-            room_num = self._get_min_available_to_buy_room_number()
-            self.game.buy_room(room_num)
-        elif action == 5:
-            self.game.press_statistical_research()
-        elif action == 6:
-            self.game.press_user_survey()
-        else:
-            self._perform_action_card(action - 7)
+            return self._perform_start_sprint_action()
+        if action == 1:
+            return self._perform_decomposition()
+        if action == 2:
+            return self._perform_release()
+        if action == 3:
+            return self._perform_buy_robot()
+        if action == 4:
+            return self._perform_buy_room()
+        if action == 5:
+            return self._perform_get_statistical_research()
+        if action == 6:
+            return self._perform_user_survey()
+        
+        return self._perform_action_card(action - 7)
 
-    def _perform_action_card(self, action: int):
-        userstory_max_action_num = self.count_common_us + self.count_bug_us + self.count_td_us
-        if action < userstory_max_action_num:
-            self._perform_action_userstory(action)
-        else:
-            self._perform_action_backlog_card(action - userstory_max_action_num)
+    def _perform_action_card(self, action: int) -> int:
+        if action < self.userstory_max_action_num:
+            return self._perform_action_userstory(action)
+        
+        card_id = action - self.userstory_max_action_num
+        return self._perform_action_backlog_card(card_id)
 
-    def _perform_action_backlog_card(self, action: int):
+    def _perform_action_backlog_card(self, action: int) -> int:
         if action < self.count_common_cards:
             card = self._get_card(self.sampled_cards_common, action)
         elif action - self.count_common_cards < self.count_bug_cards:
-            card = self._get_card(self.sampled_cards_bugs, action - self.count_common_cards)
+            card = self._get_card(self.sampled_cards_bugs,
+                                  action - self.count_common_cards)
         else:
-            card = self._get_card(self.sampled_cards_td, action - self.count_common_cards - self.count_bug_cards)
+            card = self._get_card(
+                self.sampled_cards_td, action - self.count_common_cards - self.count_bug_cards)
         if card is not None:
             self.game.move_backlog_card(card)
+            return 1
+        return -10
 
-    def _perform_action_userstory(self, action: int):
+    def _perform_action_userstory(self, action: int) -> int:
         if action < self.count_common_us:
             card = self._get_card(self.sampled_userstories_common, action)
         elif action - self.count_common_us < self.count_bug_us:
-            card = self._get_card(self.sampled_userstories_bugs, action - self.count_common_us)
+            card = self._get_card(
+                self.sampled_userstories_bugs, action - self.count_common_us)
         else:
-            card = self._get_card(self.sampled_userstories_td, action - self.count_common_us - self.count_bug_us)
+            card = self._get_card(
+                self.sampled_userstories_td, action - self.count_common_us - self.count_bug_us)
         if card is not None:
             self.game.move_userstory_card(card)
+            return 1
+        return -10
 
     def _get_card(self, sampled, index):
         if index < len(sampled):

@@ -43,7 +43,7 @@ class UserStories:
             return
 
         if not self.context.has_enough_money(cost):
-            print("not enough money")
+            # print("not enough money")
             return
 
         self.context.set_money(self.context.get_money() - cost)

@@ -2,12 +2,13 @@ import os
 import torch
 import datetime
 from algorithms.deep_q_networks import DQN
+from environment.environment import ProductOwnerEnv
 
 from typing import List
 
 
 class BaseStudyDQN:
-    def __init__(self, env, agent, trajecory_max_len) -> None:
+    def __init__(self, env: ProductOwnerEnv, agent, trajecory_max_len) -> None:
         self.env = env
         self.agent: DQN = agent
         self.trajectory_max_len = trajecory_max_len
@@ -40,6 +41,7 @@ class LoggingStudy(BaseStudyDQN):
         self.episode = 0
         self.rewards_log: List[int] = []
         self.q_value_log: List[int] = []
+        self.sprints_log: List[int] = []
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
     
@@ -50,10 +52,12 @@ class LoggingStudy(BaseStudyDQN):
             self.q_value_log.append(q_values.max())
         
         reward = super().play_trajectory(init_state)
+        sprint_n = self.env.game.context.current_sprint
 
         self.rewards_log.append(reward)
+        self.sprints_log.append(sprint_n)
 
-        print(f"episode: {self.episode}, total_reward: {reward}")
+        print(f"episode: {self.episode}, total_reward: {reward:.2f}, sprint_n: {sprint_n}")
         self.episode += 1
     
     def study_agent(self, episode_n):
@@ -66,6 +70,12 @@ class LoggingStudy(BaseStudyDQN):
             path = f'{agent_name}/model_{epoche}.pt'
             super().study_agent(self.save_rate)
             save_dqn_agent(self.agent, path=path)
+            with open(f'{agent_name}/rewards_{epoche}.txt', mode='w') as f:
+                f.write(repr(self.rewards_log))
+            with open(f'{agent_name}/estimates_{epoche}.txt', mode='w') as f:
+                f.write(repr(self.q_value_log))
+            with open(f'{agent_name}/sprints_{epoche}.txt', mode='w') as f:
+                f.write(repr(self.sprints_log))
 
 def save_dqn_agent(agent: DQN, path):
     torch.save(agent, path)
