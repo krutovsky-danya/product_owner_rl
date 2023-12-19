@@ -36,7 +36,7 @@ class ProductOwnerGame:
     def backlog_start_sprint(self):
         if self.backlog.can_start_sprint():
             cards = self.backlog.on_start_sprint_pressed()
-            if cards:
+            if cards is not None:
                 self.backlog.clear_sprint()
                 self._on_backlog_start_sprint(cards)
 

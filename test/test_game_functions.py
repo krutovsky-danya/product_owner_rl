@@ -108,6 +108,17 @@ class TestGameFunctions(unittest.TestCase):
 
         self.assertEqual(len(current_tech_debt), 1)
 
+    def test_can_start_blank_sprint(self):
+        self.game.backlog.can_start_sprint = lambda: True
+
+        old_current_sprint = self.game.context.current_sprint
+
+        self.game.backlog_start_sprint()
+
+        new_current_sprint = self.game.context.current_sprint
+
+        self.assertGreater(new_current_sprint, old_current_sprint)
+
     def buy_statistical_research(self, current_money, us_count):
         self.game.press_statistical_research()
 
