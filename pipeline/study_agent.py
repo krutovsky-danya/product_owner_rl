@@ -81,6 +81,6 @@ def save_dqn_agent(agent: DQN, path):
     torch.save(agent, path)
 
 def load_dqn_agent(path):
-    agent = torch.load(path)
+    agent: DQN = torch.load(path)
     agent.eval()
     return agent

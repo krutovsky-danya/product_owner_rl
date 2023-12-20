@@ -1,4 +1,5 @@
 from game.backlog.backlog import Backlog
+from game.backlog_card.backlog_card import Card
 from game.userstories.userstories import UserStories
 from game.hud.hud import HUD
 from game.rooms.devroom.room import OfficeRoom
@@ -259,6 +260,14 @@ class ProductOwnerGame:
                 if card.is_movable:
                     self.backlog.backlog.remove(card)
                     self.backlog.sprint.append(card)
+
+    def move_sprint_card(self, card: Card):
+        cards = self.backlog.sprint
+        if len(cards) == 0:
+            return
+        if card.is_movable:
+            self.backlog.sprint.remove(card)
+            self.backlog.backlog.append(card)
 
     def press_statistical_research(self):  # !
         if self.userstories.statistical_research_available:

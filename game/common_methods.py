@@ -1,3 +1,5 @@
+import random
+
 def clamp(x, minimum, maximum):
     if x < minimum:
         return minimum
@@ -28,3 +30,7 @@ def interpolate(value, table: dict):
             return u
 
     return None
+
+def sample_n_or_less(collection, count):
+    count = min(count, len(collection))
+    return random.sample(collection, count)

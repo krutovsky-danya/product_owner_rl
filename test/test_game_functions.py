@@ -1,6 +1,8 @@
 import sys
 import random
 
+from game.backlog_card.backlog_card import Card
+
 sys.path.insert(0, "..")
 
 import unittest
@@ -107,6 +109,16 @@ class TestGameFunctions(unittest.TestCase):
         self.game._check_and_spawn_tech_debt()
 
         self.assertEqual(len(current_tech_debt), 1)
+    
+    def test_move_sprint_card_should_move_card_to_backlog(self):
+        card = Card()
+        self.game.backlog.sprint.append(card)
+
+        self.game.move_sprint_card(card)
+
+        self.assertSequenceEqual(self.game.backlog.sprint, [])
+        self.assertIn(card, self.game.backlog.backlog)
+        self.assertSequenceEqual(self.game.backlog.backlog, [card])
 
     def test_can_start_blank_sprint(self):
         self.game.backlog.can_start_sprint = lambda: True

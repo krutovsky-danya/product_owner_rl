@@ -42,7 +42,7 @@ class TestEnvFunctions(unittest.TestCase):
         state_dim = self.env.state_dim
         state = self.env.reset()
 
-        assert len(state) == state_dim
+        self.assertEqual(len(state), state_dim)
 
     def buy_statistical_research(self, current_money, us_count):
         state = self.env.step(5)  # buy statistical research
@@ -93,7 +93,10 @@ class TestEnvFunctions(unittest.TestCase):
 
     def find_available_to_move_backlog_card(self):
         state = self.env._get_state()
-        state = state[32:]
+        backlog_begin = self.env.meta_space_dim + \
+            self.env.userstory_space_dim
+        backlog_end = backlog_begin + self.env.backlog_space_dim
+        state = state[backlog_begin:backlog_end]
         game_sim = self.env.game
 
         current_hours = game_sim.backlog.calculate_hours_sum()
@@ -101,7 +104,7 @@ class TestEnvFunctions(unittest.TestCase):
         for i in range(0, len(state), 3):
             card_hours = state[i]
             if card_hours + current_hours <= hours_boundary:
-                return int(i / 3) + 14
+                return int(i / 3) + self.env.meta_action_dim + self.env.userstory_max_action_num
 
     def can_move_any_backlog_card(self):
         game_sim = self.env.game
