@@ -6,17 +6,18 @@ import random
 
 
 class QFunction(nn.Module):
-    def __init__(self, state_dim, action_n):
+    def __init__(self, state_dim, action_n, inner_layer=128):
         super().__init__()
         self.state_dim = state_dim
         self.action_n = action_n
+        self.inner_layer = inner_layer
 
         self.network = nn.Sequential(
-            nn.Linear(state_dim, 64),
+            nn.Linear(state_dim, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(64, action_n),
+            nn.Linear(self.inner_layer, action_n),
         )
 
     def forward(self, states):

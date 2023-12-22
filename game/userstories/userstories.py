@@ -39,7 +39,7 @@ class UserStories:
         total_stories = current_stories + available_stories
 
         if total_stories >= 7:
-            print("too many stories")
+            # print("too many stories")
             return
 
         if not self.context.has_enough_money(cost):

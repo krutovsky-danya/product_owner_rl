@@ -1,11 +1,5 @@
-import sys
-import random
-
-from game.backlog_card.backlog_card import Card
-
-sys.path.insert(0, "..")
-
 import unittest
+from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import GlobalConstants
 from game.rooms.devroom.room import OfficeRoom
