@@ -154,7 +154,7 @@ class SoftTargetDQN(TargetDQN):
         tau=0.1,
         batch_size=64,
         epsilon_decrease=0.01,
-        epilon_min=0.01,
+        epsilon_min=0.01,
     ):
         super().__init__(
             state_dim,
@@ -164,7 +164,7 @@ class SoftTargetDQN(TargetDQN):
             batch_size,
             1,
             epsilon_decrease,
-            epilon_min,
+            epsilon_min,
         )
         self.tau = tau
 

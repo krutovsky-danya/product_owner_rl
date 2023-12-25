@@ -26,6 +26,56 @@ def get_buggy_game():
     game.office.toggle_purchases(True)
     return game
 
+def get_buggy_game_2():
+    game = ProductOwnerGame()
+    game.context.current_sprint = 35
+    game.context.credit = 0
+    game.context.set_money(77_000 + 50_000)
+    game.context.set_loyalty(4.52)
+    game.context.customers = 48.08
+    game.context.is_new_game = False
+    game.userstories.disable_restrictions()
+    game.office.toggle_purchases(True)
+    game.buy_robot(0)
+    return game
+
+def get_buggy_game_3():
+    game = ProductOwnerGame()
+    game.context.current_sprint = 35
+    game.context.credit = 0
+    game.context.set_money(161_000)
+    game.context.set_loyalty(4.42)
+    game.context.customers = 46.54
+    game.context.is_new_game = False
+    game.userstories.disable_restrictions()
+    game.office.toggle_purchases(True)
+    return game
+
+def get_game_on_sprint_26():
+    game = ProductOwnerGame()
+    game.context.is_new_game = False
+    game.userstories.disable_restrictions()
+    game.office.toggle_purchases(True)
+    game.buy_robot(0)
+    game.context.current_sprint = 26
+    game.context.credit = 75_000
+    game.context.set_money(34_000)
+    game.context.set_loyalty(4.27)
+    game.context.customers = 37.03
+    return game
+
+def get_game_on_sprint_21():
+    game = ProductOwnerGame()
+    game.context.is_new_game = False
+    game.userstories.disable_restrictions()
+    game.office.toggle_purchases(True)
+    game.context.current_sprint = 21
+    game.context.credit = 120_000
+    game.context.set_money(75_000)
+    game.context.set_loyalty(4.21)
+    game.context.customers = 35.42
+    return game
+
 class ProductOwnerGame:
     def __init__(self):
         self.context = GlobalContext()
