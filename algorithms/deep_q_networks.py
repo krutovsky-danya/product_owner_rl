@@ -61,14 +61,22 @@ class DQN(nn.Module):
         return torch.max(self.q_function(next_states), dim=1).values
 
     def fit(self, state, action, reward, done, next_state):
-        self.memory.append([state, action, reward, int(done), next_state])
+        self.memory.append(
+            [
+                torch.tensor(state),
+                torch.tensor(action),
+                torch.tensor(reward),
+                torch.tensor(int(done)),
+                torch.tensor(next_state),
+            ]
+        )
 
         if len(self.memory) < self.batch_size:
             return
 
         batch = random.sample(self.memory, self.batch_size)
         states, actions, rewards, dones, next_states = map(
-            torch.tensor, list(zip(*batch))
+            torch.stack, list(zip(*batch))
         )
 
         max_q_values = self.get_max_q_values(next_states)
@@ -83,6 +91,8 @@ class DQN(nn.Module):
         self.epsilon -= self.epsilon_decrease
         self.epsilon = max(self.epsilon_min, self.epsilon)
 
+        return loss.detach().numpy()
+
 
 class TargetDQN(DQN):
     def __init__(
@@ -94,10 +104,10 @@ class TargetDQN(DQN):
         batch_size=64,
         target_update=10,
         epsilon_decrease=0.01,
-        epilon_min=0.01,
+        epsilon_min=0.01,
     ):
         super().__init__(
-            state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epilon_min
+            state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epsilon_min
         )
         self.target_q_function = QFunction(state_dim, action_dim)
 
@@ -109,7 +119,7 @@ class TargetDQN(DQN):
 
         self.target_update = target_update
         self.fit_calls = 0
-    
+
     def update_target(self):
         pass
 
@@ -118,12 +128,14 @@ class TargetDQN(DQN):
         return torch.max(self.target_q_function(next_states), dim=1).values
 
     def fit(self, state, action, reward, done, next_state):
-        super().fit(state, action, reward, done, next_state)
+        loss = super().fit(state, action, reward, done, next_state)
 
         self.fit_calls += 1
         if self.fit_calls >= self.target_update:
             self.update_target()
             self.fit_calls = 0
+
+        return loss
 
 
 class HardTargetDQN(TargetDQN):
@@ -160,7 +172,9 @@ class SoftTargetDQN(TargetDQN):
         # theta' = tau * theta + (1 - tau) * theta'
         target_dict = self.target_q_function.state_dict()
         for name, param in self.q_function.named_parameters():
-            target_dict[name] = self.tau * param.data + (1 - self.tau) * target_dict[name]
+            target_dict[name] = (
+                self.tau * param.data + (1 - self.tau) * target_dict[name]
+            )
         self.target_q_function.load_state_dict(target_dict)
 
 

@@ -12,6 +12,9 @@ class BaseStudyDQN:
         self.env = env
         self.agent: DQN = agent
         self.trajectory_max_len = trajecory_max_len
+    
+    def fit_agent(self, state, action, reward, done, next_state):
+        return self.agent.fit(state, action, reward, done, next_state)
 
     def play_trajectory(self, init_state):
         total_reward = 0
@@ -20,7 +23,7 @@ class BaseStudyDQN:
             action = self.agent.get_action(state)
             next_state, reward, done, _ = self.env.step(action)
 
-            self.agent.fit(state, action, reward, done, next_state)
+            self.fit_agent(state, action, reward, done, next_state)
 
             state = next_state
             total_reward += reward
@@ -42,8 +45,14 @@ class LoggingStudy(BaseStudyDQN):
         self.rewards_log: List[int] = []
         self.q_value_log: List[int] = []
         self.sprints_log: List[int] = []
+        self.loss_log: List[float] = []
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
+    
+    def fit_agent(self, state, action, reward, done, next_state):
+        loss = super().fit_agent(state, action, reward, done, next_state)
+        self.loss_log.append(loss)
+        return loss
     
     def play_trajectory(self, init_state):
         with torch.no_grad():
@@ -57,7 +66,21 @@ class LoggingStudy(BaseStudyDQN):
         self.rewards_log.append(reward)
         self.sprints_log.append(sprint_n)
 
-        print(f"episode: {self.episode}, total_reward: {reward:.2f}, sprint_n: {sprint_n}")
+        credit_paid = self.env.game.context.credit <= 0
+        credit_sign = 'p' if credit_paid else ' '
+
+        victory_sign = ' '
+        if self.env.game.context.is_victory:
+            victory_sign = 'v'
+        if self.env.game.context.is_loss:
+            victory_sign = 'l'
+
+        message = f"episode: {self.episode:03d}\t" + \
+            f'total_reward: {reward:.2f}\t' + \
+            f'sprint_n: {sprint_n:02d}\t' + \
+            f'{credit_sign} {victory_sign}\t'
+
+        print(message)
         self.episode += 1
     
     def study_agent(self, episode_n):

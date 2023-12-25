@@ -1,5 +1,5 @@
 from environment.backlog_env import BacklogEnv, split_cards_in_types, sample_n_or_less
-from game.game import ProductOwnerGame
+from game.game import ProductOwnerGame, get_buggy_game
 from game.game_constants import UserCardType
 import torch
 import numpy as np
@@ -179,9 +179,8 @@ class ProductOwnerEnv:
         credit_before = self.game.context.credit
         reward_bit = self._perform_action(action)
         credit_after = self.game.context.credit
-        if credit_before > 0 >= credit_after:
-            print('Credit paid')
-            reward += 100
+        if credit_before > 0 and credit_after <= 0:
+            reward += 10
         reward += self._get_reward()
         reward += reward_bit
         self.current_state = self._get_state()
@@ -367,8 +366,47 @@ class ProductOwnerEnv:
                 return i
         return -1
 
+class CreditPayerEnv(ProductOwnerEnv):
+    def __init__(self, common_userstories_count=4, backlog_env=None):
+        if backlog_env is None:
+            backlog_env = BacklogEnv(4, 0, 0, 4, 0, 0)
+        super().__init__(common_userstories_count, 0, 0, backlog_env)
+    
+    def step(self, action: int):
+        new_state, reward, done, info = super().step(action)
+        if self.game.context.current_sprint == 35:
+            done = True
+            reward += self.game.context.get_money() / 1e5
+        return new_state, reward, done, info
+
 class LoggingEnv(ProductOwnerEnv):
     def step(self, action: int):
         new_state, reward, done, info = super().step(action)
         print(action, reward)
         return new_state, reward, done, info
+
+class BuggyProductOwnerEnv(ProductOwnerEnv):
+    def __init__(self, common_userstories_count=4, bug_userstories_count=2, td_userstories_count=1, backlog_env=None):
+        super().__init__(common_userstories_count, bug_userstories_count, td_userstories_count, backlog_env)
+        self.game = get_buggy_game()
+        self.current_state = self._get_state()
+    
+    def reset(self):
+        self.game = get_buggy_game()
+        self.current_state = self._get_state()
+        return self.current_state
+
+class StochasticGameStartEnv(ProductOwnerEnv):
+    def __init__(self, userstories_common_count=4, userstories_bug_count=2, userstories_td_count=1, backlog_env=None):
+        super().__init__(userstories_common_count, userstories_bug_count, userstories_td_count, backlog_env)
+
+        self.is_buggy = True
+    
+    def reset(self):
+        self.is_buggy = not self.is_buggy
+        if self.is_buggy:
+            self.game = get_buggy_game()
+        else:
+            self.game = ProductOwnerGame()
+        self.current_state = self._get_state()
+        return self.current_state

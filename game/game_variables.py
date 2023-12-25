@@ -30,6 +30,8 @@ class GlobalContext:
         self.current_room_multiplier = 1
         self.current_rooms_counter = 1
         self.color_storage = ColorStorage()
+        self.is_victory = False
+        self.is_loss = False
 
     def get_money(self):
         return self._money
@@ -49,8 +51,10 @@ class GlobalContext:
         if is_win:
             print("win")
             save_to_leaderboard(self.current_sprint)
+            self.is_victory = True
         else:
-            print("lose")
+            # print("lose")
+            self.is_loss = True
 
     def get_loyalty(self):
         return self._loyalty
