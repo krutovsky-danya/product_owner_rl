@@ -1,10 +1,11 @@
 from environment.backlog_env import BacklogEnv, split_cards_in_types, sample_n_or_less
-from game.game import ProductOwnerGame, get_buggy_game
+from game.game import ProductOwnerGame
 from game.game_constants import UserCardType
 import torch
 import numpy as np
 import random
 from typing import List
+from game.game_generators import get_buggy_game_1
 
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
@@ -388,25 +389,10 @@ class LoggingEnv(ProductOwnerEnv):
 class BuggyProductOwnerEnv(ProductOwnerEnv):
     def __init__(self, common_userstories_count=4, bug_userstories_count=2, td_userstories_count=1, backlog_env=None):
         super().__init__(common_userstories_count, bug_userstories_count, td_userstories_count, backlog_env)
-        self.game = get_buggy_game()
+        self.game = get_buggy_game_1()
         self.current_state = self._get_state()
     
     def reset(self):
-        self.game = get_buggy_game()
-        self.current_state = self._get_state()
-        return self.current_state
-
-class StochasticGameStartEnv(ProductOwnerEnv):
-    def __init__(self, userstories_common_count=4, userstories_bug_count=2, userstories_td_count=1, backlog_env=None):
-        super().__init__(userstories_common_count, userstories_bug_count, userstories_td_count, backlog_env)
-
-        self.is_buggy = True
-    
-    def reset(self):
-        self.is_buggy = not self.is_buggy
-        if self.is_buggy:
-            self.game = get_buggy_game()
-        else:
-            self.game = ProductOwnerGame()
+        self.game = get_buggy_game_1()
         self.current_state = self._get_state()
         return self.current_state

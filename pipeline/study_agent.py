@@ -92,7 +92,10 @@ class LoggingStudy(BaseStudyDQN):
         for epoche in range(epoche_n):
             path = f'{agent_name}/model_{epoche}.pt'
             super().study_agent(self.save_rate)
+            memory = self.agent.memory
+            self.agent.memory = []
             save_dqn_agent(self.agent, path=path)
+            self.agent.memory = memory
             with open(f'{agent_name}/rewards_{epoche}.txt', mode='w') as f:
                 f.write(repr(self.rewards_log))
             with open(f'{agent_name}/estimates_{epoche}.txt', mode='w') as f:
