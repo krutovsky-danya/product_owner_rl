@@ -38,7 +38,8 @@ class DQN(nn.Module):
         super().__init__()
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.q_function = QFunction(self.state_dim, self.action_dim)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.q_function = QFunction(self.state_dim, self.action_dim).to(device=self.device)
         self.gamma = gamma
         self.batch_size = batch_size
         self.epsilon = 1
@@ -49,7 +50,8 @@ class DQN(nn.Module):
 
     @torch.no_grad()
     def get_action(self, state):
-        q_values = self.q_function(torch.FloatTensor(state))
+        state = torch.FloatTensor(state).to(self.device)
+        q_values = self.q_function(state)
         argmax_action = torch.argmax(q_values)
         probs = self.epsilon * np.ones(self.action_dim) / self.action_dim
         probs[argmax_action] += 1 - self.epsilon
@@ -78,6 +80,11 @@ class DQN(nn.Module):
         states, actions, rewards, dones, next_states = map(
             torch.stack, list(zip(*batch))
         )
+        states = states.to(self.device)
+        actions = actions.to(self.device)
+        rewards = rewards.to(self.device)
+        dones = dones.to(self.device)
+        next_states = next_states.to(self.device)
 
         max_q_values = self.get_max_q_values(next_states)
         targets = rewards + self.gamma * (1 - dones) * max_q_values
@@ -91,7 +98,7 @@ class DQN(nn.Module):
         self.epsilon -= self.epsilon_decrease
         self.epsilon = max(self.epsilon_min, self.epsilon)
 
-        return loss.detach().numpy()
+        return loss.cpu().detach().numpy()
 
 
 class TargetDQN(DQN):
@@ -109,7 +116,7 @@ class TargetDQN(DQN):
         super().__init__(
             state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epsilon_min
         )
-        self.target_q_function = QFunction(state_dim, action_dim)
+        self.target_q_function = QFunction(state_dim, action_dim).to(self.device)
 
         state_dict = self.q_function.network.state_dict()
         self.target_q_function.network.load_state_dict(state_dict)
