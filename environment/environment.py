@@ -1,4 +1,5 @@
-from environment.backlog_env import BacklogEnv, split_cards_in_types, sample_n_or_less
+from environment.backlog_env import BacklogEnv, split_cards_in_types, sample_n_or_zero
+from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import UserCardType
 import torch
@@ -19,7 +20,7 @@ USERSTORY_BUG_FEATURE_COUNT = 2
 USERSTORY_TECH_DEBT_FEATURE_COUNT = 1
 
 class ProductOwnerEnv:
-    def __init__(self, userstories_common_count=4, userstories_bug_count=2, userstories_td_count=1, backlog_env=None):
+    def __init__(self, userstories_common_count=4, userstories_bug_count=2, userstories_td_count=1, backlog_env: BacklogEnv = None):
         self.game = ProductOwnerGame()
         self.backlog_env = BacklogEnv() if backlog_env is None else backlog_env
 
@@ -115,9 +116,9 @@ class ProductOwnerEnv:
         cards = self.game.userstories.stories_list
         commons, bugs, tech_debts = split_cards_in_types(cards)
 
-        sampled_cards_common = sample_n_or_less(commons, count_common)
-        sampled_cards_bugs = sample_n_or_less(bugs, count_bug)
-        sampled_cards_td = sample_n_or_less(tech_debts, count_td)
+        sampled_cards_common = sample_n_or_zero(commons, count_common)
+        sampled_cards_bugs = sample_n_or_zero(bugs, count_bug)
+        sampled_cards_td = sample_n_or_zero(tech_debts, count_td)
 
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td)
@@ -293,7 +294,7 @@ class ProductOwnerEnv:
         return self._perfrom_remove_sprint_card(card_id)
 
     def _perform_action_backlog_card(self, action: int) -> int:
-        card = None
+        card: Card = None
         backlog_env = self.backlog_env
 
         if action < backlog_env.backlog_commons_count:
@@ -306,11 +307,16 @@ class ProductOwnerEnv:
         tech_debt_card_id = bug_card_id - backlog_env.backlog_bugs_count
         if card is None and tech_debt_card_id < backlog_env.backlog_tech_debt_count:    
             card = self._get_card(backlog_env.backlog_tech_debt, tech_debt_card_id)
+        
+        if card is None:
+            return -10
+        
+        hours_after_move = self.game.backlog.calculate_hours_sum() + card.info.hours
+        if hours_after_move > self.game.backlog.get_max_hours():
+            return -1
 
-        if card is not None:
-            self.game.move_backlog_card(card)
-            return 1
-        return -10
+        self.game.move_backlog_card(card)
+        return 1
 
     def _perform_action_userstory(self, action: int) -> int:
         if action < self.us_common_count:
@@ -370,7 +376,7 @@ class ProductOwnerEnv:
 class CreditPayerEnv(ProductOwnerEnv):
     def __init__(self, common_userstories_count=4, backlog_env=None):
         if backlog_env is None:
-            backlog_env = BacklogEnv(4, 0, 0, 4, 0, 0)
+            backlog_env = BacklogEnv(12, 0, 0, 12, 0, 0)
         super().__init__(common_userstories_count, 0, 0, backlog_env)
     
     def step(self, action: int):

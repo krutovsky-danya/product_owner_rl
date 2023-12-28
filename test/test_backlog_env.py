@@ -11,7 +11,8 @@ class TestBacklogEnv(unittest.TestCase):
     def setUp(self):
         self.context = GlobalContext()
         self.backlog = Backlog(self.context)
-        self.env = BacklogEnv(backlog_commons_count=1, backlog_bugs_count=1)
+        self.env = BacklogEnv(backlog_commons_count=1, backlog_bugs_count=1, backlog_tech_debt_count=1,
+                 sprint_commons_count=1, sprint_bugs_count=1, sprint_tech_debt_count=1)
         self.size = self.env.backlog_space_dim + self.env.sprint_space_dim
     
     def test_encode_empty_backlog(self):

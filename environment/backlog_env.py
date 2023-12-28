@@ -1,6 +1,6 @@
 from game.backlog.backlog import Backlog
 from game.backlog_card.backlog_card import Card
-from game.common_methods import sample_n_or_less
+from game.common_methods import sample_n_or_zero
 from game.game_constants import UserCardType
 
 
@@ -31,8 +31,8 @@ def split_cards_in_types(cards: List[Card]):
 
 
 class BacklogEnv:
-    def __init__(self, backlog_commons_count=4, backlog_bugs_count=2, backlog_tech_debt_count=1,
-                 sprint_commons_count=1, sprint_bugs_count=1, sprint_tech_debt_count=1) -> None:
+    def __init__(self, backlog_commons_count=12, backlog_bugs_count=2, backlog_tech_debt_count=2,
+                 sprint_commons_count=12, sprint_bugs_count=2, sprint_tech_debt_count=2) -> None:
         self.backlog_commons_count = backlog_commons_count
         self.backlog_bugs_count = backlog_bugs_count
         self.backlog_tech_debt_count = backlog_tech_debt_count
@@ -86,9 +86,9 @@ class BacklogEnv:
         commons, bugs, tech_debt = split_cards_in_types(cards)
         commons_count, bugs_count, tech_debt_count = counts
 
-        commons = sample_n_or_less(commons, commons_count)
-        bugs = sample_n_or_less(bugs, bugs_count)
-        tech_debt = sample_n_or_less(tech_debt, tech_debt_count)
+        commons = sample_n_or_zero(commons, commons_count)
+        bugs = sample_n_or_zero(bugs, bugs_count)
+        tech_debt = sample_n_or_zero(tech_debt, tech_debt_count)
         setter(commons, bugs, tech_debt)
 
         commons_len = BACKLOG_COMMON_FEATURE_COUNT * commons_count

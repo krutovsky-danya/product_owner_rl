@@ -7,7 +7,7 @@ from algorithms.deep_q_networks import DQN, DoubleDQN
 from environment.environment import ProductOwnerEnv, CreditPayerEnv
 
 if __name__ == "__main__":
-    env = StochasticGameStartEnv()
+    env = CreditPayerEnv()
     state_dim = env.state_dim
     action_n = env.action_n
 
@@ -30,10 +30,11 @@ if __name__ == "__main__":
 
     os.makedirs('figures', exist_ok=True)
 
-    plt.plot(rewards, '.')
-    plt.plot(estimates, '.')
+    plt.plot(rewards, '.', label='Rewards')
+    plt.plot(estimates, '.', label='Estimates')
     plt.xlabel("Trajectory")
     plt.ylabel('Reward')
+    plt.legend()
     plt.savefig('figures/rewards.png')
     plt.show()
 
