@@ -5,6 +5,7 @@ class Card:
     def __init__(self):
         self.info = None
         self.is_movable = True
+        self.is_in_sprint = False
 
     def add_data(self, card_info: CardInfo):
         self.info = card_info
