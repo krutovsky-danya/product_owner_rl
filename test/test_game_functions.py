@@ -141,9 +141,8 @@ class TestGameFunctions(unittest.TestCase):
 
     def test_cannot_move_one_card_to_sprint_twice(self):
         card = Card()
-        card2 = Card()
         self.game.backlog.backlog.append(card)
-        self.game.backlog.backlog.append(card2)
+        self.game.backlog.backlog.append(Card())
         len_backlog_before = len(self.game.backlog.backlog)
         len_sprint_before = len(self.game.backlog.sprint)
 
@@ -159,29 +158,28 @@ class TestGameFunctions(unittest.TestCase):
 
     def test_cannot_move_one_card_to_release_twice(self):
         self.game.context.is_new_game = False
-        card = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
+        card1 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
         card2 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
-        self.game.userstories.stories_list.append(card)
+        self.game.userstories.stories_list.append(card1)
         self.game.userstories.stories_list.append(card2)
 
         len_us_list_before = len(self.game.userstories.stories_list)
         len_release_before = len(self.game.userstories.release)
 
-        self.game.move_userstory_card(card)
+        self.game.move_userstory_card(card1)
 
         self.assertEqual(len_us_list_before - 1, len(self.game.userstories.stories_list))
         self.assertEqual(len_release_before + 1, len(self.game.userstories.release))
 
-        self.game.move_userstory_card(card)
+        self.game.move_userstory_card(card1)
 
         self.assertEqual(len_us_list_before - 1, len(self.game.userstories.stories_list))
         self.assertEqual(len_release_before + 1, len(self.game.userstories.release))
 
     def test_can_move_backlog_cards_between_backlog_and_sprint(self):
         card = Card()
-        card2 = Card()
         self.game.backlog.backlog.append(card)
-        self.game.backlog.backlog.append(card2)
+        self.game.backlog.backlog.append(Card())
 
         len_backlog_before = len(self.game.backlog.backlog)
         len_sprint_before = len(self.game.backlog.sprint)

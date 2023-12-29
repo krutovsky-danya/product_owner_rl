@@ -237,15 +237,12 @@ class ProductOwnerGame:
             self.context.buy_room()
 
     def _on_userstory_card_dropped(self, card: UserStoryCard, is_on_left: bool):
-        if is_on_left:
-            if not card.is_in_release:
-                return
+        if is_on_left and card.is_in_release:
             self.userstories.on_stories_card_dropped(card)
-        else:
-            if card.is_in_release:
-                return
+            card.is_in_release = False
+        elif not card.is_in_release:
             self.userstories.on_release_card_dropped(card)
-        card.is_in_release = not card.is_in_release
+            card.is_in_release = True
 
     def move_userstory_card(self, card):  # !
         if self.userstories.available:
