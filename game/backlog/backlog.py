@@ -18,7 +18,7 @@ class Backlog:
         hours_to_sum = self.calculate_hours_sum()
         if hours_to_sum > self.get_max_hours():
             return False
-        return hours_to_sum != 0 or self.context.customers > 0 or self.context.customers < 0
+        return hours_to_sum != 0 or abs(self.context.customers) > 0
 
     def generate_cards(self):
         self.backlog.clear()
