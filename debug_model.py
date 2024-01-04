@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+from pipeline import LoggingStudy
 
-from pipeline.study_agent import LoggingStudy, load_dqn_agent
+from pipeline.study_agent import load_dqn_agent
 from algorithms.deep_q_networks import DoubleDQN
 from environment.environment import LoggingEnv
 
