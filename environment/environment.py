@@ -77,7 +77,7 @@ class ProductOwnerEnv:
             context.credit / 10 ** 5,
             context.available_developers_count,
             context.current_rooms_counter,
-            context.current_sprint_hours,
+            self.game.backlog.calculate_hours_sum(),
             context.blank_sprint_counter,
             self.game.backlog.can_start_sprint(),
             self.game.hud.release_available,
