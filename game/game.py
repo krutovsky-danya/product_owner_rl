@@ -240,7 +240,7 @@ class ProductOwnerGame:
         if is_on_left and card.is_in_release:
             self.userstories.on_stories_card_dropped(card)
             card.is_in_release = False
-        elif not card.is_in_release:
+        elif not is_on_left and not card.is_in_release:
             self.userstories.on_release_card_dropped(card)
             card.is_in_release = True
 
