@@ -30,7 +30,7 @@ class ProductOwnerEnv:
         self.userstories_bugs = []
         self.userstories_td = []
 
-        self.meta_space_dim = 17
+        self.meta_space_dim = 18
         
         self.userstory_space_dim = + \
             self.us_common_count * USERSTORY_COMMON_FEATURE_COUNT + \
@@ -77,6 +77,7 @@ class ProductOwnerEnv:
             context.credit / 10 ** 5,
             context.available_developers_count,
             context.current_rooms_counter,
+            context.current_sprint_hours,
             self.game.backlog.calculate_hours_sum(),
             context.blank_sprint_counter,
             self.game.backlog.can_start_sprint(),
