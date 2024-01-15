@@ -10,6 +10,7 @@ from game.backlog_card.card_info import CardInfo
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from game.userstory_card.userstory_card import UserStoryCard
 from game.common_methods import interpolate, stepify, clamp
 import random
 from typing import List, Dict
@@ -211,8 +212,6 @@ class ProductOwnerGame:
         return has_color_for_td and paid_credit and chanced_td and self.force_td_spawn
 
     def buy_robot(self, room_num):  # !
-        # todo снять привязку к номерам комнат. Добавлять робота в комнату, где ещё есть место
-        # (в комнату с минимальным номером из тех, что удовлетворяют этому условию)
         room: OfficeRoom = self.office.offices[clamp(
             room_num, 0, len(self.office.offices) - 1)]
         has_bought = room.on_buy_robot_button_pressed()
@@ -220,23 +219,21 @@ class ProductOwnerGame:
             self.context.buy_robot()
 
     def buy_room(self, room_num):  # !
-        # todo снять привязку к номерам комнат. Добавлять комнату при покупке
         room = self.office.offices[clamp(
             room_num, 0, len(self.office.offices) - 1)]
         has_bought = room.on_buy_room_button_pressed()
         if has_bought:
             self.context.buy_room()
 
-    def _on_userstory_card_dropped(self, card, is_on_left: bool):
-        if is_on_left:
+    def _on_userstory_card_dropped(self, card: UserStoryCard, is_on_left: bool):
+        if is_on_left and card.is_in_release:
             self.userstories.on_stories_card_dropped(card)
-        else:
+            card.is_in_release = False
+        elif not is_on_left and not card.is_in_release:
             self.userstories.on_release_card_dropped(card)
+            card.is_in_release = True
 
     def move_userstory_card(self, card):  # !
-        # зависит от того, что мы будем с этим делать:
-        # предполагается ли, что модель может закинуть карточку в декомпозицию,
-        # а потом вытащить её от туда? то же самое с бэклогом
         if self.userstories.available:
             if isinstance(card, int):
                 stories = self.userstories.stories_list
@@ -253,21 +250,24 @@ class ProductOwnerGame:
         if len(cards) > 0:
             if isinstance(card, int):
                 card = cards[clamp(card, 0, len(cards) - 1)]
-                if card.is_movable:
+                if card.is_movable and not card.is_in_sprint:
                     self.backlog.backlog.remove(card)
                     self.backlog.sprint.append(card)
+                    card.is_in_sprint = True
             elif card is not None:
-                if card.is_movable:
+                if card.is_movable and not card.is_in_sprint:
                     self.backlog.backlog.remove(card)
                     self.backlog.sprint.append(card)
+                    card.is_in_sprint = True
 
     def move_sprint_card(self, card: Card):
         cards = self.backlog.sprint
         if len(cards) == 0:
             return
-        if card.is_movable:
+        if card.is_movable and card.is_in_sprint:
             self.backlog.sprint.remove(card)
             self.backlog.backlog.append(card)
+            card.is_in_sprint = False
 
     def press_statistical_research(self):  # !
         if self.userstories.statistical_research_available:

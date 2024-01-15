@@ -3,6 +3,7 @@ from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import GlobalConstants
 from game.rooms.devroom.room import OfficeRoom
+from game.userstory_card.userstory_card import UserStoryCard, UserStoryCardInfo
 
 
 class TestGameFunctions(unittest.TestCase):
@@ -106,7 +107,8 @@ class TestGameFunctions(unittest.TestCase):
     
     def test_move_sprint_card_should_move_card_to_backlog(self):
         card = Card()
-        self.game.backlog.sprint.append(card)
+        self.game.backlog.backlog.append(card)
+        self.game.move_backlog_card(card)
 
         self.game.move_sprint_card(card)
 
@@ -124,6 +126,73 @@ class TestGameFunctions(unittest.TestCase):
         new_current_sprint = self.game.context.current_sprint
 
         self.assertGreater(new_current_sprint, old_current_sprint)
+
+    def test_cannot_add_two_userstory_cards_in_release_in_beginning(self):
+        self.buy_statistical_research(self.game.context.get_money(),
+                                      len(self.game.userstories.stories_list))
+
+        self.move_userstory_card(len(self.game.userstories.stories_list),
+                                 len(self.game.userstories.release))
+        len_us_story_before = len(self.game.userstories.stories_list)
+        len_us_release_before = len(self.game.userstories.release)
+        self.game.move_userstory_card(0)
+        self.assertEqual(len_us_story_before, len(self.game.userstories.stories_list))
+        self.assertEqual(len_us_release_before, len(self.game.userstories.release))
+
+    def test_cannot_move_one_card_to_sprint_twice(self):
+        card = Card()
+        self.game.backlog.backlog.append(card)
+        self.game.backlog.backlog.append(Card())
+        len_backlog_before = len(self.game.backlog.backlog)
+        len_sprint_before = len(self.game.backlog.sprint)
+
+        self.game.move_backlog_card(card)
+
+        self.assertEqual(len_backlog_before - 1, len(self.game.backlog.backlog))
+        self.assertEqual(len_sprint_before + 1, len(self.game.backlog.sprint))
+
+        self.game.move_backlog_card(card)
+
+        self.assertEqual(len_backlog_before - 1, len(self.game.backlog.backlog))
+        self.assertEqual(len_sprint_before + 1, len(self.game.backlog.sprint))
+
+    def test_cannot_move_one_card_to_release_twice(self):
+        self.game.context.is_new_game = False
+        card1 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
+        card2 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
+        self.game.userstories.stories_list.append(card1)
+        self.game.userstories.stories_list.append(card2)
+
+        len_us_list_before = len(self.game.userstories.stories_list)
+        len_release_before = len(self.game.userstories.release)
+
+        self.game.move_userstory_card(card1)
+
+        self.assertEqual(len_us_list_before - 1, len(self.game.userstories.stories_list))
+        self.assertEqual(len_release_before + 1, len(self.game.userstories.release))
+
+        self.game.move_userstory_card(card1)
+
+        self.assertEqual(len_us_list_before - 1, len(self.game.userstories.stories_list))
+        self.assertEqual(len_release_before + 1, len(self.game.userstories.release))
+
+    def test_can_move_backlog_cards_between_backlog_and_sprint(self):
+        card = Card()
+        self.game.backlog.backlog.append(card)
+        self.game.backlog.backlog.append(Card())
+
+        len_backlog_before = len(self.game.backlog.backlog)
+        len_sprint_before = len(self.game.backlog.sprint)
+
+        self.game.move_backlog_card(card)
+
+        self.assertEqual(len_backlog_before - 1, len(self.game.backlog.backlog))
+        self.assertEqual(len_sprint_before + 1, len(self.game.backlog.sprint))
+
+        self.game.move_sprint_card(card)
+
+        self.assertEqual(len_backlog_before, len(self.game.backlog.backlog))
+        self.assertEqual(len_sprint_before, len(self.game.backlog.sprint))
 
     def buy_statistical_research(self, current_money, us_count):
         self.game.press_statistical_research()

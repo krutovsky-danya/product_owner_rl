@@ -105,9 +105,18 @@ class UserStories:
         self.context.available_stories.pop(id(us_info), None)
         self.stories_list.remove(card)
         self.release_available = not (len(self.release) == 0)
+        if self.context.is_new_game:
+            self.toggle_movement(False)
 
     def disable_restrictions(self):
         self.statistical_research_available = True
         self.available = True
         self.user_survey_available = True
         self.release_available = not (len(self.release) == 0)
+        self.toggle_movement(True)
+
+    def toggle_movement(self, is_enable: bool):
+        for card in self.stories_list:
+            card.is_movable = is_enable
+        for card in self.release:
+            card.is_movable = is_enable

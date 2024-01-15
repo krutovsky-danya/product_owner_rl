@@ -32,7 +32,7 @@ class ProductOwnerEnv:
         self.userstories_bugs = []
         self.userstories_td = []
 
-        self.meta_space_dim = 17
+        self.meta_space_dim = 18
         
         self.userstory_space_dim = + \
             self.us_common_count * USERSTORY_COMMON_FEATURE_COUNT + \
@@ -80,6 +80,7 @@ class ProductOwnerEnv:
             context.available_developers_count,
             context.current_rooms_counter,
             context.current_sprint_hours,
+            self.game.backlog.calculate_hours_sum(),
             context.blank_sprint_counter,
             self.game.backlog.can_start_sprint(),
             self.game.hud.release_available,
@@ -327,10 +328,15 @@ class ProductOwnerEnv:
         else:
             card = self._get_card(
                 self.userstories_td, action - self.us_common_count - self.us_bug_count)
-        if card is not None and self.game.userstories.available:
-            self.game.move_userstory_card(card)
-            return 1
-        return -10
+
+        if card is None or not self.game.userstories.available:
+            return -10
+
+        if not card.is_movable:
+            return -1
+
+        self.game.move_userstory_card(card)
+        return 1
 
     def _perfrom_remove_sprint_card(self, card_id: int) -> int:
         card = None
