@@ -27,20 +27,20 @@ class LoggingStudy(MetricsStudy):
 
         self.sprints_log.append(sprint_n)
 
-        credit_paid = self.env.game.context.credit <= 0
-        credit_sign = "p" if credit_paid else " "
+        credit = self.env.game.context.credit
 
-        victory_sign = " "
+        termination = "none"
         if self.env.game.context.is_victory:
-            victory_sign = "v"
+            termination = "victory"
         if self.env.game.context.is_loss:
-            victory_sign = "l"
+            termination = "lose"
 
         message = (
             f"episode: {self.episode:03d}\t"
             + f"total_reward: {reward:.2f}\t"
             + f"sprint_n: {sprint_n:02d}\t"
-            + f"{credit_sign} {victory_sign}\t"
+            + f"credit: {credit: 6d}\t"
+            + f"termination: {termination}\t"
         )
 
         print(message)
