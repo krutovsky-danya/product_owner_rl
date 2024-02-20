@@ -2,9 +2,10 @@ import unittest
 from environment.environment import ProductOwnerEnv
 from game.game_constants import GlobalConstants
 import numpy as np
+from environment.backlog_env import BACKLOG_COMMON_FEATURE_COUNT
 
 
-IS_SILENT = True
+IS_SILENT = False
 
 
 class TestEnvFunctions(unittest.TestCase):
@@ -96,10 +97,10 @@ class TestEnvFunctions(unittest.TestCase):
 
         current_hours = game_sim.backlog.calculate_hours_sum()
         hours_boundary = game_sim.context.available_developers_count * GlobalConstants.developer_hours
-        for i in range(0, len(state), 3):
+        for i in range(0, len(state), BACKLOG_COMMON_FEATURE_COUNT):
             card_hours = state[i]
             if card_hours + current_hours <= hours_boundary:
-                return int(i / 3) + self.env.meta_action_dim + self.env.userstory_max_action_num
+                return int(i / BACKLOG_COMMON_FEATURE_COUNT) + self.env.meta_action_dim + self.env.userstory_max_action_num
 
     def can_move_any_backlog_card(self):
         game_sim = self.env.game
