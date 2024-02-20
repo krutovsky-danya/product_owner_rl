@@ -157,7 +157,7 @@ class ProductOwnerEnv:
             return -10
         return 1
     
-    def _perform_get_statistical_research(self) -> int:
+    def _perform_statistical_research(self) -> int:
         if not self.game.userstories.statistical_research_available:
             return -10
         stories_before = len(self.game.userstories.stories_list)
@@ -190,7 +190,7 @@ class ProductOwnerEnv:
         if action == 4:
             return self._perform_buy_room()
         if action == 5:
-            return self._perform_get_statistical_research()
+            return self._perform_statistical_research()
         if action == 6:
             return self._perform_user_survey()
         
@@ -205,7 +205,7 @@ class ProductOwnerEnv:
             return self._perform_action_backlog_card(card_id)
         
         card_id = card_id - self.backlog_max_action_num
-        return self._perfrom_remove_sprint_card(card_id)
+        return self._perform_remove_sprint_card(card_id)
 
     def _perform_action_backlog_card(self, action: int) -> int:
         card: Card = None
@@ -252,7 +252,7 @@ class ProductOwnerEnv:
         self.game.move_userstory_card(card)
         return 1
 
-    def _perfrom_remove_sprint_card(self, card_id: int) -> int:
+    def _perform_remove_sprint_card(self, card_id: int) -> int:
         card = None
         backlog_env = self.backlog_env
 

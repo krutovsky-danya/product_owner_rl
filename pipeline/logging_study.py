@@ -48,20 +48,20 @@ class LoggingStudy(MetricsStudy):
 
     def study_agent(self, episode_n):
         agent_name = type(self.agent).__name__
-        epoche_n = (episode_n + self.save_rate - 1) // self.save_rate
+        epoch_n = (episode_n + self.save_rate - 1) // self.save_rate
 
         os.makedirs(agent_name, exist_ok=True)
 
-        for epoche in range(epoche_n):
-            path = f"{agent_name}/model_{epoche}.pt"
+        for epoch in range(epoch_n):
+            path = f"{agent_name}/model_{epoch}.pt"
             super().study_agent(self.save_rate)
             memory = self.agent.memory
             self.agent.memory = []
             save_dqn_agent(self.agent, path=path)
             self.agent.memory = memory
-            with open(f"{agent_name}/rewards_{epoche}.txt", mode="w") as f:
+            with open(f"{agent_name}/rewards_{epoch}.txt", mode="w") as f:
                 f.write(repr(self.rewards_log))
-            with open(f"{agent_name}/estimates_{epoche}.txt", mode="w") as f:
+            with open(f"{agent_name}/estimates_{epoch}.txt", mode="w") as f:
                 f.write(repr(self.q_value_log))
-            with open(f"{agent_name}/sprints_{epoche}.txt", mode="w") as f:
+            with open(f"{agent_name}/sprints_{epoch}.txt", mode="w") as f:
                 f.write(repr(self.sprints_log))
