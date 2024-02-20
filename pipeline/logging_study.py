@@ -8,6 +8,8 @@ from typing import List
 
 
 class LoggingStudy(MetricsStudy):
+    SAVE_MEMORY = True
+
     def __init__(self, env, agent, trajectory_max_len, save_rate=1000) -> None:
         super().__init__(env, agent, trajectory_max_len)
         self.episode = 0
@@ -36,7 +38,7 @@ class LoggingStudy(MetricsStudy):
             termination = "lose"
 
         message = (
-            f"episode: {self.episode:03d}\t"
+            f"\nepisode: {self.episode:03d}\t"
             + f"total_reward: {reward:.2f}\t"
             + f"sprint_n: {sprint_n:02d}\t"
             + f"credit: {credit: 6d}\t"
@@ -56,7 +58,8 @@ class LoggingStudy(MetricsStudy):
             path = f"{agent_name}/model_{epoch}.pt"
             super().study_agent(self.save_rate)
             memory = self.agent.memory
-            self.agent.memory = []
+            if not self.SAVE_MEMORY:
+                self.agent.memory = []
             save_dqn_agent(self.agent, path=path)
             self.agent.memory = memory
             with open(f"{agent_name}/rewards_{epoch}.txt", mode="w") as f:
