@@ -6,7 +6,7 @@ import unittest
 
 class TestPipeline(unittest.TestCase):
     def setUp(self):
-        self.env = ProductOwnerEnv()
+        self.env = ProductOwnerEnv(with_sprint=False)
 
         state_dim = self.env.state_dim
         action_n = self.env.action_n

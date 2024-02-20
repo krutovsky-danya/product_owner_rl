@@ -28,7 +28,7 @@ def get_agent_generator(env: ProductOwnerEnv, trajectory_max_len, episode_n):
 
 
 if __name__ == "__main__":
-    env = CreditPayerEnv()
+    env = CreditPayerEnv(with_sprint=False)
 
     episode_n = 500
     trajectory_max_len = 100

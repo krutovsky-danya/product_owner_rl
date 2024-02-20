@@ -57,6 +57,8 @@ class BacklogEnv:
         self.sprint_bugs = []
         self.sprint_tech_debt = []
 
+        self.with_sprint = True
+
     def _set_backlog_cards(self, commons, bugs, tech_debt):
         self.backlog_commons = commons
         self.backlog_bugs = bugs
@@ -74,11 +76,14 @@ class BacklogEnv:
             backlog.backlog, counts, self._set_backlog_cards)
         assert len(backlog_encoding) == self.backlog_space_dim
 
-        counts = (self.sprint_commons_count, self.sprint_bugs_count,
-                  self.sprint_tech_debt_count)
-        sprint_encoding = self._encode_queue(
-            backlog.sprint, counts, self._set_sprint_cards)
-        assert len(sprint_encoding) == self.sprint_space_dim
+        sprint_encoding = []
+
+        if self.with_sprint:
+            counts = (self.sprint_commons_count, self.sprint_bugs_count,
+                      self.sprint_tech_debt_count)
+            sprint_encoding = self._encode_queue(
+                backlog.sprint, counts, self._set_sprint_cards)
+            assert len(sprint_encoding) == self.sprint_space_dim
 
         return backlog_encoding + sprint_encoding
 
