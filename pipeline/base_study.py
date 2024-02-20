@@ -21,7 +21,7 @@ class BaseStudy:
         done = False
 
         while not done:
-            action, inner_sprint_action_count = self._choose_action(state,
+            action, inner_sprint_action_count = self._choose_action(self.agent, state,
                                                                     inner_sprint_action_count)
             next_state, reward, done, _ = self.env.step(action)
 
@@ -35,8 +35,8 @@ class BaseStudy:
 
         return total_reward
 
-    def _choose_action(self, state, inner_sprint_action_count):
-        chosen_action = self.agent.get_action(state)
+    def _choose_action(self, agent, state, inner_sprint_action_count):
+        chosen_action = agent.get_action(state)
         if chosen_action == 0:
             inner_sprint_action_count = 0
         else:
