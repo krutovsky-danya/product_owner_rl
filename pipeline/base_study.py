@@ -1,6 +1,8 @@
 from algorithms.deep_q_networks import DQN
 from environment.environment import ProductOwnerEnv
 
+MAX_INNER_SPRINT_ACTION_COUNT = 20
+
 
 class BaseStudy:
     def __init__(self, env: ProductOwnerEnv, agent, trajectory_max_len) -> None:
