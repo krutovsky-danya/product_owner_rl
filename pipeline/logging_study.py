@@ -8,8 +8,8 @@ from typing import List
 
 
 class LoggingStudy(MetricsStudy):
-    def __init__(self, env, agent, trajecory_max_len, save_rate=1000) -> None:
-        super().__init__(env, agent, trajecory_max_len)
+    def __init__(self, env, agent, trajectory_max_len, save_rate=1000) -> None:
+        super().__init__(env, agent, trajectory_max_len)
         self.episode = 0
         self.sprints_log: List[int] = []
         self.loss_log: List[float] = []

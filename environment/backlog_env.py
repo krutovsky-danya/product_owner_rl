@@ -57,10 +57,10 @@ class BacklogEnv:
         self.sprint_bugs = []
         self.sprint_tech_debt = []
 
-    def _set_backlog_cards(self, commons, bugs, texh_debt):
+    def _set_backlog_cards(self, commons, bugs, tech_debt):
         self.backlog_commons = commons
         self.backlog_bugs = bugs
-        self.backlog_tech_debt = texh_debt
+        self.backlog_tech_debt = tech_debt
 
     def _set_sprint_cards(self, commons, bugs, tech_debt):
         self.sprint_commons = commons

@@ -6,7 +6,7 @@ from pipeline import LoggingStudy, ConfidenceStudy
 
 from pipeline.study_agent import load_dqn_agent
 from algorithms.deep_q_networks import DQN, DoubleDQN
-from environment.environment import ProductOwnerEnv, CreditPayerEnv
+from environment.environment import ProductOwnerEnv
 import numpy as np
 
 
