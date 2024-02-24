@@ -16,43 +16,27 @@ class ProductOwnerEnv:
 
     def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_sprint=True):
         self.game = ProductOwnerGame()
-        self.backlog_env = BacklogEnv() if backlog_env is None else backlog_env
-        self.backlog_env.with_sprint = with_sprint
+        if backlog_env is None:
+            self.backlog_env = BacklogEnv(with_sprint=with_sprint)
+        else:
+            self.backlog_env = backlog_env
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env
 
         self.meta_space_dim = 18
 
         self.state_dim = self.meta_space_dim + \
             self.userstory_env.userstory_space_dim + \
-            self.backlog_env.backlog_space_dim
-
-        self.with_sprint = with_sprint
-
-        if self.with_sprint:
-            self.state_dim += self.backlog_env.sprint_space_dim
+            self.backlog_env.backlog_space_dim + \
+            self.backlog_env.sprint_space_dim
         
         self.current_state = self._get_state()
 
         self.meta_action_dim = 7
-        self.userstory_max_action_num = + \
-            self.userstory_env.us_common_count + \
-            self.userstory_env.us_bug_count + \
-            self.userstory_env.us_td_count
-        self.backlog_max_action_num = + \
-            self.backlog_env.backlog_commons_count + \
-            self.backlog_env.backlog_bugs_count + \
-            self.backlog_env.backlog_tech_debt_count
 
-        self.sprint_max_action_num = 0
-        if self.with_sprint:
-            self.sprint_max_action_num = + \
-                self.backlog_env.sprint_commons_count + \
-                self.backlog_env.sprint_bugs_count + \
-                self.backlog_env.sprint_tech_debt_count
         self.action_n = self.meta_action_dim + \
-            self.userstory_max_action_num + \
-            self.backlog_max_action_num + \
-            self.sprint_max_action_num
+            self.userstory_env.max_action_num + \
+            self.backlog_env.backlog_max_action_num + \
+            self.backlog_env.sprint_max_action_num
 
     def reset(self):
         self.game = ProductOwnerGame()
@@ -207,14 +191,14 @@ class ProductOwnerEnv:
         return self._perform_action_card(action - 7)
 
     def _perform_action_card(self, action: int) -> int:
-        if action < self.userstory_max_action_num:
+        if action < self.userstory_env.max_action_num:
             return self._perform_action_userstory(action)
         
-        card_id = action - self.userstory_max_action_num
-        if card_id < self.backlog_max_action_num:
+        card_id = action - self.userstory_env.max_action_num
+        if card_id < self.backlog_env.backlog_max_action_num:
             return self._perform_action_backlog_card(card_id)
         
-        card_id = card_id - self.backlog_max_action_num
+        card_id = card_id - self.backlog_env.backlog_max_action_num
         return self._perform_remove_sprint_card(card_id)
 
     def _perform_action_backlog_card(self, action: int) -> int:
@@ -273,9 +257,9 @@ class ProductOwnerEnv:
         if card is None and bug_card_id < backlog_env.sprint_bugs_count:
             card = self._get_card(backlog_env.sprint_bugs, bug_card_id)
 
-        texh_debt_card_id = bug_card_id - backlog_env.sprint_bugs_count
-        if card is None and texh_debt_card_id < backlog_env.sprint_tech_debt_count:
-            card = self._get_card(backlog_env.sprint_tech_debt, texh_debt_card_id)
+        tech_debt_card_id = bug_card_id - backlog_env.sprint_bugs_count
+        if card is None and tech_debt_card_id < backlog_env.sprint_tech_debt_count:
+            card = self._get_card(backlog_env.sprint_tech_debt, tech_debt_card_id)
 
         if card is None:
             return -10

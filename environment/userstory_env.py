@@ -1,33 +1,12 @@
-from typing import List
-from game.backlog_card.backlog_card import Card
 from game.common_methods import sample_n_or_zero
-from game.game_constants import UserCardType
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
-
-BUG = UserCardType.BUG
-TECH_DEBT = UserCardType.TECH_DEBT
+from environment.card_methods import split_cards_in_types
 
 USERSTORY_COMMON_FEATURE_COUNT = 4
 USERSTORY_BUG_FEATURE_COUNT = 2
 USERSTORY_TECH_DEBT_FEATURE_COUNT = 1
-
-
-def split_cards_in_types(cards: List[Card]):
-    commons = []
-    bugs = []
-    tech_debts = []
-    for card in cards:
-        card_info = card.info
-        if card_info.card_type == BUG:
-            bugs.append(card)
-        elif card_info.card_type == TECH_DEBT:
-            tech_debts.append(card)
-        else:
-            commons.append(card)
-
-    return commons, bugs, tech_debts
 
 
 class UserstoryEnv:
@@ -43,6 +22,11 @@ class UserstoryEnv:
             self.us_common_count * USERSTORY_COMMON_FEATURE_COUNT + \
             self.us_bug_count * USERSTORY_BUG_FEATURE_COUNT + \
             self.us_td_count * USERSTORY_TECH_DEBT_FEATURE_COUNT
+
+        self.max_action_num = + \
+            self.us_common_count + \
+            self.us_bug_count + \
+            self.us_td_count
 
         self.userstories_common = []
         self.userstories_bugs = []

@@ -102,7 +102,8 @@ class TestEnvFunctions(unittest.TestCase):
         for i in range(0, len(state), BACKLOG_COMMON_FEATURE_COUNT):
             card_hours = state[i]
             if card_hours + current_hours <= hours_boundary:
-                return int(i / BACKLOG_COMMON_FEATURE_COUNT) + self.env.meta_action_dim + self.env.userstory_max_action_num
+                action_num = self.env.meta_action_dim + self.env.userstory_env.max_action_num
+                return int(i / BACKLOG_COMMON_FEATURE_COUNT) + action_num
 
     def can_move_any_backlog_card(self):
         game_sim = self.env.game
