@@ -38,7 +38,7 @@ class LoggingStudy(MetricsStudy):
             termination = "lose"
 
         message = (
-            f"\nepisode: {self.episode:03d}\t"
+            f"episode: {self.episode:03d}\t"
             + f"total_reward: {reward:.2f}\t"
             + f"sprint_n: {sprint_n:02d}\t"
             + f"credit: {credit: 6d}\t"
