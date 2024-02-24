@@ -41,7 +41,7 @@ class BaseStudy:
             inner_sprint_action_count = 0
         else:
             inner_sprint_action_count += 1
-        if inner_sprint_action_count > MAX_INNER_SPRINT_ACTION_COUNT:
+        if inner_sprint_action_count == MAX_INNER_SPRINT_ACTION_COUNT:
             chosen_action = 0
             inner_sprint_action_count = 0
             if not self.env.IS_SILENT:
