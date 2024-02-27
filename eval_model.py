@@ -17,11 +17,11 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-def eval_some_model(env: ProductOwnerEnv, agents, repeat_count: int, is_silent: bool):
+def eval_some_model(env: ProductOwnerEnv, agents, backlog_envs, repeat_count: int, is_silent: bool):
     rewards, sprints, loyalties, customers, money, wins = [], [], [], [], [], []
 
     for _ in range(repeat_count):
-        reward = eval_agents_trajectory(env, agents, is_silent)
+        reward = eval_agents_trajectory(env, agents, backlog_envs, is_silent)
         rewards.append(reward)
         update_logs(env, sprints, loyalties, customers, money, wins)
 
@@ -37,19 +37,21 @@ def eval_some_model(env: ProductOwnerEnv, agents, repeat_count: int, is_silent: 
              "wins": wins})
 
 
-def eval_agents_trajectory(env: ProductOwnerEnv, agents, is_silent):
+def eval_agents_trajectory(env: ProductOwnerEnv, agents, backlog_envs, is_silent):
     stage = len(agents)
     if stage == 2:
         assert isinstance(env, CreditPayerEnv)
     full_reward = 0
 
     if stage > 0:
-        full_reward += play_tutorial(env, agents[0], is_silent)
+        full_reward += play_tutorial(env, agents[0], backlog_envs[0], is_silent)
     if stage > 1:
         with_end = False if stage > 2 else env.with_end
-        full_reward += play_credit_payment(env, agents[1], is_silent, with_end=with_end)
+        full_reward += play_credit_payment(env, agents[1], backlog_envs[1],
+                                           is_silent, with_end=with_end)
     if stage > 2:
-        full_reward += play_credit_payment(env, agents[2], is_silent, with_end=True)
+        full_reward += play_credit_payment(env, agents[2], backlog_envs[2],
+                                           is_silent, with_end=True)
     if stage > 3:
         full_reward += play_some_stage(env, env, agents[3], "end", is_silent)
     print(f"full reward: {full_reward},"
@@ -67,16 +69,16 @@ def update_logs(env, sprints, loyalties, customers, money, wins):
     money.append(context.get_money())
 
 
-def play_tutorial(main_env, tutorial_agent, is_silent=True):
+def play_tutorial(main_env, tutorial_agent, backlog_env, is_silent=True):
     main_env.reset()
-    env = TutorialSolverEnv(with_sprint=main_env.with_sprint)
+    env = TutorialSolverEnv(backlog_env=backlog_env)
     return play_some_stage(main_env, env, tutorial_agent, "tutorial reward", is_silent)
 
 
-def play_credit_payment(main_env, credit_agent, is_silent=True, with_end=False):
+def play_credit_payment(main_env, credit_agent, backlog_env, is_silent=True, with_end=False):
     current_sprint = main_env.game.context.current_sprint
     state_line = "credit reward" if current_sprint < 7 else "credit end reward"
-    env = CreditPayerEnv(with_sprint=main_env.with_sprint, with_end=with_end)
+    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end)
     return play_some_stage(main_env, env, credit_agent, state_line, is_silent)
 
 
@@ -129,11 +131,16 @@ def load_agents():
     return [agent_tutorial, agent_credit, agent_credit_end, agent_end]
 
 
+def define_backlog_environments():
+    return [None] * 4
+
+
 def eval_model():
-    env = ProductOwnerEnv(with_sprint=False)
+    backlog_environments = define_backlog_environments()
+    env = ProductOwnerEnv(backlog_env=backlog_environments[-1])
     env.IS_SILENT = True
 
-    results = eval_some_model(env, load_agents(), 10, is_silent=True)
+    results = eval_some_model(env, load_agents(), backlog_environments, 10, is_silent=True)
     print(results[0])
     results = results[1]
 

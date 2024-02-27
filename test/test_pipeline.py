@@ -1,3 +1,4 @@
+from environment.backlog_env import BacklogEnv
 from pipeline.base_study import BaseStudy
 from algorithms.deep_q_networks import DQN
 from environment.environment import ProductOwnerEnv
@@ -6,7 +7,8 @@ import unittest
 
 class TestPipeline(unittest.TestCase):
     def setUp(self):
-        self.env = ProductOwnerEnv(with_sprint=False)
+        backlog_env = BacklogEnv(sprint_tech_debt_count=0, sprint_commons_count=0, sprint_bugs_count=0)
+        self.env = ProductOwnerEnv(backlog_env=backlog_env)
 
         state_dim = self.env.state_dim
         action_n = self.env.action_n

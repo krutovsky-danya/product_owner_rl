@@ -14,10 +14,10 @@ TECH_DEBT = UserCardType.TECH_DEBT
 class ProductOwnerEnv:
     IS_SILENT = False
 
-    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_sprint=True):
+    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None):
         self.game = ProductOwnerGame()
         if backlog_env is None:
-            self.backlog_env = BacklogEnv(with_sprint=with_sprint)
+            self.backlog_env = BacklogEnv()
         else:
             self.backlog_env = backlog_env
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env

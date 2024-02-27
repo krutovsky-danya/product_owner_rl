@@ -10,13 +10,13 @@ PURCHASE_ACTIONS = {3, 4, 5, 6}
 
 
 class CreditPayerEnv(ProductOwnerEnv):
-    def __init__(self, userstory_env=None, backlog_env=None, with_sprint=True, with_end=False,
+    def __init__(self, userstory_env=None, backlog_env=None, with_end=False,
                  with_late_purchases_punishment=False):
         if userstory_env is None:
             userstory_env = UserstoryEnv(6, 0, 0)
         if backlog_env is None:
-            backlog_env = BacklogEnv(12, 0, 0, 12, 0, 0, with_sprint)
-        super().__init__(userstory_env, backlog_env, with_sprint)
+            backlog_env = BacklogEnv(12, 0, 0, 12, 0, 0)
+        super().__init__(userstory_env, backlog_env)
         self.with_end = with_end
         self.with_late_purchases_punishment = with_late_purchases_punishment
         if self.with_end:

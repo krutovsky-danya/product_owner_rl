@@ -13,19 +13,14 @@ BACKLOG_TECH_DEBT_FEATURE_COUNT = 2
 
 class BacklogEnv:
     def __init__(self, backlog_commons_count=12, backlog_bugs_count=2, backlog_tech_debt_count=2,
-                 sprint_commons_count=12, sprint_bugs_count=2, sprint_tech_debt_count=2,
-                 with_sprint=True) -> None:
+                 sprint_commons_count=12, sprint_bugs_count=2, sprint_tech_debt_count=2) -> None:
         self.backlog_commons_count = backlog_commons_count
         self.backlog_bugs_count = backlog_bugs_count
         self.backlog_tech_debt_count = backlog_tech_debt_count
 
-        self.sprint_commons_count = 0
-        self.sprint_bugs_count = 0
-        self.sprint_tech_debt_count = 0
-        if with_sprint:
-            self.sprint_commons_count = sprint_commons_count
-            self.sprint_bugs_count = sprint_bugs_count
-            self.sprint_tech_debt_count = sprint_tech_debt_count
+        self.sprint_commons_count = sprint_commons_count
+        self.sprint_bugs_count = sprint_bugs_count
+        self.sprint_tech_debt_count = sprint_tech_debt_count
 
         self.backlog_space_dim = self.backlog_commons_count * BACKLOG_COMMON_FEATURE_COUNT + \
             self.backlog_bugs_count * BACKLOG_BUG_FEATURE_COUNT + \
@@ -53,8 +48,6 @@ class BacklogEnv:
         self.sprint_bugs = []
         self.sprint_tech_debt = []
 
-        self.with_sprint = with_sprint
-
     def _set_backlog_cards(self, commons, bugs, tech_debt):
         self.backlog_commons = commons
         self.backlog_bugs = bugs
@@ -74,7 +67,7 @@ class BacklogEnv:
 
         sprint_encoding = []
 
-        if self.with_sprint:
+        if self.sprint_space_dim > 0:
             counts = (self.sprint_commons_count, self.sprint_bugs_count,
                       self.sprint_tech_debt_count)
             sprint_encoding = self._encode_queue(
