@@ -31,7 +31,7 @@ class BaseStudy:
             total_reward += reward
 
             t += 1
-            done = (t == self.trajectory_max_len)
+            done = done or (t == self.trajectory_max_len)
 
         return total_reward
 
