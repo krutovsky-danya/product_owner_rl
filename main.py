@@ -1,12 +1,11 @@
 import os
 import matplotlib.pyplot as plt
-from environment import StochasticGameStartEnv
-from environment import CreditPayerEnv
+from environment import CreditPayerEnv, ProductOwnerEnv
+from environment.backlog_env import BacklogEnv
 from pipeline import LoggingStudy, ConfidenceStudy
 
 from pipeline.study_agent import load_dqn_agent
 from algorithms.deep_q_networks import DQN, DoubleDQN
-from environment.environment import ProductOwnerEnv, CreditPayerEnv
 import numpy as np
 
 
@@ -28,7 +27,9 @@ def get_agent_generator(env: ProductOwnerEnv, trajectory_max_len, episode_n):
 
 
 if __name__ == "__main__":
-    env = CreditPayerEnv()
+    backlog_env = BacklogEnv(sprint_tech_debt_count=0, sprint_commons_count=0, sprint_bugs_count=0)
+    env = CreditPayerEnv(backlog_env=backlog_env,
+                         with_end=True, with_late_purchases_punishment=False)
 
     episode_n = 500
     trajectory_max_len = 100

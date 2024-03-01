@@ -1,17 +1,20 @@
 import unittest
 from environment.environment import ProductOwnerEnv
+from environment.userstory_env import UserstoryEnv
 from game.game_constants import GlobalConstants
 import numpy as np
+from environment.backlog_env import BACKLOG_COMMON_FEATURE_COUNT
 
 
-IS_SILENT = True
+IS_SILENT = False
 
 
 class TestEnvFunctions(unittest.TestCase):
     def setUp(self):
-        self.env = ProductOwnerEnv(
-            userstories_common_count=4, userstories_bug_count=2, userstories_td_count=1
-        )
+        userstory_env = UserstoryEnv(userstories_common_count=4,
+                                     userstories_bug_count=2,
+                                     userstories_td_count=1)
+        self.env = ProductOwnerEnv(userstory_env)
 
     def test_start_game(self):
         # тестируются действия, выполняемые с момента начала игры до первого релиза включительно
@@ -89,17 +92,18 @@ class TestEnvFunctions(unittest.TestCase):
     def find_available_to_move_backlog_card(self):
         state = self.env._get_state()
         backlog_begin = self.env.meta_space_dim + \
-            self.env.userstory_space_dim
+            self.env.userstory_env.userstory_space_dim
         backlog_end = backlog_begin + self.env.backlog_env.backlog_space_dim
         state = state[backlog_begin:backlog_end]
         game_sim = self.env.game
 
         current_hours = game_sim.backlog.calculate_hours_sum()
         hours_boundary = game_sim.context.available_developers_count * GlobalConstants.developer_hours
-        for i in range(0, len(state), 3):
+        for i in range(0, len(state), BACKLOG_COMMON_FEATURE_COUNT):
             card_hours = state[i]
             if card_hours + current_hours <= hours_boundary:
-                return int(i / 3) + self.env.meta_action_dim + self.env.userstory_max_action_num
+                action_num = self.env.meta_action_dim + self.env.userstory_env.max_action_num
+                return int(i / BACKLOG_COMMON_FEATURE_COUNT) + action_num
 
     def can_move_any_backlog_card(self):
         game_sim = self.env.game

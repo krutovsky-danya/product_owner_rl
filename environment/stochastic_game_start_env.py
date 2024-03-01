@@ -13,15 +13,11 @@ from game.game_generators import (
 class StochasticGameStartEnv(ProductOwnerEnv):
     def __init__(
         self,
-        userstories_common_count=4,
-        userstories_bug_count=2,
-        userstories_td_count=1,
+        userstories_env=None,
         backlog_env=None,
     ):
         super().__init__(
-            userstories_common_count,
-            userstories_bug_count,
-            userstories_td_count,
+            userstories_env,
             backlog_env,
         )
 

@@ -12,6 +12,6 @@ if __name__ == "__main__":
 
     agent = load_dqn_agent('DoubleDQN/model_1.pt')
 
-    study = LoggingStudy(env, agent, trajecory_max_len=1_000, save_rate=1)
+    study = LoggingStudy(env, agent, trajectory_max_len=1_000, save_rate=1)
 
     study.study_agent(1)

@@ -6,7 +6,7 @@ import random
 
 
 class QFunction(nn.Module):
-    def __init__(self, state_dim, action_n, inner_layer=128):
+    def __init__(self, state_dim, action_n, inner_layer=2048):
         super().__init__()
         self.state_dim = state_dim
         self.action_n = action_n
@@ -14,6 +14,8 @@ class QFunction(nn.Module):
 
         self.network = nn.Sequential(
             nn.Linear(state_dim, self.inner_layer),
+            nn.ReLU(),
+            nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
             nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
@@ -46,7 +48,7 @@ class DQN(nn.Module):
         self.epsilon_decrease = epsilon_decrease
         self.epsilon_min = epsilon_min
         self.memory = []
-        self.optimzaer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
+        self.optimizer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
 
     @torch.no_grad()
     def get_action(self, state):
@@ -66,7 +68,7 @@ class DQN(nn.Module):
         self.memory.append(
             [
                 torch.tensor(state),
-                torch.tensor(action),
+                torch.tensor(action, dtype=torch.long),
                 torch.tensor(reward),
                 torch.tensor(int(done)),
                 torch.tensor(next_state),
@@ -92,8 +94,8 @@ class DQN(nn.Module):
 
         loss = torch.mean((q_values - targets.detach()) ** 2)
         loss.backward()
-        self.optimzaer.step()
-        self.optimzaer.zero_grad()
+        self.optimizer.step()
+        self.optimizer.zero_grad()
 
         self.epsilon -= self.epsilon_decrease
         self.epsilon = max(self.epsilon_min, self.epsilon)
