@@ -4,11 +4,15 @@ from game.common_methods import sample_n_or_zero
 from environment.card_methods import split_cards_in_types
 
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
-BACKLOG_COMMON_FEATURE_COUNT = 3
-BACKLOG_BUG_FEATURE_COUNT = 2
-BACKLOG_TECH_DEBT_FEATURE_COUNT = 2
+from game.game_variables import GlobalContext
+from game.userstory_card.bug_user_story_info import BugUserStoryInfo
+from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
+
+BACKLOG_COMMON_FEATURE_COUNT = 7
+BACKLOG_BUG_FEATURE_COUNT = 5
+BACKLOG_TECH_DEBT_FEATURE_COUNT = 4
 
 
 class BacklogEnv:
@@ -40,6 +44,9 @@ class BacklogEnv:
             self.sprint_bugs_count + \
             self.sprint_tech_debt_count
 
+        self.backlog: Optional[Backlog] = None
+        self.context: Optional[GlobalContext] = None
+
         self.backlog_commons = []
         self.backlog_bugs = []
         self.backlog_tech_debt = []
@@ -58,7 +65,9 @@ class BacklogEnv:
         self.sprint_bugs = bugs
         self.sprint_tech_debt = tech_debt
 
-    def encode(self, backlog: Backlog) -> List[int]:
+    def encode(self, backlog: Backlog) -> List[float]:
+        self.backlog = backlog
+        self.context = backlog.context
         counts = (self.backlog_commons_count,
                   self.backlog_bugs_count, self.backlog_tech_debt_count)
         backlog_encoding = self._encode_queue(
@@ -76,7 +85,7 @@ class BacklogEnv:
 
         return backlog_encoding + sprint_encoding
 
-    def _encode_queue(self, cards: List[Card], counts: Tuple[int, int, int], setter):
+    def _encode_queue(self, cards: List[Card], counts: Tuple[int, int, int], setter) -> List[float]:
         commons, bugs, tech_debt = split_cards_in_types(cards)
         commons_count, bugs_count, tech_debt_count = counts
 
@@ -100,7 +109,7 @@ class BacklogEnv:
 
         return encoding
 
-    def _encode_cards(self, cards, encoder, result_len) -> List[int]:
+    def _encode_cards(self, cards, encoder, result_len) -> List[float]:
         result = []
         for card in cards:
             result.extend(encoder(card))
@@ -108,21 +117,43 @@ class BacklogEnv:
         result.extend([0] * padding)
         return result
 
-    def _encode_common_card(self, card: Card) -> List[int]:
+    def _encode_common_card(self, card: Card) -> List[float]:
         card_info = card.info
-        encoded = [card_info.base_hours,
-                   card_info.hours, card_info.card_type.value]
+        us_card_info = self.context.current_stories[card_info.us_id]
+        life_time = self.context.current_sprint - us_card_info.spawn_sprint
+        encoded = [
+            card_info.base_hours,
+            card_info.hours,
+            card_info.card_type.value,
+            us_card_info.completed_part,
+            us_card_info.loyalty,
+            us_card_info.customers_to_bring,
+            life_time,
+        ]
         assert len(encoded) == BACKLOG_COMMON_FEATURE_COUNT
         return encoded
 
-    def _encode_bug(self, card: Card) -> List[int]:
+    def _encode_bug(self, card: Card) -> List[float]:
         card_info = card.info
-        encoded = [card_info.base_hours, card_info.hours]
+        us_card_info: BugUserStoryInfo = self.context.current_stories[card_info.us_id]
+        encoded = [
+            card_info.base_hours,
+            card_info.hours,
+            us_card_info.completed_part,
+            us_card_info.loyalty_debuff,
+            us_card_info.customers_debuff,
+        ]
         assert len(encoded) == BACKLOG_BUG_FEATURE_COUNT
         return encoded
 
-    def _encode_tech_debt(self, card: Card) -> List[int]:
+    def _encode_tech_debt(self, card: Card) -> List[float]:
         card_info = card.info
-        encoded = [card_info.base_hours, card_info.hours]
+        us_card_info: TechDebtInfo = self.context.current_stories[card_info.us_id]
+        encoded = [
+            card_info.base_hours,
+            card_info.hours,
+            us_card_info.completed_part,
+            us_card_info.full_hours_debuff,
+        ]
         assert len(encoded) == BACKLOG_TECH_DEBT_FEATURE_COUNT
         return encoded

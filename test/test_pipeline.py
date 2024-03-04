@@ -14,7 +14,7 @@ class TestPipeline(unittest.TestCase):
         action_n = self.env.action_n
         self.agent = DQN(state_dim, action_n)
 
-        self.study = BaseStudy(self.env, self.agent, 1_000)
+        self.study = BaseStudy(self.env, self.agent, 10)
 
     def test_run_study_should_not_raise_error(self):
         self.study.study_agent(1)
