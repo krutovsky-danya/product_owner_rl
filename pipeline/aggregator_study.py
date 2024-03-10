@@ -70,7 +70,8 @@ class AggregatorStudy(LoggingStudy):
         total_reward = 0
 
         while not done:
-            action, inner_sprint_action_count = self._choose_action(agent, state,
+            action = agent.get_action(state)
+            action, inner_sprint_action_count = self._choose_action(action,
                                                                     inner_sprint_action_count)
             state, reward, done, _ = translator_env.step(action)
 
