@@ -14,7 +14,12 @@ class LoggingStudy(MetricsStudy):
     SAVE_MEMORY = True
 
     def __init__(
-        self, env, agent, trajectory_max_len, save_rate: Optional[int] = None
+        self,
+        env,
+        agent,
+        trajectory_max_len,
+        save_rate: Optional[int] = None,
+        log_level=logging.DEBUG,
     ) -> None:
         super().__init__(env, agent, trajectory_max_len)
         self.episode = 0
@@ -22,16 +27,38 @@ class LoggingStudy(MetricsStudy):
         self.loss_log: List[float] = []
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
-        self.logger = self._get_logger()
-    
-    def _get_logger(self):
+        self.logger = self._get_logger(log_level)
+
+    def _get_logger(self, log_level):
         logger = logging.getLogger()
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
         logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(log_level)
 
         return logger
+
+    def _log_action(self, action):
+        if action == 0:
+            message = 'start sprint'
+        if action == 1:
+            cards_count = len(self.env.game.userstories.release)
+            message = f'decompose {cards_count} cards'
+        if action == 2:
+            released_count = len(self.env.game.completed_us)
+            message = f'release {released_count} user stories'
+        if action == 3:
+            message = 'buy robot'
+        if action == 4:
+            message = 'buy room'
+        if action == 5:
+            message = 'buy statistical research'
+        if action == 6:
+            message = 'buy user survey'
+        if action >= 7:
+            message = 'move card'
+
+        self.logger.debug(message)
 
     def fit_agent(self, state, action, reward, done, next_state):
         loss = super().fit_agent(state, action, reward, done, next_state)
@@ -71,6 +98,7 @@ class LoggingStudy(MetricsStudy):
         chosen_action, _ = result
         if action != chosen_action and chosen_action == 0:
             self.logger.debug('enforced next sprint')
+        self._log_action(action)
         return result
 
     def study_agent(self, episode_n):
