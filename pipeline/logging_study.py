@@ -65,7 +65,7 @@ class LoggingStudy(MetricsStudy):
         self.loss_log.append(loss)
         return loss
 
-    def play_trajectory(self, init_state):
+    def play_trajectory(self, init_state) -> float:
         reward = super().play_trajectory(init_state)
         sprint_n = self.env.game.context.current_sprint
 
@@ -92,6 +92,8 @@ class LoggingStudy(MetricsStudy):
         )
         self.logger.info(message)
         self.episode += 1
+
+        return reward
 
     def _choose_action(self, action, inner_sprint_action_count) -> Tuple[int, int]:
         result = super()._choose_action(action, inner_sprint_action_count)

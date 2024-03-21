@@ -45,7 +45,7 @@ class AggregatorStudy(LoggingStudy):
             if failed:
                 return full_reward
         full_reward += super().play_trajectory(state)
-        print(f"full total_reward: {full_reward}")
+        self.logger.info(f"full total_reward: {full_reward}")
         return full_reward
 
     def play_tutorial(self, tutorial_agent, tutorial_backlog_env):
@@ -77,8 +77,8 @@ class AggregatorStudy(LoggingStudy):
 
             total_reward += reward
 
-        print(f"{name} end")
+        self.logger.debug(f"{name} end")
         if translator_env.game.context.get_money() < 0:
-            print(f"{name} failed")
+            self.logger.debug(f"{name} failed")
 
         return self.env._get_state(), total_reward, translator_env.game.context.get_money() < 0
