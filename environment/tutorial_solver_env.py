@@ -8,7 +8,7 @@ class TutorialSolverEnv(ProductOwnerEnv):
         if userstory_env is None:
             userstory_env = UserstoryEnv(2, 0, 0)
         if backlog_env is None:
-            backlog_env = BacklogEnv(4, 0, 0, 4, 0, 0)
+            backlog_env = BacklogEnv(4, 0, 0, 0, 0, 0)
         super().__init__(userstory_env, backlog_env)
 
     def step(self, action: int):

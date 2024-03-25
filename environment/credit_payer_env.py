@@ -15,7 +15,7 @@ class CreditPayerEnv(ProductOwnerEnv):
         if userstory_env is None:
             userstory_env = UserstoryEnv(6, 0, 0)
         if backlog_env is None:
-            backlog_env = BacklogEnv(12, 0, 0, 12, 0, 0)
+            backlog_env = BacklogEnv(12, 0, 0, 0, 0, 0)
         super().__init__(userstory_env, backlog_env)
         self.with_end = with_end
         self.with_late_purchases_punishment = with_late_purchases_punishment
