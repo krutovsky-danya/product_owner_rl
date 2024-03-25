@@ -92,12 +92,14 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
     translator_env.game = main_env.game
     done = main_env.game.context.get_money() < 0
     state = translator_env._get_state()
+    info = translator_env.get_info()
     inner_sprint_action_count = 0
     total_reward = 0
 
     while not done:
-        action, inner_sprint_action_count = choose_action(agent, state, inner_sprint_action_count)
-        state, reward, done, _ = translator_env.step(action)
+        action, inner_sprint_action_count = choose_action(agent, state, info,
+                                                          inner_sprint_action_count)
+        state, reward, done, info = translator_env.step(action)
 
         total_reward += reward
 
@@ -106,8 +108,8 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
     return total_reward
 
 
-def choose_action(agent, state, inner_sprint_action_count, is_silent=True):
-    action = agent.get_action(state)
+def choose_action(agent, state, info, inner_sprint_action_count, is_silent=True):
+    action = agent.get_action(state, info)
     if action == 0:
         inner_sprint_action_count = 0
     else:
