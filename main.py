@@ -19,6 +19,7 @@ def create_usual_agent(env: ProductOwnerEnv, trajectory_max_len: int, episode_n:
         )
     return agent
 
+
 def get_agent_generator(env: ProductOwnerEnv, trajectory_max_len, episode_n):
     state_dim = env.state_dim
     action_n = env.action_n
@@ -39,7 +40,7 @@ def get_agent_generator(env: ProductOwnerEnv, trajectory_max_len, episode_n):
 if __name__ == "__main__":
     backlog_env = BacklogEnv(sprint_tech_debt_count=0, sprint_commons_count=0, sprint_bugs_count=0)
     env = CreditPayerEnv(backlog_env=backlog_env,
-                         with_end=True, with_late_purchases_punishment=False)
+                         with_end=True, with_late_purchases_punishment=False, with_info=True)
 
     episode_n = 500
     trajectory_max_len = 100

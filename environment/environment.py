@@ -22,7 +22,7 @@ USER_SURVEY = 6
 class ProductOwnerEnv:
     IS_SILENT = False
 
-    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None):
+    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True):
         self.game = ProductOwnerGame()
         if backlog_env is None:
             self.backlog_env = BacklogEnv()
@@ -45,6 +45,8 @@ class ProductOwnerEnv:
             self.userstory_env.max_action_num + \
             self.backlog_env.backlog_max_action_num + \
             self.backlog_env.sprint_max_action_num
+
+        self.with_info = with_info
 
     def reset(self):
         self.game = ProductOwnerGame()
@@ -92,8 +94,11 @@ class ProductOwnerEnv:
         return completed_us_count, completed_bug_count, completed_td_count
 
     def get_info(self):
-        result = self._get_info_meta_actions()
-        result += self._get_info_cards()
+        if self.with_info:
+            result = self._get_info_meta_actions()
+            result += self._get_info_cards()
+        else:
+            result = list(range(self.action_n))
         return {"actions": result}
 
     def _get_info_meta_actions(self):
@@ -354,8 +359,8 @@ class LoggingEnv(ProductOwnerEnv):
         return new_state, reward, done, info
 
 class BuggyProductOwnerEnv(ProductOwnerEnv):
-    def __init__(self, userstory_env=None, backlog_env=None):
-        super().__init__(userstory_env, backlog_env)
+    def __init__(self, userstory_env=None, backlog_env=None, with_info=True):
+        super().__init__(userstory_env, backlog_env, with_info)
         self.game = get_buggy_game_1()
         self.current_state = self._get_state()
     

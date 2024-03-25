@@ -5,8 +5,8 @@ from pipeline.study_agent import load_dqn_agent, save_dqn_agent
 import visualizer
 
 
-def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n):
-    env = ProductOwnerEnv()
+def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n, with_info):
+    env = ProductOwnerEnv(with_info)
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
     agents = prev_agents + [agent]
 
@@ -14,6 +14,7 @@ def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n):
     study.study_agent(episode_n)
 
     return study
+
 
 def main():
     tutorial_model_path = 'models/tutorial_model.pt'
@@ -27,7 +28,7 @@ def main():
 
     agents = [tutorial_agent, credit_start_agent, credit_end_agent]
 
-    study = make_final_sprints_study(agents, 1000, 1000)
+    study = make_final_sprints_study(agents, 1000, 1000, True)
     agent = study.agent
 
     visualizer.show_rewards(study, show_estimates=True, filename='figures/rewards.png')
@@ -36,6 +37,7 @@ def main():
 
     agent.memory = []
     save_dqn_agent(agent, 'models/final_sprints_model.pt')
+
 
 if __name__ == '__main__':
     main()

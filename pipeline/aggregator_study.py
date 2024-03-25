@@ -52,13 +52,14 @@ class AggregatorStudy(LoggingStudy):
         return full_reward
 
     def play_tutorial(self, tutorial_agent, tutorial_backlog_env):
-        env = TutorialSolverEnv(backlog_env=tutorial_backlog_env)
+        env = TutorialSolverEnv(backlog_env=tutorial_backlog_env, with_info=self.env.with_info)
         done = not self.env.game.context.is_new_game
 
         return self.play_some_stage(tutorial_agent, env, done, "tutorial")
 
     def play_credit_payment(self, credit_agent, credit_backlog_env, with_end):
-        env = CreditPayerEnv(backlog_env=credit_backlog_env, with_end=with_end)
+        env = CreditPayerEnv(backlog_env=credit_backlog_env, with_end=with_end,
+                             with_info=self.env.with_info)
         end_sprint = USUAL_CREDIT_ENV_END_SPRINT if with_end else EARLY_CREDIT_ENV_END_SPRINT
         done = self.env.game.context.current_sprint == end_sprint
 

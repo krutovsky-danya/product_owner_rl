@@ -71,14 +71,14 @@ def update_logs(env, sprints, loyalties, customers, money, wins):
 
 def play_tutorial(main_env, tutorial_agent, backlog_env, is_silent=True):
     main_env.reset()
-    env = TutorialSolverEnv(backlog_env=backlog_env)
+    env = TutorialSolverEnv(backlog_env=backlog_env, with_info=main_env.with_info)
     return play_some_stage(main_env, env, tutorial_agent, "tutorial reward", is_silent)
 
 
 def play_credit_payment(main_env, credit_agent, backlog_env, is_silent=True, with_end=False):
     current_sprint = main_env.game.context.current_sprint
     state_line = "credit reward" if current_sprint < 7 else "credit end reward"
-    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end)
+    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end, with_info=main_env.with_info)
     return play_some_stage(main_env, env, credit_agent, state_line, is_silent)
 
 
@@ -139,7 +139,7 @@ def define_backlog_environments():
 
 def eval_model():
     backlog_environments = define_backlog_environments()
-    env = ProductOwnerEnv(backlog_env=backlog_environments[-1])
+    env = ProductOwnerEnv(backlog_env=backlog_environments[-1], with_info=True)
     env.IS_SILENT = True
 
     results = eval_some_model(env, load_agents(), backlog_environments, 10, is_silent=True)
