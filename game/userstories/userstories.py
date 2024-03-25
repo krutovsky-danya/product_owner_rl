@@ -33,17 +33,20 @@ class UserStories:
         self.stories_list.append(card)
         self.context.available_stories[id(card.info)] = card.info
 
+    def _can_generate_cards(self, total_stories: int, cost: int):
+        return total_stories < 7 and self.context.has_enough_money(cost)
+
+    def can_generate_cards_user_survey(self):
+        total_stories = self.get_total_stories_count()
+        return self._can_generate_cards(total_stories, GlobalConstants.user_survey_cost)
+
+    def can_generate_cards_statistical_research(self):
+        total_stories = self.get_total_stories_count()
+        return self._can_generate_cards(total_stories, GlobalConstants.statistical_research_cost)
+
     def generate_cards(self, gen: UserStoriesGenerator, cost: int, count: int):
-        current_stories = len(self.context.current_stories.values())
-        available_stories = len(self.context.available_stories.values())
-        total_stories = current_stories + available_stories
-
-        if total_stories >= 7:
-            # print("too many stories")
-            return
-
-        if not self.context.has_enough_money(cost):
-            # print("not enough money")
+        total_stories = self.get_total_stories_count()
+        if not self._can_generate_cards(total_stories, cost):
             return
 
         self.context.set_money(self.context.get_money() - cost)
@@ -120,3 +123,10 @@ class UserStories:
             card.is_movable = is_enable
         for card in self.release:
             card.is_movable = is_enable
+
+    def get_total_stories_count(self) -> int:
+        current_stories = len(self.context.current_stories.values())
+        available_stories = len(self.context.available_stories.values())
+        total_stories = current_stories + available_stories
+
+        return total_stories

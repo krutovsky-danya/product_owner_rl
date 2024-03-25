@@ -12,6 +12,7 @@ from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from game.userstory_card.userstory_card import UserStoryCard
 from game.common_methods import interpolate, stepify, clamp
+from game.rooms.devroom.room import get_current_room_cost, get_worker_cost
 import random
 from typing import List, Dict
 
@@ -35,7 +36,10 @@ class ProductOwnerGame:
         self.hud.increase_progress(self.cards_in_sprint)
         self._next_sprint()
 
-    def backlog_start_sprint(self):
+    def is_backlog_start_sprint_available(self):  # info
+        return self.backlog.can_start_sprint()
+
+    def backlog_start_sprint(self):  # action!
         if self.backlog.can_start_sprint():
             cards = self.backlog.on_start_sprint_pressed()
             if cards is not None:
@@ -48,7 +52,10 @@ class ProductOwnerGame:
             us.is_decomposed = True
         self.backlog.generate_cards()
 
-    def userstories_start_release(self):  # !
+    def is_userstories_start_release_available(self):  # info
+        return self.userstories.release_available
+
+    def userstories_start_release(self):  # action!
         # todo добавить проверку на превышение доступного количества часов
         if self.userstories.release_available:
             cards = self.userstories.on_start_release_pressed()
@@ -146,7 +153,10 @@ class ProductOwnerGame:
             self.userstories.disable_restrictions()
             self.office.toggle_purchases(True)
 
-    def hud_release_product(self):  # !
+    def is_hud_release_product_available(self):  # info
+        return self.hud.release_available
+
+    def hud_release_product(self):  # action!
         if self.hud.release_available:
             self._on_hud_release_product()
 
@@ -211,29 +221,61 @@ class ProductOwnerGame:
             0, 1) < GlobalConstants.TECH_DEBT_SPAWN_PROBABILITY
         return has_color_for_td and paid_credit and chanced_td and self.force_td_spawn
 
-    def buy_robot(self, room_num):  # !
+    def is_buy_robot_available(self):  # info
+        has_money = self.context.has_enough_money(get_worker_cost())
+        has_not_full_room = self.get_min_not_full_room_number() > -1
+        return has_money and has_not_full_room
+
+    def get_min_not_full_room_number(self):
+        offices = self.office.offices
+        for i in range(len(offices)):
+            room = offices[i]
+            if room.can_buy_robot:
+                return i
+        return -1
+
+    def buy_robot(self, room_num):  # action!
         room: OfficeRoom = self.office.offices[clamp(
             room_num, 0, len(self.office.offices) - 1)]
         has_bought = room.on_buy_robot_button_pressed()
         if has_bought:
             self.context.buy_robot()
 
-    def buy_room(self, room_num):  # !
+    def is_buy_room_available(self):  # info
+        current_room_cost = get_current_room_cost(self.context)
+        has_money = self.context.has_enough_money(current_room_cost)
+        has_available_to_buy_room = self.get_min_available_to_buy_room_number() > -1
+        return has_money and has_available_to_buy_room
+
+    def get_min_available_to_buy_room_number(self):
+        offices = self.office.offices
+        for i in range(len(offices)):
+            room = offices[i]
+            if room.can_buy_room:
+                return i
+        return -1
+
+    def buy_room(self, room_num):  # action!
         room = self.office.offices[clamp(
             room_num, 0, len(self.office.offices) - 1)]
         has_bought = room.on_buy_room_button_pressed()
         if has_bought:
             self.context.buy_room()
 
-    def _on_userstory_card_dropped(self, card: UserStoryCard, is_on_left: bool):
-        if is_on_left and card.is_in_release:
+    def _on_userstory_card_dropped(self, card: UserStoryCard, moving_to_stories: bool):
+        if moving_to_stories and card.is_in_release:
             self.userstories.on_stories_card_dropped(card)
             card.is_in_release = False
-        elif not is_on_left and not card.is_in_release:
+        elif not moving_to_stories and not card.is_in_release:
             self.userstories.on_release_card_dropped(card)
             card.is_in_release = True
 
-    def move_userstory_card(self, card):  # !
+    def is_move_userstory_card_available(self, card: UserStoryCard):  # info
+        stories = self.userstories.stories_list
+        return (self.userstories.available and len(stories) > 0 and
+                card.is_movable and not card.is_in_release)
+
+    def move_userstory_card(self, card):  # action!
         if self.userstories.available:
             if isinstance(card, int):
                 stories = self.userstories.stories_list
@@ -245,7 +287,13 @@ class ProductOwnerGame:
                 if card.is_movable:
                     self._on_userstory_card_dropped(card, False)
 
-    def move_backlog_card(self, card):  # !
+    def is_move_backlog_card_available(self, card: Card):  # info
+        cards = self.backlog.backlog
+        hours_after_move = self.backlog.calculate_hours_sum() + card.info.hours
+        has_enough_hours = hours_after_move <= self.backlog.get_max_hours()
+        return len(cards) > 0 and card.is_movable and not card.is_in_sprint and has_enough_hours
+
+    def move_backlog_card(self, card):  # action!
         cards = self.backlog.backlog
         if len(cards) > 0:
             if isinstance(card, int):
@@ -260,7 +308,11 @@ class ProductOwnerGame:
                     self.backlog.sprint.append(card)
                     card.is_in_sprint = True
 
-    def move_sprint_card(self, card: Card):
+    def is_move_sprint_card_available(self, card: Card):  # info
+        cards = self.backlog.sprint
+        return len(cards) > 0 and card.is_movable and card.is_in_sprint
+
+    def move_sprint_card(self, card: Card):  # action!
         cards = self.backlog.sprint
         if len(cards) == 0:
             return
@@ -269,10 +321,18 @@ class ProductOwnerGame:
             self.backlog.backlog.append(card)
             card.is_in_sprint = False
 
-    def press_statistical_research(self):  # !
+    def is_press_statistical_research_available(self):  # info
+        return self.userstories.statistical_research_available and \
+               self.userstories.can_generate_cards_statistical_research()
+
+    def press_statistical_research(self):  # action!
         if self.userstories.statistical_research_available:
             self.userstories.on_statistical_research_pressed()
 
-    def press_user_survey(self):  # !
+    def is_press_user_survey_available(self):  # info
+        return self.userstories.user_survey_available and \
+               self.userstories.can_generate_cards_user_survey()
+
+    def press_user_survey(self):  # action!
         if self.userstories.user_survey_available:
             self.userstories.on_user_survey_pressed()
