@@ -24,6 +24,7 @@ class AggregatorStudy(LoggingStudy):
         super().__init__(env, agents[-1], trajectory_max_len, save_rate)
 
     def play_trajectory(self, state):
+        self.episode += 1
         full_reward = 0
         if self.stage > 1:
             state, reward, failed = self.play_tutorial(self.agents[0], self.backlog_environments[0])
@@ -44,6 +45,7 @@ class AggregatorStudy(LoggingStudy):
             full_reward += credit_reward
             if failed:
                 return full_reward
+        self.episode -= 1
         full_reward += super().play_trajectory(state)
         self.logger.info(f"full total_reward: {full_reward}")
         return full_reward
