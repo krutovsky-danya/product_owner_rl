@@ -79,6 +79,8 @@ class AggregatorStudy(LoggingStudy):
                                                                     inner_sprint_action_count)
             state, reward, done, info = translator_env.step(action)
 
+            self._log_after_action(action)
+
             total_reward += reward
 
         self.logger.debug(f"{name} end")
