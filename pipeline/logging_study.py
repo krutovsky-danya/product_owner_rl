@@ -65,8 +65,8 @@ class LoggingStudy(MetricsStudy):
         self.loss_log.append(loss)
         return loss
 
-    def play_trajectory(self, init_state) -> float:
-        reward = super().play_trajectory(init_state)
+    def play_trajectory(self, init_state, init_info) -> float:
+        reward = super().play_trajectory(init_state, init_info)
         sprint_n = self.env.game.context.current_sprint
 
         self.sprints_log.append(sprint_n)
