@@ -6,7 +6,7 @@ import visualizer
 
 
 def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n, with_info):
-    env = ProductOwnerEnv(with_info)
+    env = ProductOwnerEnv(with_info=with_info)
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
     agents = prev_agents + [agent]
 
