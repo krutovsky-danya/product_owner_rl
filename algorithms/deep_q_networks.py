@@ -57,10 +57,10 @@ class DQN(nn.Module):
         q_values = self.q_function(state)
         masked_q_values = q_values[mask]
         masked_argmax_action = torch.argmax(masked_q_values)
-        probs = self.epsilon * np.ones(len(mask)) / len(mask)
+        probs = self.epsilon * np.ones_like(mask) / len(mask)
         probs[masked_argmax_action] += 1 - self.epsilon
-        masked_action = np.random.choice(np.arange(len(mask)), p=probs)
-        return mask[masked_action]
+        masked_action = np.random.choice(mask, p=probs)
+        return masked_action
 
     @torch.no_grad()
     def get_max_q_values(self, next_states):
