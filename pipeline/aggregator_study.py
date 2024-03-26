@@ -24,13 +24,13 @@ class AggregatorStudy(LoggingStudy):
         super().__init__(env, agents[-1], trajectory_max_len, save_rate)
 
     def play_trajectory(self, state, info):
-        self.episode += 1
         full_reward = 0
         if self.stage > 1:
             state, info, reward, failed = self.play_tutorial(self.agents[0],
                                                              self.backlog_environments[0])
             full_reward += reward
             if failed:
+                self._log_trajectory_end(full_reward)
                 return reward
         if self.stage > 2:
             state, info, credit_reward, failed = self.play_credit_payment(self.agents[1],
@@ -38,6 +38,7 @@ class AggregatorStudy(LoggingStudy):
                                                                           False)
             full_reward += credit_reward
             if failed:
+                self._log_trajectory_end(full_reward)
                 return full_reward
         if self.stage > 3:
             state, info,  credit_reward, failed = self.play_credit_payment(self.agents[2],
@@ -45,9 +46,9 @@ class AggregatorStudy(LoggingStudy):
                                                                            True)
             full_reward += credit_reward
             if failed:
+                self._log_trajectory_end(full_reward)
                 return full_reward
         full_reward += super().play_trajectory(state, info)
-        self.episode -= 1
         self.logger.info(f"full total_reward: {full_reward}")
         return full_reward
 

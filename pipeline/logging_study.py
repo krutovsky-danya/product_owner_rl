@@ -66,7 +66,7 @@ class LoggingStudy(MetricsStudy):
             loyalty = self.env.game.context.get_loyalty()
             customers = self.env.game.context.customers
             current_sprint = self.env.game.context.current_sprint
-            message += f" {current_sprint + 1}: {money / 1e5:2.4f}, {loyalty:2.4f}, {customers:3.4f}"
+            message += f" {current_sprint}: {money / 1e5:2.4f}, {loyalty:2.4f}, {customers:3.4f}"
         if action >= 7:
             message = 'move card'
             current_hours = self.env.game.backlog.calculate_hours_sum()
@@ -84,6 +84,11 @@ class LoggingStudy(MetricsStudy):
 
     def play_trajectory(self, init_state, init_info) -> float:
         reward = super().play_trajectory(init_state, init_info)
+        self._log_trajectory_end(reward)
+
+        return reward
+
+    def _log_trajectory_end(self, reward):
         sprint_n = self.env.game.context.current_sprint
 
         self.sprints_log.append(sprint_n)
@@ -101,16 +106,14 @@ class LoggingStudy(MetricsStudy):
             termination = "lose"
 
         message = (
-            f"episode: {self.episode:03d}\t"
-            + f"total_reward: {reward:.2f}\t"
-            + f"sprint_n: {sprint_n:02d}\t"
-            + f"credit: {credit: 6d}\t"
-            + f"termination: {termination}\t"
+                f"episode: {(self.episode + 1):03d}\t"
+                + f"total_reward: {reward:.2f}\t"
+                + f"sprint_n: {sprint_n:02d}\t"
+                + f"credit: {credit: 6d}\t"
+                + f"termination: {termination}\t"
         )
         self.logger.info(message)
         self.episode += 1
-
-        return reward
 
     def _choose_action(self, action, inner_sprint_action_count) -> Tuple[int, int]:
         result = super()._choose_action(action, inner_sprint_action_count)
