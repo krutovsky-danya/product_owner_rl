@@ -14,18 +14,19 @@ class BaseStudy:
     def fit_agent(self, state, action, reward, done, next_state):
         return self.agent.fit(state, action, reward, done, next_state)
 
-    def play_trajectory(self, init_state):
+    def play_trajectory(self, init_state, init_info):
         total_reward = 0
         state = init_state
+        info = init_info
         t = 0
         inner_sprint_action_count = 0
         done = False
 
         while not done:
-            action = self.agent.get_action(state)
+            action = self.agent.get_action(state, info)
             action, inner_sprint_action_count = self._choose_action(action,
                                                                     inner_sprint_action_count)
-            next_state, reward, done, _ = self.env.step(action)
+            next_state, reward, done, info = self.env.step(action)
 
             self.fit_agent(state, action, reward, done, next_state)
 
@@ -50,4 +51,5 @@ class BaseStudy:
     def study_agent(self, episode_n: int):
         for episode in range(episode_n):
             state = self.env.reset()
-            self.play_trajectory(state)
+            info = self.env.get_info()
+            self.play_trajectory(state, info)

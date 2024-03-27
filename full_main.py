@@ -8,24 +8,25 @@ from credit_start_main import make_credit_study
 n = 1
 trajectory_max_len = 100
 episode_n = 100
+with_info = True
 
 # repeat several times
 for i in range(n):
     # study tutorial agent
-    tutorial_study = make_tutorial_study(trajectory_max_len, episode_n)
+    tutorial_study = make_tutorial_study(trajectory_max_len, episode_n, with_info)
         
     # use previous agent to study credit start agent
     tutorial_agent = tutorial_study.agent
     agents = [tutorial_agent]
-    credit_start_study = make_credit_study(agents, trajectory_max_len, episode_n, False)
+    credit_start_study = make_credit_study(agents, trajectory_max_len, episode_n, False, with_info)
 
     # use previous agents to study credit end agent
     agents.append(credit_start_study.agent)
-    credit_end_study = make_credit_study(agents, trajectory_max_len, episode_n, True)
+    credit_end_study = make_credit_study(agents, trajectory_max_len, episode_n, True, with_info)
     
     # use previous agents to study end agent
     agents.append(credit_end_study.agent)
-    final_sprints_study = make_final_sprints_study(agents, trajectory_max_len, episode_n)
+    final_sprints_study = make_final_sprints_study(agents, trajectory_max_len, episode_n, with_info)
 
     # eval model
     # collect quality metrics

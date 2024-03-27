@@ -10,11 +10,19 @@ from game.game_generators import get_buggy_game_1
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT
 
+START_SPRINT = 0
+DECOMPOSE = 1
+RELEASE = 2
+BUY_ROBOT = 3
+BUY_ROOM = 4
+STATISTICAL_RESEARCH = 5
+USER_SURVEY = 6
+
 
 class ProductOwnerEnv:
     IS_SILENT = False
 
-    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None):
+    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True):
         self.game = ProductOwnerGame()
         if backlog_env is None:
             self.backlog_env = BacklogEnv()
@@ -37,6 +45,8 @@ class ProductOwnerEnv:
             self.userstory_env.max_action_num + \
             self.backlog_env.backlog_max_action_num + \
             self.backlog_env.sprint_max_action_num
+
+        self.with_info = with_info
 
     def reset(self):
         self.game = ProductOwnerGame()
@@ -83,6 +93,76 @@ class ProductOwnerEnv:
                 completed_us_count += 1
         return completed_us_count, completed_bug_count, completed_td_count
 
+    def get_info(self):
+        if self.with_info:
+            result = self._get_info_meta_actions()
+            result += self._get_info_cards()
+        else:
+            result = list(range(self.action_n))
+        return {"actions": result}
+
+    def _get_info_meta_actions(self):
+        result = []
+        if self.game.is_backlog_start_sprint_available():
+            result.append(START_SPRINT)
+        if self.game.is_userstories_start_release_available():
+            result.append(DECOMPOSE)
+        if self.game.is_hud_release_product_available():
+            result.append(RELEASE)
+        if self.game.is_buy_robot_available():
+            result.append(BUY_ROBOT)
+        if self.game.is_buy_room_available():
+            result.append(BUY_ROOM)
+        if self.game.is_press_statistical_research_available():
+            result.append(STATISTICAL_RESEARCH)
+        if self.game.is_press_user_survey_available():
+            result.append(USER_SURVEY)
+        return result
+
+    def _get_info_cards(self):
+        result = self._get_info_userstory_cards()
+        result += self._get_info_backlog_cards()
+        result += self._get_info_sprint_cards()
+        return result
+
+    def _get_info_userstory_cards(self):
+        result = []
+        predicate = self.game.is_move_userstory_card_available
+        offset = self.meta_action_dim
+        self._set_info_cards(self.userstory_env.userstories_common, offset, predicate, result)
+        offset += self.userstory_env.us_common_count
+        self._set_info_cards(self.userstory_env.userstories_bugs, offset, predicate, result)
+        offset += self.userstory_env.us_bug_count
+        self._set_info_cards(self.userstory_env.userstories_td, offset, predicate, result)
+        return result
+
+    def _get_info_backlog_cards(self):
+        result = []
+        predicate = self.game.is_move_backlog_card_available
+        offset = self.meta_action_dim + self.userstory_env.max_action_num
+        self._set_info_cards(self.backlog_env.backlog_commons, offset, predicate, result)
+        offset += self.backlog_env.backlog_commons_count
+        self._set_info_cards(self.backlog_env.backlog_bugs, offset, predicate, result)
+        offset += self.backlog_env.backlog_bugs_count
+        self._set_info_cards(self.backlog_env.backlog_tech_debt, offset, predicate, result)
+        return result
+
+    def _get_info_sprint_cards(self):
+        result = []
+        predicate = self.game.is_move_sprint_card_available
+        offset = self.meta_action_dim + self.userstory_env.max_action_num + self.backlog_env.backlog_max_action_num
+        self._set_info_cards(self.backlog_env.sprint_commons, offset, predicate, result)
+        offset += self.backlog_env.sprint_commons_count
+        self._set_info_cards(self.backlog_env.sprint_bugs, offset, predicate, result)
+        offset += self.backlog_env.sprint_bugs_count
+        self._set_info_cards(self.backlog_env.sprint_tech_debt, offset, predicate, result)
+        return result
+
+    def _set_info_cards(self, cards, offset: int, predicate, result):
+        for value, card in enumerate(cards):
+            if predicate(card):
+                result.append(value + offset)
+
     def step(self, action: int):
         # new_state, reward, done, info
         reward = 0
@@ -94,7 +174,7 @@ class ProductOwnerEnv:
         reward += self._get_reward()
         reward += reward_bit
         self.current_state = self._get_state()
-        return self.current_state, reward, self.game.context.done, None
+        return self.current_state, reward, self.game.context.done, self.get_info()
 
     def _get_reward(self):
         # sprint_penalty = +1
@@ -130,7 +210,7 @@ class ProductOwnerEnv:
         return -10
 
     def _perform_buy_robot(self) -> int:
-        room_num = self._get_min_not_full_room_number()
+        room_num = self.game.get_min_not_full_room_number()
         if room_num == -1:
             return -10
         worker_count_before = self.game.context.available_developers_count
@@ -141,7 +221,7 @@ class ProductOwnerEnv:
         return 1
     
     def _perform_buy_room(self) -> int:
-        room_num = self._get_min_available_to_buy_room_number()
+        room_num = self.game.get_min_available_to_buy_room_number()
         if room_num == -1:
             return -10
         worker_count_before = self.game.context.available_developers_count
@@ -173,22 +253,22 @@ class ProductOwnerEnv:
     
     def _perform_action(self, action: int):
         # we'll assume that action in range(0, max_action_num)
-        if action == 0:
+        if action == START_SPRINT:
             return self._perform_start_sprint_action()
-        if action == 1:
+        if action == DECOMPOSE:
             return self._perform_decomposition()
-        if action == 2:
+        if action == RELEASE:
             return self._perform_release()
-        if action == 3:
+        if action == BUY_ROBOT:
             return self._perform_buy_robot()
-        if action == 4:
+        if action == BUY_ROOM:
             return self._perform_buy_room()
-        if action == 5:
+        if action == STATISTICAL_RESEARCH:
             return self._perform_statistical_research()
-        if action == 6:
+        if action == USER_SURVEY:
             return self._perform_user_survey()
         
-        return self._perform_action_card(action - 7)
+        return self._perform_action_card(action - self.meta_action_dim)
 
     def _perform_action_card(self, action: int) -> int:
         if action < self.userstory_env.max_action_num:
@@ -271,21 +351,6 @@ class ProductOwnerEnv:
             return sampled[index]
         return None
 
-    def _get_min_not_full_room_number(self):
-        offices = self.game.office.offices
-        for i in range(len(offices)):
-            room = offices[i]
-            if room.can_buy_robot:
-                return i
-        return -1
-
-    def _get_min_available_to_buy_room_number(self):
-        offices = self.game.office.offices
-        for i in range(len(offices)):
-            room = offices[i]
-            if room.can_buy_room:
-                return i
-        return -1
 
 class LoggingEnv(ProductOwnerEnv):
     def step(self, action: int):
@@ -294,8 +359,8 @@ class LoggingEnv(ProductOwnerEnv):
         return new_state, reward, done, info
 
 class BuggyProductOwnerEnv(ProductOwnerEnv):
-    def __init__(self, userstory_env=None, backlog_env=None):
-        super().__init__(userstory_env, backlog_env)
+    def __init__(self, userstory_env=None, backlog_env=None, with_info=True):
+        super().__init__(userstory_env, backlog_env, with_info)
         self.game = get_buggy_game_1()
         self.current_state = self._get_state()
     

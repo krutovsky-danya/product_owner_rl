@@ -19,7 +19,7 @@ class LoggingStudy(MetricsStudy):
         agent,
         trajectory_max_len,
         save_rate: Optional[int] = None,
-        log_level=logging.INFO,
+        log_level=logging.DEBUG,
     ) -> None:
         super().__init__(env, agent, trajectory_max_len)
         self.episode = 0
@@ -38,9 +38,8 @@ class LoggingStudy(MetricsStudy):
 
         return logger
 
-    def _log_action(self, action):
-        if action == 0:
-            message = 'start sprint'
+    def _log_before_action(self, action):
+        message = None
         if action == 1:
             cards_count = len(self.env.game.userstories.release)
             message = f'decompose {cards_count} cards'
@@ -55,18 +54,41 @@ class LoggingStudy(MetricsStudy):
             message = 'buy statistical research'
         if action == 6:
             message = 'buy user survey'
+
+        if message:
+            self.logger.debug(message)
+
+    def _log_after_action(self, action):
+        message = None
+        if action == 0:
+            message = 'start sprint'
+            money = self.env.game.context.get_money()
+            loyalty = self.env.game.context.get_loyalty()
+            customers = self.env.game.context.customers
+            current_sprint = self.env.game.context.current_sprint
+            message += f" {current_sprint}: {money / 1e5:2.4f}, {loyalty:2.4f}, {customers:3.4f}"
         if action >= 7:
             message = 'move card'
+            current_hours = self.env.game.backlog.calculate_hours_sum()
+            max_sprint_hours = self.env.game.backlog.get_max_hours()
+            message += f": {current_hours}/{max_sprint_hours}"
 
-        self.logger.debug(message)
+        if message:
+            self.logger.debug(message)
 
     def fit_agent(self, state, action, reward, done, next_state):
         loss = super().fit_agent(state, action, reward, done, next_state)
+        self._log_after_action(action)
         self.loss_log.append(loss)
         return loss
 
-    def play_trajectory(self, init_state) -> float:
-        reward = super().play_trajectory(init_state)
+    def play_trajectory(self, init_state, init_info) -> float:
+        reward = super().play_trajectory(init_state, init_info)
+        self._log_trajectory_end(reward)
+
+        return reward
+
+    def _log_trajectory_end(self, reward):
         sprint_n = self.env.game.context.current_sprint
 
         self.sprints_log.append(sprint_n)
@@ -84,23 +106,21 @@ class LoggingStudy(MetricsStudy):
             termination = "lose"
 
         message = (
-            f"episode: {self.episode:03d}\t"
-            + f"total_reward: {reward:.2f}\t"
-            + f"sprint_n: {sprint_n:02d}\t"
-            + f"credit: {credit: 6d}\t"
-            + f"termination: {termination}\t"
+                f"episode: {(self.episode + 1):03d}\t"
+                + f"total_reward: {reward:.2f}\t"
+                + f"sprint_n: {sprint_n:02d}\t"
+                + f"credit: {credit: 6d}\t"
+                + f"termination: {termination}\t"
         )
         self.logger.info(message)
         self.episode += 1
-
-        return reward
 
     def _choose_action(self, action, inner_sprint_action_count) -> Tuple[int, int]:
         result = super()._choose_action(action, inner_sprint_action_count)
         chosen_action, _ = result
         if action != chosen_action and chosen_action == 0:
             self.logger.debug('enforced next sprint')
-        self._log_action(action)
+        self._log_before_action(action)
         return result
 
     def study_agent(self, episode_n):

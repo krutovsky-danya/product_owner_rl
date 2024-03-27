@@ -51,14 +51,16 @@ class DQN(nn.Module):
         self.optimizer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
 
     @torch.no_grad()
-    def get_action(self, state):
+    def get_action(self, state, info):
+        mask = info["actions"]
         state = torch.FloatTensor(state).to(self.device)
         q_values = self.q_function(state)
-        argmax_action = torch.argmax(q_values)
-        probs = self.epsilon * np.ones(self.action_dim) / self.action_dim
-        probs[argmax_action] += 1 - self.epsilon
-        action = np.random.choice(np.arange(self.action_dim), p=probs)
-        return action
+        masked_q_values = q_values[mask]
+        masked_argmax_action = torch.argmax(masked_q_values)
+        probs = self.epsilon * np.ones_like(mask) / len(mask)
+        probs[masked_argmax_action] += 1 - self.epsilon
+        masked_action = np.random.choice(mask, p=probs)
+        return masked_action
 
     @torch.no_grad()
     def get_max_q_values(self, next_states):

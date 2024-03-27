@@ -15,10 +15,12 @@ class StochasticGameStartEnv(ProductOwnerEnv):
         self,
         userstories_env=None,
         backlog_env=None,
+        with_info=True
     ):
         super().__init__(
             userstories_env,
             backlog_env,
+            with_info
         )
 
         self.index = 0

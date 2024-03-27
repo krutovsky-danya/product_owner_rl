@@ -71,14 +71,14 @@ def update_logs(env, sprints, loyalties, customers, money, wins):
 
 def play_tutorial(main_env, tutorial_agent, backlog_env, is_silent=True):
     main_env.reset()
-    env = TutorialSolverEnv(backlog_env=backlog_env)
+    env = TutorialSolverEnv(backlog_env=backlog_env, with_info=main_env.with_info)
     return play_some_stage(main_env, env, tutorial_agent, "tutorial reward", is_silent)
 
 
 def play_credit_payment(main_env, credit_agent, backlog_env, is_silent=True, with_end=False):
     current_sprint = main_env.game.context.current_sprint
     state_line = "credit reward" if current_sprint < 7 else "credit end reward"
-    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end)
+    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end, with_info=main_env.with_info)
     return play_some_stage(main_env, env, credit_agent, state_line, is_silent)
 
 
@@ -92,12 +92,14 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
     translator_env.game = main_env.game
     done = main_env.game.context.get_money() < 0
     state = translator_env._get_state()
+    info = translator_env.get_info()
     inner_sprint_action_count = 0
     total_reward = 0
 
     while not done:
-        action, inner_sprint_action_count = choose_action(agent, state, inner_sprint_action_count)
-        state, reward, done, _ = translator_env.step(action)
+        action, inner_sprint_action_count = choose_action(agent, state, info,
+                                                          inner_sprint_action_count)
+        state, reward, done, info = translator_env.step(action)
 
         total_reward += reward
 
@@ -106,8 +108,8 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
     return total_reward
 
 
-def choose_action(agent, state, inner_sprint_action_count, is_silent=True):
-    action = agent.get_action(state)
+def choose_action(agent, state, info, inner_sprint_action_count, is_silent=True):
+    action = agent.get_action(state, info)
     if action == 0:
         inner_sprint_action_count = 0
     else:
@@ -137,7 +139,7 @@ def define_backlog_environments():
 
 def eval_model():
     backlog_environments = define_backlog_environments()
-    env = ProductOwnerEnv(backlog_env=backlog_environments[-1])
+    env = ProductOwnerEnv(backlog_env=backlog_environments[-1], with_info=True)
     env.IS_SILENT = True
 
     results = eval_some_model(env, load_agents(), backlog_environments, 10, is_silent=True)

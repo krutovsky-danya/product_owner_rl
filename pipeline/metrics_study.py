@@ -14,13 +14,13 @@ class MetricsStudy(BaseStudy):
         self.rewards_log: List[int] = []
         self.q_value_log: List[int] = []
 
-    def play_trajectory(self, init_state):
+    def play_trajectory(self, init_state, init_info):
         with torch.no_grad():
             state = torch.tensor(init_state).to(self.agent.device)
             q_values: torch.Tensor = self.agent.q_function(state)
         estimates = q_values.max().detach().cpu().numpy()
         self.q_value_log.append(estimates)
 
-        reward = super().play_trajectory(init_state)
+        reward = super().play_trajectory(init_state, init_info)
         self.rewards_log.append(reward)
         return reward
