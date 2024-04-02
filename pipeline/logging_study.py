@@ -76,8 +76,8 @@ class LoggingStudy(MetricsStudy):
         if message:
             self.logger.debug(message)
 
-    def fit_agent(self, state, action, reward, done, next_state):
-        loss = super().fit_agent(state, action, reward, done, next_state)
+    def fit_agent(self, state, action, reward, done, next_state, next_info):
+        loss = super().fit_agent(state, action, reward, done, next_state, next_info)
         self._log_after_action(action)
         self.loss_log.append(loss)
         return loss

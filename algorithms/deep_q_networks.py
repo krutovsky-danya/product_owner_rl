@@ -63,10 +63,11 @@ class DQN(nn.Module):
         return masked_action
 
     @torch.no_grad()
-    def get_max_q_values(self, next_states):
-        return torch.max(self.q_function(next_states), dim=1).values
+    def get_max_q_values(self, next_states, next_infos):
+        return torch.max(self.q_function(next_states)[:, next_infos][torch.arange(self.batch_size), torch.arange(self.batch_size), :], dim=1).values
 
-    def fit(self, state, action, reward, done, next_state):
+    def fit(self, state, action, reward, done, next_state, next_info):
+        next_info = torch.tensor(next_info['actions'])
         self.memory.append(
             [
                 torch.tensor(state),
@@ -74,6 +75,10 @@ class DQN(nn.Module):
                 torch.tensor(reward),
                 torch.tensor(int(done)),
                 torch.tensor(next_state),
+                torch.nn.functional.pad(next_info,
+                                        pad=(0, self.q_function.action_n - next_info.numel()),
+                                        mode="constant",
+                                        value=next_info[0].item())
             ]
         )
 
@@ -81,7 +86,7 @@ class DQN(nn.Module):
             return
 
         batch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, dones, next_states = map(
+        states, actions, rewards, dones, next_states, next_infos = map(
             torch.stack, list(zip(*batch))
         )
         states = states.to(self.device)
@@ -89,8 +94,9 @@ class DQN(nn.Module):
         rewards = rewards.to(self.device)
         dones = dones.to(self.device)
         next_states = next_states.to(self.device)
+        next_infos = next_infos.to(self.device)
 
-        max_q_values = self.get_max_q_values(next_states)
+        max_q_values = self.get_max_q_values(next_states, next_infos)
         targets = rewards + self.gamma * (1 - dones) * max_q_values
         q_values = self.q_function(states)[torch.arange(self.batch_size), actions]
 
@@ -135,11 +141,11 @@ class TargetDQN(DQN):
         pass
 
     @torch.no_grad()
-    def get_max_q_values(self, next_states):
-        return torch.max(self.target_q_function(next_states), dim=1).values
+    def get_max_q_values(self, next_states, next_infos):
+        return torch.max(self.target_q_function(next_states)[:, next_infos][torch.arange(self.batch_size), torch.arange(self.batch_size), :], dim=1).values
 
-    def fit(self, state, action, reward, done, next_state):
-        loss = super().fit(state, action, reward, done, next_state)
+    def fit(self, state, action, reward, done, next_state, next_info):
+        loss = super().fit(state, action, reward, done, next_state, next_info)
 
         self.fit_calls += 1
         if self.fit_calls >= self.target_update:
@@ -190,9 +196,10 @@ class SoftTargetDQN(TargetDQN):
 
 
 class DoubleDQN(SoftTargetDQN):
-    def get_max_q_values(self, next_states):
-        next_states_q = self.q_function(next_states)
+    def get_max_q_values(self, next_states, next_infos):
+        next_states_q = self.q_function(next_states)[:, next_infos][torch.arange(self.batch_size), torch.arange(self.batch_size), :]
         best_actions = torch.argmax(next_states_q, axis=1)
+        best_actions = next_infos[torch.arange(self.batch_size), best_actions]
 
         max_q_values = self.target_q_function(next_states)[
             np.arange(0, self.batch_size), best_actions
