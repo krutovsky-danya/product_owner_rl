@@ -11,8 +11,8 @@ class BaseStudy:
         self.agent: DQN = agent
         self.trajectory_max_len = trajectory_max_len
 
-    def fit_agent(self, state, action, reward, done, next_state):
-        return self.agent.fit(state, action, reward, done, next_state)
+    def fit_agent(self, state, action, reward, done, next_state, next_info):
+        return self.agent.fit(state, action, reward, done, next_state, next_info)
 
     def play_trajectory(self, init_state, init_info):
         total_reward = 0
@@ -28,7 +28,7 @@ class BaseStudy:
                                                                     inner_sprint_action_count)
             next_state, reward, done, info = self.env.step(action)
 
-            self.fit_agent(state, action, reward, done, next_state)
+            self.fit_agent(state, action, reward, done, next_state, info)
 
             state = next_state
             total_reward += reward
