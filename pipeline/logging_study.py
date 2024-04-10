@@ -19,7 +19,7 @@ class LoggingStudy(MetricsStudy):
         agent,
         trajectory_max_len,
         save_rate: Optional[int] = None,
-        log_level=logging.DEBUG,
+        log_level=logging.INFO,
     ) -> None:
         super().__init__(env, agent, trajectory_max_len)
         self.episode = 0

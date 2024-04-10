@@ -1,7 +1,16 @@
+from environment.userstory_env import UserstoryEnv
+from environment.backlog_env import BacklogEnv
+from environment.reward_sytem import BaseRewardSystem, EmpiricalRewardSystem, EmpiricalCreditStageRewardSystem
 from pipeline.logging_study import LoggingStudy
 from environment import TutorialSolverEnv, CreditPayerEnv, ProductOwnerEnv
 from environment.credit_payer_env import USUAL_CREDIT_ENV_END_SPRINT, EARLY_CREDIT_ENV_END_SPRINT
 
+
+def update_reward_system_config(env: ProductOwnerEnv, reward_system: BaseRewardSystem):
+    backlog = env.backlog_env
+    offset = env.meta_action_dim + env.userstory_env.max_action_num + backlog.backlog_max_action_num
+    actions = [offset + i for i in range(backlog.sprint_max_action_num)]
+    reward_system.config["remove_sprint_card_actions"] = actions
 
 class AggregatorStudy(LoggingStudy):
     def __init__(self, env, agents, trajectory_max_len, save_rate=100,
@@ -26,6 +35,8 @@ class AggregatorStudy(LoggingStudy):
     def play_trajectory(self, state, info):
         full_reward = 0
         if self.stage > 1:
+            if self.backlog_environments[0] is None:
+                self.backlog_environments[0] = BacklogEnv(4, 0, 0, 0, 0, 0)
             state, info, reward, failed = self.play_tutorial(self.agents[0],
                                                              self.backlog_environments[0])
             full_reward += reward
@@ -53,16 +64,20 @@ class AggregatorStudy(LoggingStudy):
         return full_reward
 
     def play_tutorial(self, tutorial_agent, tutorial_backlog_env):
-        env = TutorialSolverEnv(backlog_env=tutorial_backlog_env, with_info=self.env.with_info)
+        reward_system = EmpiricalRewardSystem(config={})
+        env = TutorialSolverEnv(backlog_env=tutorial_backlog_env, with_info=self.env.with_info, reward_system=reward_system)
+        update_reward_system_config(env, reward_system)
         done = not self.env.game.context.is_new_game
 
         return self.play_some_stage(tutorial_agent, env, done, "tutorial")
 
     def play_credit_payment(self, credit_agent, credit_backlog_env, with_end):
+        reward_system = EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=True, config={})
         env = CreditPayerEnv(backlog_env=credit_backlog_env, with_end=with_end,
-                             with_info=self.env.with_info)
+                             with_info=self.env.with_info, reward_system=reward_system)
         end_sprint = USUAL_CREDIT_ENV_END_SPRINT if with_end else EARLY_CREDIT_ENV_END_SPRINT
         done = self.env.game.context.current_sprint == end_sprint
+        update_reward_system_config(env, reward_system)
 
         return self.play_some_stage(credit_agent, env, done, "credit")
 

@@ -13,7 +13,7 @@ def create_usual_agent(env: ProductOwnerEnv, trajectory_max_len: int, episode_n:
     state_dim = env.state_dim
     action_n = env.action_n
 
-    epsilon_decrease = 1 / (trajectory_max_len * episode_n)
+    epsilon_decrease = 1e-4
     agent = DoubleDQN(
             state_dim, action_n, gamma=0.9, tau=0.001, epsilon_decrease=epsilon_decrease
         )

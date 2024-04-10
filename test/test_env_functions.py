@@ -1,6 +1,7 @@
 import unittest
 from environment.environment import ProductOwnerEnv
 from environment.userstory_env import UserstoryEnv
+from environment.reward_sytem import BaseRewardSystem
 from game.game_constants import GlobalConstants
 import numpy as np
 from environment.backlog_env import BACKLOG_COMMON_FEATURE_COUNT
@@ -14,7 +15,8 @@ class TestEnvFunctions(unittest.TestCase):
         userstory_env = UserstoryEnv(userstories_common_count=4,
                                      userstories_bug_count=2,
                                      userstories_td_count=1)
-        self.env = ProductOwnerEnv(userstory_env)
+        reward_system = BaseRewardSystem(config={})
+        self.env = ProductOwnerEnv(userstory_env, reward_system=reward_system)
 
     def test_start_game(self):
         # тестируются действия, выполняемые с момента начала игры до первого релиза включительно

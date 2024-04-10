@@ -1,5 +1,6 @@
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
+from .reward_sytem import BaseRewardSystem
 from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import UserCardType, GlobalConstants
@@ -22,7 +23,8 @@ USER_SURVEY = 6
 class ProductOwnerEnv:
     IS_SILENT = False
 
-    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True):
+    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True,
+                 reward_system: BaseRewardSystem=None):
         self.game = ProductOwnerGame()
         if backlog_env is None:
             self.backlog_env = BacklogEnv()
@@ -30,7 +32,7 @@ class ProductOwnerEnv:
             self.backlog_env = backlog_env
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env
 
-        self.meta_space_dim = 18
+        self.meta_space_dim = 19
 
         self.state_dim = self.meta_space_dim + \
             self.userstory_env.userstory_space_dim + \
@@ -47,6 +49,9 @@ class ProductOwnerEnv:
             self.backlog_env.sprint_max_action_num
 
         self.with_info = with_info
+        if reward_system is None:
+            raise Exception("reward system can not be None")
+        self.reward_system = reward_system
 
     def reset(self):
         self.game = ProductOwnerGame()
@@ -71,6 +76,7 @@ class ProductOwnerEnv:
             self.game.userstories.release_available,
             self.game.userstories.statistical_research_available,
             self.game.userstories.user_survey_available,
+            int(context.done),
             *self._get_completed_cards_count(),
             *self.userstory_env.encode(self.game.userstories.stories_list),
             *self.backlog_env.encode(self.game.backlog)
@@ -165,93 +171,68 @@ class ProductOwnerEnv:
 
     def step(self, action: int):
         # new_state, reward, done, info
-        reward = 0
-        credit_before = self.game.context.credit
-        reward_bit = self._perform_action(action)
-        credit_after = self.game.context.credit
-        if credit_before > 0 and credit_after <= 0:
-            reward += 10
-        reward += self._get_reward()
-        reward += reward_bit
-        self.current_state = self._get_state()
-        return self.current_state, reward, self.game.context.done, self.get_info()
+        state_old = self.current_state
+        success = self._perform_action(action)
+        if success:
+            self.current_state = self._get_state()
+        reward = self.reward_system.get_reward(state_old, action, self.current_state)
+        info = self.get_info()
+        done = self.game.context.done or len(info) == 0
+        return self.current_state, reward, done, info
 
-    def _get_reward(self):
-        # sprint_penalty = +1
-        # money_reward = self.game.context.get_money() / 10 ** 6
-        done = self.game.context.done
-        if done:
-            if self.game.context.get_money() > 1e6:
-                reward_for_endgame = 500
-            else:
-                reward_for_endgame = -50
-        else:
-            reward_for_endgame = 0
-        return reward_for_endgame
+    def _perform_start_sprint_action(self) -> bool:
+        can_start_sprint = self.game.backlog.can_start_sprint()
+        if can_start_sprint:
+            self.game.backlog_start_sprint()
+        return can_start_sprint
 
-    def _perform_start_sprint_action(self) -> int:
-        if not self.game.backlog.can_start_sprint():
-            return -10
-        self.game.backlog_start_sprint()
-        return 1
-
-    def _perform_decomposition(self) -> int:
+    def _perform_decomposition(self) -> bool:
         is_release_available = self.game.userstories.release_available
         if is_release_available:
             self.game.userstories_start_release()
-            return 1
-        return -10
+        return is_release_available
     
-    def _perform_release(self) -> int:
+    def _perform_release(self) -> bool:
         is_release_available = self.game.hud.release_available
         if is_release_available:
             self.game.hud_release_product()
-            return 1
-        return -10
+        return is_release_available
 
-    def _perform_buy_robot(self) -> int:
+    def _perform_buy_robot(self) -> bool:
         room_num = self.game.get_min_not_full_room_number()
         if room_num == -1:
-            return -10
+            return False
         worker_count_before = self.game.context.available_developers_count
         self.game.buy_robot(room_num)
         worker_count = self.game.context.available_developers_count
-        if worker_count_before == worker_count:
-            return -10
-        return 1
+        return worker_count_before != worker_count
     
-    def _perform_buy_room(self) -> int:
+    def _perform_buy_room(self) -> bool:
         room_num = self.game.get_min_available_to_buy_room_number()
         if room_num == -1:
-            return -10
+            return False
         worker_count_before = self.game.context.available_developers_count
         self.game.buy_room(room_num)
         worker_count = self.game.context.available_developers_count
-        if worker_count_before == worker_count:
-            return -10
-        return 1
+        return worker_count_before != worker_count
     
-    def _perform_statistical_research(self) -> int:
+    def _perform_statistical_research(self) -> bool:
         if not self.game.userstories.statistical_research_available:
-            return -10
+            return False
         stories_before = len(self.game.userstories.stories_list)
         self.game.press_statistical_research()
         stories_after = len(self.game.userstories.stories_list)
-        if stories_before == stories_after:
-            return -10
-        return 1
+        return stories_before != stories_after
     
-    def _perform_user_survey(self) -> int:
+    def _perform_user_survey(self) -> bool:
         if not self.game.userstories.user_survey_available:
-            return -10
+            return False
         stories_before = len(self.game.userstories.stories_list)
         self.game.press_user_survey()
         stories_after = len(self.game.userstories.stories_list)
-        if stories_before == stories_after:
-            return -10
-        return 1
+        return stories_before != stories_after
     
-    def _perform_action(self, action: int):
+    def _perform_action(self, action: int) -> bool:
         # we'll assume that action in range(0, max_action_num)
         if action == START_SPRINT:
             return self._perform_start_sprint_action()
@@ -270,7 +251,7 @@ class ProductOwnerEnv:
         
         return self._perform_action_card(action - self.meta_action_dim)
 
-    def _perform_action_card(self, action: int) -> int:
+    def _perform_action_card(self, action: int) -> bool:
         if action < self.userstory_env.max_action_num:
             return self._perform_action_userstory(action)
         
@@ -281,7 +262,7 @@ class ProductOwnerEnv:
         card_id = card_id - self.backlog_env.backlog_max_action_num
         return self._perform_remove_sprint_card(card_id)
 
-    def _perform_action_backlog_card(self, action: int) -> int:
+    def _perform_action_backlog_card(self, action: int) -> bool:
         card: Card = None
         backlog_env = self.backlog_env
 
@@ -297,16 +278,16 @@ class ProductOwnerEnv:
             card = self._get_card(backlog_env.backlog_tech_debt, tech_debt_card_id)
         
         if card is None:
-            return -10
+            return False
         
         hours_after_move = self.game.backlog.calculate_hours_sum() + card.info.hours
         if hours_after_move > self.game.backlog.get_max_hours():
-            return -1
+            return False
 
         self.game.move_backlog_card(card)
-        return 1
+        return True
 
-    def _perform_action_userstory(self, action: int) -> int:
+    def _perform_action_userstory(self, action: int) -> bool:
         if action < self.userstory_env.us_common_count:
             card = self._get_card(self.userstory_env.userstories_common, action)
         elif action - self.userstory_env.us_common_count < self.userstory_env.us_bug_count:
@@ -318,15 +299,15 @@ class ProductOwnerEnv:
                 action - self.userstory_env.us_common_count - self.userstory_env.us_bug_count)
 
         if card is None or not self.game.userstories.available:
-            return -10
+            return False
 
         if not card.is_movable:
-            return -1
+            return False
 
         self.game.move_userstory_card(card)
-        return 1
+        return True
 
-    def _perform_remove_sprint_card(self, card_id: int) -> int:
+    def _perform_remove_sprint_card(self, card_id: int) -> bool:
         card = None
         backlog_env = self.backlog_env
 
@@ -342,9 +323,9 @@ class ProductOwnerEnv:
             card = self._get_card(backlog_env.sprint_tech_debt, tech_debt_card_id)
 
         if card is None:
-            return -10
+            return False
         self.game.move_sprint_card(card)
-        return -2
+        return True
 
     def _get_card(self, sampled, index):
         if 0 <= index < len(sampled):
