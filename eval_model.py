@@ -1,5 +1,7 @@
 from environment import CreditPayerEnv, TutorialSolverEnv, ProductOwnerEnv
 import numpy as np
+
+from environment.reward_sytem import EmpiricalCreditStageRewardSystem, EmpiricalRewardSystem, FullPotentialCreditRewardSystem
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent
 import matplotlib.pyplot as plt
 from pipeline.base_study import MAX_INNER_SPRINT_ACTION_COUNT
@@ -71,14 +73,17 @@ def update_logs(env, sprints, loyalties, customers, money, wins):
 
 def play_tutorial(main_env, tutorial_agent, backlog_env, is_silent=True):
     main_env.reset()
-    env = TutorialSolverEnv(backlog_env=backlog_env, with_info=main_env.with_info)
+    reward_system = EmpiricalRewardSystem(config={'remove_sprint_card_actions': []})
+    env = TutorialSolverEnv(backlog_env=backlog_env, with_info=main_env.with_info, reward_system=reward_system)
     return play_some_stage(main_env, env, tutorial_agent, "tutorial reward", is_silent)
 
 
 def play_credit_payment(main_env, credit_agent, backlog_env, is_silent=True, with_end=False):
     current_sprint = main_env.game.context.current_sprint
     state_line = "credit reward" if current_sprint < 7 else "credit end reward"
-    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end, with_info=main_env.with_info)
+    reward_system = FullPotentialCreditRewardSystem(config={})
+    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end, with_info=main_env.with_info,
+                         reward_system=reward_system)
     return play_some_stage(main_env, env, credit_agent, state_line, is_silent)
 
 
@@ -91,7 +96,7 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
     translator_env.IS_SILENT = is_silent
     translator_env.game = main_env.game
     done = main_env.game.context.get_money() < 0
-    state = translator_env._get_state()
+    state = translator_env.recalculate_state()
     info = translator_env.get_info()
     inner_sprint_action_count = 0
     total_reward = 0
@@ -114,7 +119,7 @@ def choose_action(agent, state, info, inner_sprint_action_count, is_silent=True)
         inner_sprint_action_count = 0
     else:
         inner_sprint_action_count += 1
-    if inner_sprint_action_count > MAX_INNER_SPRINT_ACTION_COUNT:
+    if inner_sprint_action_count == MAX_INNER_SPRINT_ACTION_COUNT:
         action = 0
         inner_sprint_action_count = 0
         if not is_silent:
