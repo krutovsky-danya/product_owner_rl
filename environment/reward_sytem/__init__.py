@@ -1,3 +1,4 @@
 from .base_reward_system import BaseRewardSystem
 from .empirical_reward_system import EmpiricalRewardSystem, BoundedEmpiricalRewardSystem
 from .empirical_credit_stage_reward_system import EmpiricalCreditStageRewardSystem, BoundedEmpiricalCreditStageRewardSystem
+from .full_potential_credit_reward_system import FullPotentialCreditRewardSystem

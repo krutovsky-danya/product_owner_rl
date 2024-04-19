@@ -11,8 +11,8 @@ class EmpiricalCreditStageRewardSystem(EmpiricalRewardSystem):
         self.potential_weight = 3
         self.late_purchases_reward = -100
 
-    def get_reward(self, state_old, action, state_new) -> float:
-        reward = super().get_reward(state_old, action, state_new)
+    def get_reward(self, state_old, action, state_new, success) -> float:
+        reward = super().get_reward(state_old, action, state_new, success)
         reward += self.get_credit_payer_reward(state_old, state_new)
         if self.with_late_purchase_punishment:
             reward += self.get_late_purchases_punishment(state_old, action, state_new)
@@ -47,4 +47,5 @@ class BoundedEmpiricalCreditStageRewardSystem(EmpiricalCreditStageRewardSystem):
     def __init__(self, with_late_purchase_punishment, config: dict) -> None:
         super().__init__(with_late_purchase_punishment, config)
         self.potential_weight = 0.03
+        self.money_weight = 1e-5
         self.late_purchases_reward = -0.5
