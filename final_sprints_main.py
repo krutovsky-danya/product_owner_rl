@@ -7,14 +7,14 @@ from pipeline.aggregator_study import update_reward_system_config
 import visualizer
 
 
-def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n, with_info):
+def make_final_sprints_study(prev_agents, trajectory_max_len, episode_n, with_info, save_rate=None):
     reward_system = EmpiricalRewardSystem(config={})
     env = ProductOwnerEnv(with_info=with_info, reward_system=reward_system)
     update_reward_system_config(env, reward_system)
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
     agents = prev_agents + [agent]
 
-    study = AggregatorStudy(env, agents, trajectory_max_len)
+    study = AggregatorStudy(env, agents, trajectory_max_len, save_rate=save_rate)
     study.study_agent(episode_n)
 
     return study

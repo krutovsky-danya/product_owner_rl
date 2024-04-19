@@ -12,7 +12,7 @@ import visualizer
 
 def make_tutorial_study(trajectory_max_len, episode_n, with_info):
     backlog_env = BacklogEnv(4, 0, 0, 0, 0, 0)
-    reward_system = BoundedEmpiricalRewardSystem(config={'remove_sprint_card_actions': []})
+    reward_system = EmpiricalRewardSystem(config={'remove_sprint_card_actions': []})
     env = TutorialSolverEnv(backlog_env=backlog_env, with_info=with_info, reward_system=reward_system)
     update_reward_system_config(env, reward_system)
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
