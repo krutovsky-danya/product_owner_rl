@@ -182,8 +182,14 @@ class ProductOwnerEnv:
         state_new = self.reward_system.copy_state(self.game)
         reward = self.reward_system.get_reward(state_old, action, state_new, success)
         info = self.get_info()
-        done = self.game.context.done or len(info) == 0 or (self.game.context.customers <= 0 and not self.game.context.is_new_game)
+        done = self.get_done(info)
         return self.current_state, reward, done, info
+
+    def get_done(self, info):
+        game_done = self.game.context.done
+        no_available_actions = len(info) == 0
+        lost_customers = (self.game.context.customers <= 0 and not self.game.context.is_new_game)
+        return game_done or no_available_actions or lost_customers
 
     def _perform_start_sprint_action(self) -> bool:
         can_start_sprint = self.game.backlog.can_start_sprint()
