@@ -53,3 +53,9 @@ class BaseStudy:
             state = self.env.reset()
             info = self.env.get_info()
             self.play_trajectory(state, info)
+
+    def train(self):
+        self.agent.train_mode = True
+
+    def eval(self):
+        self.agent.train_mode = False
