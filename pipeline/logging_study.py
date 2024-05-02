@@ -125,25 +125,36 @@ class LoggingStudy(MetricsStudy):
 
     def study_agent(self, episode_n):
         agent_name = type(self.agent).__name__
+        env_name = type(self.env).__name__
+        epoch_n = self.define_epoch_count_and_save_rate(episode_n)
+
+        os.makedirs(agent_name, exist_ok=True)
+
+        for epoch in range(epoch_n):
+            path = f"{agent_name}/model_{epoch}_{env_name}.pt"
+            super().study_agent(self.save_rate)
+            # self.save_model(path, agent_name, env_name, epoch)
+
+    def define_epoch_count_and_save_rate(self, episode_n) -> int:
         if self.save_rate is None:
             epoch_n = 1
             self.save_rate = episode_n
         else:
             epoch_n = math.ceil(episode_n / self.save_rate)
 
-        os.makedirs(agent_name, exist_ok=True)
+        return epoch_n
 
-        for epoch in range(epoch_n):
-            path = f"{agent_name}/model_{epoch}.pt"
-            super().study_agent(self.save_rate)
-            memory = self.agent.memory
-            if not self.SAVE_MEMORY:
-                self.agent.memory = []
-            save_dqn_agent(self.agent, path=path)
-            self.agent.memory = memory
-            with open(f"{agent_name}/rewards_{epoch}.txt", mode="w") as f:
-                f.write(repr(self.rewards_log))
-            with open(f"{agent_name}/estimates_{epoch}.txt", mode="w") as f:
-                f.write(repr(self.q_value_log))
-            with open(f"{agent_name}/sprints_{epoch}.txt", mode="w") as f:
-                f.write(repr(self.sprints_log))
+    def save_model(self, path, agent_name, env_name, epoch):
+        memory = self.agent.memory
+        if not self.SAVE_MEMORY:
+            self.agent.memory = []
+        save_dqn_agent(self.agent, path=path)
+        self.agent.memory = memory
+        with open(f"{agent_name}/rewards_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(repr(self.rewards_log))
+        with open(f"{agent_name}/estimates_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(repr(self.q_value_log))
+        with open(f"{agent_name}/sprints_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(repr(self.sprints_log))
+        with open(f"{agent_name}/loss_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(repr(self.loss_log))
