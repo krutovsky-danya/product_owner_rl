@@ -133,7 +133,7 @@ class LoggingStudy(MetricsStudy):
         for epoch in range(epoch_n):
             path = f"{agent_name}/model_{epoch}_{env_name}.pt"
             super().study_agent(self.save_rate)
-            # self.save_model(path, agent_name, env_name, epoch)
+            self.save_model(path, agent_name, env_name, epoch)
 
     def define_epoch_count_and_save_rate(self, episode_n) -> int:
         if self.save_rate is None:
