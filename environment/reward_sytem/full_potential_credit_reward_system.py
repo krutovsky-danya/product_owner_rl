@@ -3,13 +3,17 @@ import torch
 
 
 class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, coefficient=1) -> None:
         super().__init__(config)
         self.remove_sprint_card_reward = 0
         self.valid_action_reward = 0
+        self.wrong_action_reward = -10 * coefficient
+        self.credit_payment_reward = 10 * coefficient
+        self.win_reward = 500 * coefficient
+        self.lose_reward = -50 * coefficient
         self.get_action_reward = lambda old, action, new: 0
-        self.potential_weight = 0.3
-        self.money_weight = 1e-3
+        self.potential_weight = 0.3 * coefficient
+        self.money_weight = 1e-3 * coefficient
 
     def get_reward(self, state_old, action, state_new, success) -> float:
         reward = super().get_reward(state_old, action, state_new, success)
@@ -44,7 +48,7 @@ class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
         customers = self.get_customers(state)
         loyalty = self.get_loyalty(state)
 
-        if blank_counter >= 13:
+        if blank_counter >= 13 or customers < 5.5:
             return 0
         indexes = torch.arange(max(blank_counter - 4, 3), 9)
         # сумма арифметической прогрессии с разностью 1, первым элементом 3 и
