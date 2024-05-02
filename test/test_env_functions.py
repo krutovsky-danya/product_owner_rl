@@ -92,7 +92,7 @@ class TestEnvFunctions(unittest.TestCase):
         return self.can_move_any_backlog_card()
 
     def find_available_to_move_backlog_card(self):
-        state = self.env._get_state()
+        state = self.env.recalculate_state()
         backlog_begin = self.env.meta_space_dim + \
             self.env.userstory_env.userstory_space_dim
         backlog_end = backlog_begin + self.env.backlog_env.backlog_space_dim

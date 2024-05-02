@@ -1,6 +1,7 @@
 from .base_reward_system import BaseRewardSystem
 
 START_SPRINT = 0
+RELEASE = 2
 
 class EmpiricalRewardSystem(BaseRewardSystem):
     def __init__(self, config: dict) -> None:
@@ -11,9 +12,10 @@ class EmpiricalRewardSystem(BaseRewardSystem):
         self.lose_reward = -50
         self.remove_sprint_card_reward = -2
         self.valid_action_reward = 1
+        self.money_weight = 1e-3
 
-    def get_reward(self, state_old, action, state_new) -> float:
-        if (state_old == state_new).all():
+    def get_reward(self, state_old, action, state_new, success) -> float:
+        if not success:
             return self.wrong_action_reward
         reward = 0
         if self.get_credit(state_old) > 0 and self.get_credit(state_new) <= 0:
@@ -39,8 +41,8 @@ class EmpiricalRewardSystem(BaseRewardSystem):
         return self.valid_action_reward
 
     def get_reward_for_starting_sprint(self, state_old, state_new) -> float:
-        money_before = self.get_money(state_old)
-        money_after = self.get_money(state_new)
+        money_before = self.get_money(state_old) * self.money_weight
+        money_after = self.get_money(state_new) * self.money_weight
         base_reward = money_after - money_before
         if base_reward < 0:
             return base_reward
@@ -58,3 +60,4 @@ class BoundedEmpiricalRewardSystem(EmpiricalRewardSystem):
         self.lose_reward = -1
         self.remove_sprint_card_reward = -0.02
         self.valid_action_reward = 0.01
+        self.money_weight = 1e-5
