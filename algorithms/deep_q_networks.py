@@ -49,12 +49,10 @@ class DQN(nn.Module):
         self.epsilon_min = epsilon_min
         self.memory = []
         self.optimizer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
-        self.train_mode = True
+        self._train_mode = True
 
     @torch.no_grad()
     def get_action(self, state, info):
-        epsilon = self.epsilon
-        self.epsilon = self.epsilon if self.train_mode else 0
         mask = info["actions"]
         state = torch.FloatTensor(state).to(self.device)
         q_values = self.q_function(state)
@@ -63,7 +61,6 @@ class DQN(nn.Module):
         probs = self.epsilon * np.ones_like(mask) / len(mask)
         probs[masked_argmax_action] += 1 - self.epsilon
         masked_action = np.random.choice(mask, p=probs)
-        self.epsilon = epsilon
         return masked_action
 
     @torch.no_grad()
@@ -78,7 +75,7 @@ class DQN(nn.Module):
                                        value=guide[0].item())
 
     def fit(self, state, action, reward, done, next_state, next_info):
-        if not self.train_mode:
+        if not self._train_mode:
             return
         next_guide = torch.tensor(next_info['actions'])
         self.memory.append(
@@ -120,6 +117,15 @@ class DQN(nn.Module):
 
         return loss.cpu().detach().numpy()
 
+    def train(self, mode: bool = True, epsilon: float = 0):
+        super().train(mode)
+        self._train_mode = mode
+        self.epsilon = epsilon if mode else 0
+        return self
+
+    def eval(self):
+        return self.train(False)
+
 
 class TargetDQN(DQN):
     def __init__(
@@ -156,7 +162,7 @@ class TargetDQN(DQN):
                          dim=1).values
 
     def fit(self, state, action, reward, done, next_state, next_actions):
-        if not self.train_mode:
+        if not self._train_mode:
             return
         loss = super().fit(state, action, reward, done, next_state, next_actions)
 
