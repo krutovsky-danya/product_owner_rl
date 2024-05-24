@@ -9,3 +9,6 @@ class UserStoryCard:
 
     def set_card_info(self, card_info: UserStoryCardInfo):
         self.info = card_info
+
+    def __repr__(self) -> str:
+        return repr(self.info)

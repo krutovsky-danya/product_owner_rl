@@ -1,6 +1,9 @@
+from typing import List
+
 from game.common_methods import sample_n_or_zero
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
+from game.userstories.userstories import UserStoryCard
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from environment.card_methods import split_cards_in_types
 
@@ -28,7 +31,7 @@ class UserstoryEnv:
             self.us_bug_count + \
             self.us_td_count
 
-        self.userstories_common = []
+        self.userstories_common: List[UserStoryCard] = []
         self.userstories_bugs = []
         self.userstories_td = []
 
@@ -37,6 +40,18 @@ class UserstoryEnv:
                                   self.us_common_count,
                                   self.us_bug_count,
                                   self.us_td_count)
+    
+    def get_encoded_card(self, index: int):
+        # resturns card by index
+        if index < self.us_common_count:
+            return self.userstories_common[index]
+        index -= self.us_common_count
+        if index < self.us_bug_count:
+            return self.userstories_bugs[index]
+        index -= self.us_bug_count
+        if index < self.us_td_count:
+            return self.userstories_td[index]
+        return None
 
     def _encode_queue(self, cards, count_common, count_bug, count_td):
         commons, bugs, tech_debts = split_cards_in_types(cards)

@@ -1,5 +1,6 @@
 from game.backlog.backlog import Backlog
 from game.backlog_card.backlog_card import Card
+from game.backlog_card.card_info import CardInfo
 from game.common_methods import sample_n_or_zero
 from environment.card_methods import split_cards_in_types
 
@@ -47,13 +48,13 @@ class BacklogEnv:
         self.backlog: Optional[Backlog] = None
         self.context: Optional[GlobalContext] = None
 
-        self.backlog_commons = []
-        self.backlog_bugs = []
-        self.backlog_tech_debt = []
+        self.backlog_commons: List[CardInfo] = []
+        self.backlog_bugs: List[CardInfo] = []
+        self.backlog_tech_debt: List[CardInfo] = []
 
-        self.sprint_commons = []
-        self.sprint_bugs = []
-        self.sprint_tech_debt = []
+        self.sprint_commons: List[CardInfo] = []
+        self.sprint_bugs: List[CardInfo] = []
+        self.sprint_tech_debt: List[CardInfo] = []
 
     def _set_backlog_cards(self, commons, bugs, tech_debt):
         self.backlog_commons = commons
@@ -64,6 +65,18 @@ class BacklogEnv:
         self.sprint_commons = commons
         self.sprint_bugs = bugs
         self.sprint_tech_debt = tech_debt
+
+    def get_card(self, index: int):
+        if index < self.backlog_commons_count:
+            return self.backlog_commons[index]
+
+        bug_card_id = index - self.backlog_commons_count
+        if bug_card_id < self.backlog_bugs_count:
+            return self.backlog_bugs[bug_card_id]
+
+        tech_debt_card_id = bug_card_id - self.backlog_bugs_count
+        if tech_debt_card_id < self.backlog_tech_debt_count:    
+            return self.backlog_tech_debt[tech_debt_card_id]
 
     def encode(self, backlog: Backlog) -> List[float]:
         self.backlog = backlog

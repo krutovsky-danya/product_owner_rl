@@ -1,14 +1,33 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir
+from os import listdir, getcwd, path
+from typing import Tuple
+
+BOARD_X0 = 715
+BOARD_X1 = 925
+BOARD_Y0 = 135
+BOARD_Y1 = 495
+
+
+class UserStoryImageInfo:
+    def __init__(self, color, loyalty, customers, position) -> None:
+        self.color = color
+        self.loyalty = loyalty
+        self.customers = customers
+        self.position = position
 
 
 def load_characters():
     characters = []
-    for f in listdir("web_interaction/templates"):
-        key = '' if f[:5] == 'empty' else f[0]
-        digit = cv2.imread(f"web_interaction/templates/{f}")
+    template_dir = getcwd()
+    if "web_interaction" not in template_dir:
+        template_dir = path.join(template_dir, "web_interaction")
+    template_dir = path.join(template_dir, "templates")
+
+    for f in listdir(template_dir):
+        key = "" if f[:5] == "empty" else f[0]
+        digit = cv2.imread(path.join(template_dir, f))
         characters.append((key, digit))
     return characters
 
@@ -16,14 +35,21 @@ def load_characters():
 CHARACTERS = load_characters()
 
 
-def get_black_white_image(image, backgruond_color):
+def get_black_white_image(image: cv2.typing.MatLike, backgruond_color):
     lower = backgruond_color * 0.6
     upper = backgruond_color * 1.01
     mask = cv2.inRange(image, lower, upper)
+    image = image.copy()
     image[mask == 255] = [255, 255, 255]
     image[mask == 0] = [0, 0, 0]
 
     return image
+
+
+def is_loading(image: cv2.typing.MatLike):
+    black_color = [0, 0, 0]
+    uniform_area = image[5:155, 5:155]
+    return (uniform_area == black_color).all()
 
 
 def find_digit(image):
@@ -41,15 +67,20 @@ def get_float(nums, num_width, num_count):
     for i in range(num_count):
         num = nums[:, num_width * i : num_width * (i + 1)]
         digit = find_digit(num)
-        if digit == 'k':
+        if digit == "k":
+            value = str(float(value) * 1000)
             break
         if digit is None:
-            cv2.imwrite(f"templates/unknown.png", num)
             plt.imshow(num)
             plt.show()
-            break
+            filename = input()
+            cv2.imwrite(f"web_interaction/templates/{filename}.png", num)
+            global CHARACTERS
+            CHARACTERS = load_characters()
+            digit = filename[0]
         value += str(digit)
     return float(value)
+
 
 def get_user_story_float(nums):
     num_width = 6
@@ -70,7 +101,7 @@ def get_user_story_loyalty(user_story):
 def get_user_story_customers(user_story):
     customers_nums = user_story[19:27, 55:]
     customers_value = get_user_story_float(customers_nums)
-    return customers_value
+    return customers_value / 1000
 
 
 def get_user_story_description(user_story):
@@ -80,11 +111,13 @@ def get_user_story_description(user_story):
     loyalty_value = get_user_story_loyalty(user_story_bw)
     customers_value = get_user_story_customers(user_story_bw)
 
+    color = frozenset(enumerate(color))
+
     return color, loyalty_value, customers_value
 
 
 def get_board(image: cv2.typing.MatLike):
-    board = image[135:495, 715:925]
+    board = image[BOARD_Y0:BOARD_Y1, BOARD_X0:BOARD_X1]
     return board
 
 
@@ -100,38 +133,44 @@ def get_rows(board_image: cv2.typing.MatLike):
         if (color == [255, 255, 255]).all():
             break
 
-        rows.append(row)
+        rows.append((row, (BOARD_X0 + x_0, BOARD_Y0 + y_0)))
 
     return rows
 
 
 def get_user_stories(frame):
     user_stories = []
+    positions = []
     user_stories_board = get_board(frame)
     user_stories_cards = get_rows(user_stories_board)
-    for user_story in user_stories_cards:
+    for user_story, position in user_stories_cards:
         description = get_user_story_description(user_story)
         user_stories.append(description)
+        positions.append(position)
 
-    return user_stories
+    return user_stories, positions
 
 
-def split_row(row: cv2.typing.MatLike):
+def split_row(row: cv2.typing.MatLike, position: Tuple[int, int]):
     left = row[:, :42]
     right = row[:, 46:]
     if (right[0, 0] == [255, 255, 255]).all():
-        return [left]
-    return [left, right]
+        return [left], [position]
+    x, y = position
+    right_pos = (x + 46, y)
+    return [left, right], [position, right_pos]
 
 
-def get_backlog_card_descripton(card_image: cv2.typing.MatLike):
+def get_backlog_card_descripton(card_image: cv2.typing.MatLike, position: Tuple[int, int]):
     color = np.array(card_image[0, 0])
     card_image = get_black_white_image(card_image, color)
 
     hours = card_image[9:24, 3:25]
     hours_value = get_backlog_float(hours)
 
-    return color, hours_value
+    color = frozenset(enumerate(color))
+
+    return color, hours_value, position
 
 
 def get_backlog_card_images(image):
@@ -139,30 +178,104 @@ def get_backlog_card_images(image):
 
     backlog_rows = get_rows(backlog_board)
     cards = []
-    for row in backlog_rows:
-        row_cards = split_row(row)
+    positions = []
+    for row, position in backlog_rows:
+        row_cards, row_positions = split_row(row, position)
         cards.extend(row_cards)
+        positions.extend(row_positions)
 
-    return cards
+    return cards, positions
 
 
 def get_backlog(image):
     backlog_cards = []
-    cards = get_backlog_card_images(image)
+    cards, positions = get_backlog_card_images(image)
 
-    for card in cards:
-        card_descripton = get_backlog_card_descripton(card)
+    for card, position in zip(cards, positions):
+        card_descripton = get_backlog_card_descripton(card, position)
         backlog_cards.append(card_descripton)
 
     return backlog_cards
 
 
-def main():
-    image = cv2.imread("tests/test_images/iframe_user_stories.png")
-    user_stories = get_user_stories(image)
-    print(user_stories)
+def get_sprint_number(meta_info: cv2.typing.MatLike):
+    sprint = meta_info[14:30, 487:530]
 
-    image = cv2.imread("tests/test_images/iframe_backlog.png")
+    sprint_n = get_float(sprint, 11, 3)
+
+    return sprint_n
+
+
+def get_game_money(meta_info: cv2.typing.MatLike):
+    money = meta_info[33:49, 421:480]
+    unique_colors = np.unique(money[:, 0], axis=0)
+    while len(unique_colors) == 1:
+        money = money[:, 1:]
+        unique_colors = np.unique(money[:, 0], axis=0)
+    money_value = get_float(money, 11, 5)
+    return money_value
+
+
+def get_customers(meta_info: cv2.typing.MatLike):
+    num_width = 9
+    num_count = 6
+    image_width = num_width * num_count
+    customers_nums = meta_info[18:29, 161 : 161 + image_width]
+
+    customers_value = get_float(customers_nums, num_width, num_count)
+    return customers_value / 1000
+
+
+def get_loyalty(meta_info: cv2.typing.MatLike):
+    loyalty_nums = meta_info[38:49, 143:206]
+
+    loyalty_value = get_float(loyalty_nums, 9, 5)
+    return loyalty_value
+
+
+def get_current_sprint_hours(backlog_image):
+    backlog_board = get_board(backlog_image)
+    button = backlog_board[334:356, 11:199]
+
+    button_action = button[:, :100]
+    button_action_digit = find_digit(button_action)
+    if button_action_digit == "d":
+        nums = button[7:15, 115:145]
+    else:
+        nums = button[8:16, 138:168]
+    nums = get_black_white_image(nums, nums[0, 0])
+    current_hours_nums = nums[:, :12]
+    current_hours_value = get_float(current_hours_nums, 6, 2)
+
+    return current_hours_value
+
+
+def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
+    return image[7:83, 57:932]
+
+
+def main():
+    image = cv2.imread("web_interaction/game_state.png")
+    meta_info = get_meta_info_image(image)
+
+    sprint_n = get_sprint_number(meta_info)
+    print(sprint_n)
+
+    money = get_game_money(meta_info)
+    print(money)
+
+    customers_value = get_customers(meta_info)
+    print(customers_value)
+
+    loyalty_value = get_loyalty(meta_info)
+    print(loyalty_value)
+
+    # current_sprint_hours = get_current_sprint_hours(image)
+    # print(current_sprint_hours)
+
+    # user_stories = get_user_stories(image)
+    # print(user_stories)
+
     backlog_cards = get_backlog(image)
     print(backlog_cards)
 
