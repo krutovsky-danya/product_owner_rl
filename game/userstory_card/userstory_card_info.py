@@ -25,6 +25,9 @@ class UserStoryCardInfo:
         self.related_cards: List[CardInfo] = []
         self.generate_related_cards()
 
+    def __repr__(self) -> str:
+        return f'{self.label} l:{self.loyalty} c:{self.customers_to_bring}'
+
     def _set_card_type(self, label_val: str):
         if label_val == "S":
             self.time_to_complete = 38

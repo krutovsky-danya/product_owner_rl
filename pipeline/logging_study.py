@@ -11,7 +11,7 @@ from typing import List, Tuple, Optional
 
 
 class LoggingStudy(MetricsStudy):
-    SAVE_MEMORY = True
+    SAVE_MEMORY = False
 
     def __init__(
         self,

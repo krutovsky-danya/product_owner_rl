@@ -3,14 +3,15 @@ from game.game_variables import GlobalContext
 from game.game_constants import GlobalConstants
 from game.userstories.userstories_generator import UserStoriesGenerator
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from typing import List
 
 
 class UserStories:
     def __init__(self, context: GlobalContext):
         self.context = context
 
-        self.stories_list = []
-        self.release = []
+        self.stories_list: List[UserStoryCard] = []
+        self.release: List[UserStoryCard] = []
 
         self.user_survey_available = False
         self.statistical_research_available = True

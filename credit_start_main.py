@@ -3,6 +3,7 @@ from environment.backlog_env import BacklogEnv
 from environment.reward_sytem import FullPotentialCreditRewardSystem
 from environment.reward_sytem import EmpiricalCreditStageRewardSystem
 from pipeline import AggregatorStudy, STUDY, CREDIT_END, CREDIT_FULL, CREDIT_START, TUTORIAL
+from environment.userstory_env import UserstoryEnv
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent
 from pipeline.aggregator_study import update_reward_system_config
 from main import create_usual_agent
@@ -32,7 +33,9 @@ def make_credit_study(agents,
                       save_rate=None):
     with_end, with_late_purchases_penalty = parse_state_from_stage(stage)
     reward_system = get_reward_system(stage, with_late_purchases_penalty)
-    env = CreditPayerEnv(with_end=with_end, with_info=with_info, reward_system=reward_system)
+    userstory_env = UserstoryEnv(2, 0, 0)
+    backlog_env = BacklogEnv(6, 0, 0, 0, 0, 0)
+    env = CreditPayerEnv(userstory_env, backlog_env, with_end=with_end, with_info=with_info, reward_system=reward_system)
     update_reward_system_config(env, reward_system)
 
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
@@ -54,7 +57,7 @@ def main():
     order = [TUTORIAL]
     agents = {TUTORIAL: tutorial_agent}
 
-    study = make_credit_study(agents, order, 100, 1400, CREDIT_START, with_info=True)
+    study = make_credit_study(agents, order, 100, 800, CREDIT_START, with_info=True)
     agent = study.agent
 
     visualizer.show_rewards(study, show_estimates=True, filename='figures/rewards.png')
@@ -64,16 +67,16 @@ def main():
     agent.memory = []
     save_dqn_agent(agent, 'models/credit_start_model.pt')
 
-    end_study = make_credit_study(agents, order, 100, 1400, CREDIT_END, with_info=True)
-    end_agent = end_study.agent
+    # end_study = make_credit_study(agents, order, 100, 1400, CREDIT_END, with_info=True)
+    # end_agent = end_study.agent
 
-    visualizer.show_rewards(end_study, show_estimates=True, filename='figures/rewards.png')
-    visualizer.show_sprints(end_study, filename='figures/sprints.png')
-    visualizer.show_loss(end_study, filename='figures/loss.png')
+    # visualizer.show_rewards(end_study, show_estimates=True, filename='figures/rewards.png')
+    # visualizer.show_sprints(end_study, filename='figures/sprints.png')
+    # visualizer.show_loss(end_study, filename='figures/loss.png')
 
-    end_agent.memory = []
-    save_dqn_agent(end_agent, 'models/credit_end_model.pt')
-
+    # end_agent.memory = []
+    # save_dqn_agent(end_agent, 'models/credit_end_model.pt')
+    
 
 if __name__ == '__main__':
     main()
