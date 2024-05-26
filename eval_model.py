@@ -1,31 +1,35 @@
-from environment import CreditPayerEnv, TutorialSolverEnv, ProductOwnerEnv
 import numpy as np
-
-from environment.reward_sytem import EmpiricalCreditStageRewardSystem, EmpiricalRewardSystem, FullPotentialCreditRewardSystem
-from pipeline.study_agent import load_dqn_agent, save_dqn_agent
 import matplotlib.pyplot as plt
+
+from environment import CreditPayerEnv, TutorialSolverEnv, ProductOwnerEnv
+from pipeline.study_agent import load_dqn_agent
 from pipeline.base_study import MAX_INNER_SPRINT_ACTION_COUNT
+from pipeline import TUTORIAL, CREDIT_FULL, CREDIT_START, CREDIT_END, END
+from pipeline.aggregator_study import update_reward_system_config
+from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
+                                      EmpiricalRewardSystem,
+                                      FullPotentialCreditRewardSystem)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 20
 BIGGER_SIZE = 22
 
-plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+plt.rc('font', size=MEDIUM_SIZE)         # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # font size of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # font size of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # font size of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # font size of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend font size
+plt.rc('figure', titlesize=BIGGER_SIZE)  # font size of the figure title
 
 
-def eval_some_model(env: ProductOwnerEnv, agents, backlog_envs, repeat_count: int, is_silent: bool):
+def eval_model(environments, agents, order, repeat_count: int, is_silent: bool):
     rewards, sprints, loyalties, customers, money, wins = [], [], [], [], [], []
 
     for _ in range(repeat_count):
-        reward = eval_agents_trajectory(env, agents, backlog_envs, is_silent)
+        reward = play_eval_trajectory(environments, agents, order, is_silent)
         rewards.append(reward)
-        update_logs(env, sprints, loyalties, customers, money, wins)
+        update_logs(environments[order[-1]], sprints, loyalties, customers, money, wins)
 
     customers = np.array(customers)
     loyalties = np.array(loyalties)
@@ -39,25 +43,26 @@ def eval_some_model(env: ProductOwnerEnv, agents, backlog_envs, repeat_count: in
              "wins": wins})
 
 
-def eval_agents_trajectory(env: ProductOwnerEnv, agents, backlog_envs, is_silent):
-    stage = len(agents)
-    if stage == 2:
-        assert isinstance(env, CreditPayerEnv)
+def play_eval_trajectory(environments, agents, order, is_silent):
+    for stage in order:
+        assert stage in environments
+        assert stage in agents or stage == END
+    env = environments[order[-1]]
     full_reward = 0
+    env.reset()
 
-    if stage > 0:
-        full_reward += play_tutorial(env, agents[0], backlog_envs[0], is_silent)
-    if stage > 1:
-        with_end = False if stage > 2 else env.with_end
-        full_reward += play_credit_payment(env, agents[1], backlog_envs[1],
-                                           is_silent, with_end=with_end)
-    if stage > 2:
-        full_reward += play_credit_payment(env, agents[2], backlog_envs[2],
-                                           is_silent, with_end=True)
-    if stage > 3:
-        full_reward += play_some_stage(env, env, agents[3], "end", is_silent)
-    print(f"full reward: {full_reward},"
-          f"current sprint: {env.game.context.current_sprint}")
+    for stage in order:
+        if stage == END and not (stage in agents):
+            full_reward += play_end(env, is_silent)
+        else:
+            full_reward += play_some_stage(env,
+                                           environments[stage],
+                                           agents[stage],
+                                           f"{stage} reward",
+                                           is_silent)
+    if not is_silent:
+        print(f"full reward: {full_reward},"
+              f"current sprint: {env.game.context.current_sprint}")
 
     return full_reward
 
@@ -71,33 +76,24 @@ def update_logs(env, sprints, loyalties, customers, money, wins):
     money.append(context.get_money())
 
 
-def play_tutorial(main_env, tutorial_agent, backlog_env, is_silent=True):
-    main_env.reset()
-    reward_system = EmpiricalRewardSystem(config={'remove_sprint_card_actions': []})
-    env = TutorialSolverEnv(backlog_env=backlog_env, with_info=main_env.with_info, reward_system=reward_system)
-    return play_some_stage(main_env, env, tutorial_agent, "tutorial reward", is_silent)
+def play_end(main_env, is_silent=True):
+    done = main_env.game.context.get_money() < 0 or main_env.game.context.customers <= 0
+    total_reward = 0
+    while not done:
+        state, reward, done, info = main_env.step(0)
+        total_reward += reward
 
-
-def play_credit_payment(main_env, credit_agent, backlog_env, is_silent=True, with_end=False):
-    current_sprint = main_env.game.context.current_sprint
-    state_line = "credit reward" if current_sprint < 7 else "credit end reward"
-    reward_system = FullPotentialCreditRewardSystem(config={})
-    env = CreditPayerEnv(backlog_env=backlog_env, with_end=with_end, with_info=main_env.with_info,
-                         reward_system=reward_system)
-    return play_some_stage(main_env, env, credit_agent, state_line, is_silent)
-
-
-def play_end(main_env, end_agent, is_silent=True):
-    return play_some_stage(main_env, main_env, end_agent, "end reward", is_silent)
+    return total_reward
 
 
 def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, agent,
                     state_line, is_silent=True):
-    translator_env.IS_SILENT = is_silent
     translator_env.game = main_env.game
-    done = main_env.game.context.get_money() < 0
+    lost_customers = not main_env.game.context.is_new_game and main_env.game.context.customers <= 0
+    done = main_env.game.context.get_money() < 0 or lost_customers
     state = translator_env.recalculate_state()
     info = translator_env.get_info()
+    done = done or len(info["actions"]) == 0
     inner_sprint_action_count = 0
     total_reward = 0
 
@@ -108,7 +104,8 @@ def play_some_stage(main_env: ProductOwnerEnv, translator_env: ProductOwnerEnv, 
 
         total_reward += reward
 
-    print(f"{state_line}: {total_reward}")
+    if not is_silent:
+        print(f"{state_line}: {total_reward}")
 
     return total_reward
 
@@ -127,44 +124,93 @@ def choose_action(agent, state, info, inner_sprint_action_count, is_silent=True)
     return action, inner_sprint_action_count
 
 
-def load_agents():
-    agent_tutorial = load_dqn_agent("./models/current/tutorial_agent.pt")
-    agent_tutorial.epsilon = 0
-    agent_credit = load_dqn_agent("./models/current/credit_start_agent.pt")
-    agent_credit.epsilon = 0
-    agent_credit_end = load_dqn_agent("./models/current/credit_end_agent.pt")
-    agent_credit_end.epsilon = 0
-    agent_end = load_dqn_agent("./models/current/end_agent.pt")
-    return [agent_tutorial, agent_credit, agent_credit_end, agent_end]
+def load_agents(paths):
+    agents = {}
+    for stage, path in paths.items():
+        agent = load_dqn_agent(path)
+        agent.epsilon = 0
+        agents[stage] = agent
+    return agents
 
 
-def define_backlog_environments():
-    return [None] * 4
+def get_backlog_environments():
+    return {
+        TUTORIAL: None,
+        CREDIT_FULL: None,
+        CREDIT_END: None,
+        CREDIT_START: None,
+        END: None
+    }
 
 
-def eval_model():
-    backlog_environments = define_backlog_environments()
-    env = ProductOwnerEnv(backlog_env=backlog_environments[-1], with_info=True)
-    env.IS_SILENT = True
+def get_reward_systems():
+    return {
+        TUTORIAL: EmpiricalRewardSystem(config={}),
+        CREDIT_FULL: FullPotentialCreditRewardSystem(config={}),
+        CREDIT_START: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=False,
+                                                       config={}),
+        CREDIT_END: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=True, config={}),
+        END: EmpiricalRewardSystem(config={})
+    }
 
-    results = eval_some_model(env, load_agents(), backlog_environments, 10, is_silent=True)
-    print(results[0])
-    results = results[1]
 
+def get_environments(backlog_environments, reward_systems, with_info):
+    res = {
+        TUTORIAL: TutorialSolverEnv(userstory_env=None,
+                                    backlog_env=backlog_environments[TUTORIAL],
+                                    with_info=with_info,
+                                    reward_system=reward_systems[TUTORIAL]),
+        CREDIT_FULL: CreditPayerEnv(userstory_env=None,
+                                    backlog_env=backlog_environments[CREDIT_FULL],
+                                    with_end=True,
+                                    with_info=with_info,
+                                    reward_system=reward_systems[CREDIT_FULL]),
+        CREDIT_START: CreditPayerEnv(userstory_env=None,
+                                     backlog_env=backlog_environments[CREDIT_START],
+                                     with_end=False,
+                                     with_info=with_info,
+                                     reward_system=reward_systems[CREDIT_START]),
+        CREDIT_END: CreditPayerEnv(userstory_env=None,
+                                   backlog_env=backlog_environments[CREDIT_END],
+                                   with_end=True,
+                                   with_info=with_info,
+                                   reward_system=reward_systems[CREDIT_END]),
+        END: ProductOwnerEnv(userstory_env=None,
+                             backlog_env=backlog_environments[END],
+                             with_info=with_info,
+                             reward_system=reward_systems[END])
+    }
+
+    for stage, env in res.items():
+        update_reward_system_config(env, env.reward_system)
+    return res
+
+
+def show_usual_plots(results):
     for name, result in results.items():
         plt.plot(result, '.')
         plt.xlabel("Trajectory")
         plt.ylabel(name)
         plt.show()
 
+
+def eval_wins_and_losses(results):
     wins = np.array(results["wins"])
     wins_check = (wins == 1)
     print(f"wins: {len(wins[wins_check])}")
     money = np.array(results["money"])
     print(f"losses: {len(money[money < 0])}")
 
-    trajectories = np.arange(len(wins), dtype=np.int32)
+    return wins_check
 
+
+def show_plots_with_wins(results, show_plots=True):
+    wins_check = eval_wins_and_losses(results)
+
+    if not show_plots:
+        return
+
+    trajectories = np.arange(len(wins_check), dtype=np.int32)
     for name in ["money", "sprints"]:
         plt.plot(trajectories[wins_check], np.array(results[name])[wins_check], '.',
                  label="win", color="red")
@@ -176,5 +222,32 @@ def eval_model():
         plt.show()
 
 
+def load_and_eval_model(paths, repeats=10, with_plots=True, is_silent=False, with_info=True):
+    agents = load_agents(paths)
+    environments = get_environments(get_backlog_environments(), get_reward_systems(), with_info)
+    full_order = [TUTORIAL, CREDIT_FULL, END]
+
+    results = eval_model(environments, agents, full_order, repeats, is_silent=is_silent)
+    print(results[0])
+    results = results[1]
+
+    if with_plots:
+        show_usual_plots(results)
+
+    show_plots_with_wins(results, with_plots)
+
+
+def main():
+    tutorial_path = "./DoubleDQN/model_0_TutorialSolverEnv.pt"
+
+    for i in range(1, 50):
+        paths = {
+            TUTORIAL: tutorial_path,
+            CREDIT_FULL: f"./DoubleDQN/model_{i}_CreditPayerEnv.pt"
+        }
+        print(f"current model: {i}")
+        load_and_eval_model(paths, repeats=1000, with_plots=False, is_silent=True, with_info=True)
+
+
 if __name__ == "__main__":
-    eval_model()
+    main()

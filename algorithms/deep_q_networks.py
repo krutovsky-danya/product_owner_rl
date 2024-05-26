@@ -74,6 +74,8 @@ class DQN(nn.Module):
                                        value=guide[0].item())
 
     def fit(self, state, action, reward, done, next_state, next_info):
+        if not self.training:
+            return
         next_guide = torch.tensor(next_info['actions'])
         self.memory.append(
             [
@@ -114,6 +116,14 @@ class DQN(nn.Module):
 
         return loss.cpu().detach().numpy()
 
+    def train(self, mode: bool = True, epsilon: float = 0):
+        super().train(mode)
+        self.epsilon = epsilon if mode else 0
+        return self
+
+    def eval(self):
+        return self.train(False)
+
 
 class TargetDQN(DQN):
     def __init__(
@@ -150,6 +160,8 @@ class TargetDQN(DQN):
                          dim=1).values
 
     def fit(self, state, action, reward, done, next_state, next_actions):
+        if not self.training:
+            return
         loss = super().fit(state, action, reward, done, next_state, next_actions)
 
         self.fit_calls += 1

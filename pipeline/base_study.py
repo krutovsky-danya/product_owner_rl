@@ -53,3 +53,11 @@ class BaseStudy:
             state = self.env.reset()
             info = self.env.get_info()
             self.play_trajectory(state, info)
+
+    def train(self, mode: bool = True, epsilon: float = 0, epsilon_decrease=None):
+        self.agent.train(mode, epsilon)
+        if epsilon_decrease is not None:
+            self.agent.epsilon_decrease = epsilon_decrease
+
+    def eval(self):
+        self.train(mode=False)

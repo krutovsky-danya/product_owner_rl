@@ -11,6 +11,7 @@ class RewardAdapter:
         self.sprint_hours_index = "sprint_hours"
         self.done_index = "done"
         self.blank_sprint_counter_index = "blank_sprint_counter"
+        self.new_game_index = "new_game"
 
     def copy_state(self, game: ProductOwnerGame):
         state = {
@@ -21,7 +22,8 @@ class RewardAdapter:
             self.credit_index: game.context.credit,
             self.sprint_hours_index: game.backlog.calculate_hours_sum(),
             self.done_index: game.context.done,
-            self.blank_sprint_counter_index: game.context.blank_sprint_counter
+            self.blank_sprint_counter_index: game.context.blank_sprint_counter,
+            self.new_game_index: game.context.is_new_game,
         }
 
         return state
@@ -50,3 +52,6 @@ class RewardAdapter:
 
     def get_blank_sprint_counter(self, state) -> int:
         return int(state[self.blank_sprint_counter_index])
+
+    def is_new_game(self, state):
+        return bool(state[self.new_game_index])
