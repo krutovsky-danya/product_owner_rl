@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from os import listdir, getcwd, path
 from typing import Tuple
 
-BOARD_X0 = 715
-BOARD_X1 = 925
-BOARD_Y0 = 135
-BOARD_Y1 = 495
+BOARD_X0 = 715  # 1372
+BOARD_X1 = 925  # 1750
+BOARD_Y0 = 135  # 268
+BOARD_Y1 = 495  # 939
 
 
 class UserStoryImageInfo:
@@ -161,7 +161,9 @@ def split_row(row: cv2.typing.MatLike, position: Tuple[int, int]):
     return [left, right], [position, right_pos]
 
 
-def get_backlog_card_descripton(card_image: cv2.typing.MatLike, position: Tuple[int, int]):
+def get_backlog_card_descripton(
+    card_image: cv2.typing.MatLike, position: Tuple[int, int]
+):
     color = np.array(card_image[0, 0])
     card_image = get_black_white_image(card_image, color)
 
@@ -250,8 +252,19 @@ def get_current_sprint_hours(backlog_image):
     return current_hours_value
 
 
+meta_info_positions = {
+    (540, 960, 3): {"x_0": 57, "y_0": 7, "x_1": 932, "y_1": 83},
+    (1028, 1920, 3): {"x_0": 184, "y_0": 36, "x_1": 1794, "y_1": 136},
+}
+
+
 def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
-    return image[7:83, 57:932]
+    position = meta_info_positions[image.shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    return image[y_0:y_1, x_0:x_1]
 
 
 def main():
