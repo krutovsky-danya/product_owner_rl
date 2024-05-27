@@ -199,11 +199,25 @@ def get_backlog(image):
 
     return backlog_cards
 
+sprint_positions = {
+    (540, 960, 3): {'y_0': 14, 'y_1': 30, 'x_0': 487, 'x_1': 530, 'width': 11},
+    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, 'width': 18},
+}
 
-def get_sprint_number(meta_info: cv2.typing.MatLike):
-    sprint = meta_info[14:30, 487:530]
+def get_sprint_number(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    position = sprint_positions[original_shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    width = position['width']
 
-    sprint_n = get_float(sprint, 11, 3)
+    sprint = meta_info[y_0:y_1, x_0:x_1]
+
+    plt.imshow(sprint)
+    plt.show()
+
+    sprint_n = get_float(sprint, width, 3)
 
     return sprint_n
 
@@ -268,10 +282,12 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 
 def main():
-    image = cv2.imread("web_interaction/game_state.png")
+    # image = cv2.imread("web_interaction/game_state.png")
+    image = cv2.imread('tests/test_images/yellow_backlog.png')
+    original_shape = image.shape
     meta_info = get_meta_info_image(image)
 
-    sprint_n = get_sprint_number(meta_info)
+    sprint_n = get_sprint_number(meta_info, original_shape)
     print(sprint_n)
 
     money = get_game_money(meta_info)
