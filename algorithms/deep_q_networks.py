@@ -13,17 +13,27 @@ class QFunction(nn.Module):
         self.inner_layer = inner_layer
 
         self.network = nn.Sequential(
+            # nn.BatchNorm1d(state_dim),
             nn.Linear(state_dim, self.inner_layer),
             nn.ReLU(),
+            # nn.BatchNorm1d(self.inner_layer),
             nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
+            # nn.BatchNorm1d(self.inner_layer),
             nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
+            # nn.BatchNorm1d(self.inner_layer),
             nn.Linear(self.inner_layer, action_n),
         )
 
     def forward(self, states):
         return self.network(states)
+
+    def predict(self, state):
+        self.network.eval()
+        result = self.network(state.unsqueeze(0))
+        self.network.train(True)
+        return result
 
 
 class DQN(nn.Module):
@@ -54,7 +64,7 @@ class DQN(nn.Module):
     def get_action(self, state, info):
         mask = info["actions"]
         state = torch.FloatTensor(state).to(self.device)
-        q_values = self.q_function(state)
+        q_values = self.q_function.predict(state).squeeze()
         masked_q_values = q_values[mask]
         masked_argmax_action = torch.argmax(masked_q_values)
         probs = self.epsilon * np.ones_like(mask) / len(mask)

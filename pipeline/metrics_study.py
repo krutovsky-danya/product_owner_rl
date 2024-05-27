@@ -17,7 +17,7 @@ class MetricsStudy(BaseStudy):
     def play_trajectory(self, init_state, init_info):
         with torch.no_grad():
             state = torch.tensor(init_state).to(self.agent.device)
-            q_values: torch.Tensor = self.agent.q_function(state)
+            q_values: torch.Tensor = self.agent.q_function.predict(state)
         estimates = q_values.max().detach().cpu().numpy()
         self.q_value_log.append(estimates)
 
