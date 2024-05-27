@@ -239,21 +239,42 @@ def get_game_money(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int
     money_value = get_float(money, width, 5)
     return money_value
 
+customers_positions = {
+    (540, 960, 3): {'y_0': 18, 'y_1': 29, 'x_0': 161, 'x_1': 206, 'width': 9},
+    (1028, 1920, 3): {"x_0": 291, "y_0": 12, "x_1": 900, "y_1": 34, 'width': 18},
+}
 
-def get_customers(meta_info: cv2.typing.MatLike):
-    num_width = 9
+def get_customers(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    position = customers_positions[original_shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    num_width = position['width']
     num_count = 6
     image_width = num_width * num_count
-    customers_nums = meta_info[18:29, 161 : 161 + image_width]
+    customers_nums = meta_info[y_0:y_1, x_0 : x_0 + image_width]
 
     customers_value = get_float(customers_nums, num_width, num_count)
     return customers_value / 1000
 
+loyalty_positions = {
+    (540, 960, 3): {'y_0': 38, 'y_1': 49, 'x_0': 143, 'x_1': 206, 'width': 9},
+    (1028, 1920, 3): {"x_0": 255, "y_0": 49, "x_1": 900, "y_1": 71, 'width': 18},
+}
 
-def get_loyalty(meta_info: cv2.typing.MatLike):
-    loyalty_nums = meta_info[38:49, 143:206]
+def get_loyalty(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    position = loyalty_positions[original_shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    num_width = position['width']
+    num_count = 6
+    image_width = num_width * num_count
+    loyalty_nums = meta_info[y_0:y_1, x_0 : x_0 + image_width]
 
-    loyalty_value = get_float(loyalty_nums, 9, 5)
+    loyalty_value = get_float(loyalty_nums, num_width, num_count)
     return loyalty_value
 
 
@@ -301,10 +322,10 @@ def main():
     money = get_game_money(meta_info, original_shape)
     print(money)
 
-    customers_value = get_customers(meta_info)
+    customers_value = get_customers(meta_info, original_shape)
     print(customers_value)
 
-    loyalty_value = get_loyalty(meta_info)
+    loyalty_value = get_loyalty(meta_info, original_shape)
     print(loyalty_value)
 
     # current_sprint_hours = get_current_sprint_hours(image)
