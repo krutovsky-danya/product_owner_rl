@@ -44,33 +44,43 @@ class AggregatorStudy(LoggingStudy):
         self.reward_systems = reward_systems
         super().__init__(environments[STUDY], agents[STUDY], trajectory_max_len, save_rate)
 
-    def play_trajectory(self, state, info):
+    def play_trajectory(self, state, info, init_discount=1):
         full_reward = 0
+        full_discounted_reward = 0
+        discount = init_discount
 
         for name in self.order:
             translator_env = self.get_translator_env(name)
             init_done = self.get_initial_done(name)
             update_reward_system_config(translator_env, translator_env.reward_system)
-            state, info, reward, failed = self.play_some_stage(self.agents[name],
-                                                               translator_env,
-                                                               init_done,
-                                                               name)
+            state, info, reward, failed, discounted_reward, discount = self.play_some_stage(
+                self.agents[name],
+                translator_env,
+                init_done,
+                name,
+                discount
+            )
             full_reward += reward
+            full_discounted_reward += discounted_reward
             if failed:
                 self._log_trajectory_end(full_reward)
-                return full_reward
-        full_reward += super().play_trajectory(state, info)
+                return full_reward, full_discounted_reward
+        reward_study, discounted_reward_study = super().play_trajectory(state, info, discount)
+        full_reward += reward_study
+        full_discounted_reward += discounted_reward_study
         self.logger.info(f"full total_reward: {full_reward}")
-        return full_reward
+        return full_reward, full_discounted_reward
 
-    def play_some_stage(self, agent, translator_env, init_done, name):
-        agent.epsilon = 0
+    def play_some_stage(self, agent, translator_env, init_done, name, init_discount):
+        agent.eval()
         translator_env.game = self.env.game
         done = init_done
         state = translator_env.recalculate_state()
         info = translator_env.get_info()
         inner_sprint_action_count = 0
         total_reward = 0
+        total_discounted_reward = 0
+        discount = init_discount
 
         while not done:
             action = agent.get_action(state, info)
@@ -81,6 +91,8 @@ class AggregatorStudy(LoggingStudy):
             self._log_after_action(action)
 
             total_reward += reward
+            total_discounted_reward += reward * discount
+            discount *= agent.gamma
 
         self.logger.debug(f"{name} end")
         if translator_env.game.context.get_money() < 0:
@@ -90,7 +102,7 @@ class AggregatorStudy(LoggingStudy):
         info = self.env.get_info()
         failed = translator_env.game.context.get_money() < 0
 
-        return state, info, total_reward, failed
+        return state, info, total_reward, failed, total_discounted_reward, discount
 
     def get_translator_env(self, name):
         if name in self.environments:

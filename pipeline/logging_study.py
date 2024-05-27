@@ -82,11 +82,11 @@ class LoggingStudy(MetricsStudy):
         self.loss_log.append(loss)
         return loss
 
-    def play_trajectory(self, init_state, init_info) -> float:
-        reward = super().play_trajectory(init_state, init_info)
+    def play_trajectory(self, init_state, init_info, init_discount=1) -> Tuple[float, float]:
+        reward, discounted_reward = super().play_trajectory(init_state, init_info, init_discount)
         self._log_trajectory_end(reward)
 
-        return reward
+        return reward, discounted_reward
 
     def _log_trajectory_end(self, reward):
         sprint_n = self.env.game.context.current_sprint
@@ -152,6 +152,8 @@ class LoggingStudy(MetricsStudy):
         self.agent.memory = memory
         with open(f"{agent_name}/rewards_{epoch}_{env_name}.txt", mode="w") as f:
             f.write(repr(self.rewards_log))
+        with open(f"{agent_name}/discounted_rewards_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(repr(self.discounted_rewards_log))
         with open(f"{agent_name}/estimates_{epoch}_{env_name}.txt", mode="w") as f:
             f.write(repr(self.q_value_log))
         with open(f"{agent_name}/sprints_{epoch}_{env_name}.txt", mode="w") as f:
