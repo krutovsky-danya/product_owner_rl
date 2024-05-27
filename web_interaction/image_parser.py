@@ -65,7 +65,7 @@ def find_digit(image):
 def get_float(nums, num_width, num_count):
     value = ""
     for i in range(num_count):
-        num = nums[:, num_width * i : num_width * (i + 1)]
+        num: cv2.typing.MatLike = nums[:, num_width * i : num_width * (i + 1)]
         digit = find_digit(num)
         if digit == "k":
             value = str(float(value) * 1000)
@@ -74,6 +74,8 @@ def get_float(nums, num_width, num_count):
             plt.imshow(num)
             plt.show()
             filename = input()
+            y, x, _ = num.shape
+            filename += f'_{y}x{x}'
             cv2.imwrite(f"web_interaction/templates/{filename}.png", num)
             global CHARACTERS
             CHARACTERS = load_characters()
@@ -201,7 +203,7 @@ def get_backlog(image):
 
 sprint_positions = {
     (540, 960, 3): {'y_0': 14, 'y_1': 30, 'x_0': 487, 'x_1': 530, 'width': 11},
-    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, 'width': 18},
+    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, 'width': 21},
 }
 
 def get_sprint_number(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
@@ -213,22 +215,28 @@ def get_sprint_number(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, 
     width = position['width']
 
     sprint = meta_info[y_0:y_1, x_0:x_1]
-
-    plt.imshow(sprint)
-    plt.show()
-
     sprint_n = get_float(sprint, width, 3)
-
     return sprint_n
 
+money_positions = {
+    (540, 960, 3): {'y_0': 33, 'y_1': 49, 'x_0': 421, 'x_1': 480, 'width': 11},
+    (1028, 1920, 3): {"x_0": 750, "y_0": 44, "x_1": 900, "y_1": 69, 'width': 21},
+}
 
-def get_game_money(meta_info: cv2.typing.MatLike):
-    money = meta_info[33:49, 421:480]
+def get_game_money(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    position = money_positions[original_shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    width = position['width']
+    money = meta_info[y_0:y_1, x_0:x_1]
     unique_colors = np.unique(money[:, 0], axis=0)
     while len(unique_colors) == 1:
         money = money[:, 1:]
         unique_colors = np.unique(money[:, 0], axis=0)
-    money_value = get_float(money, 11, 5)
+
+    money_value = get_float(money, width, 5)
     return money_value
 
 
@@ -290,7 +298,7 @@ def main():
     sprint_n = get_sprint_number(meta_info, original_shape)
     print(sprint_n)
 
-    money = get_game_money(meta_info)
+    money = get_game_money(meta_info, original_shape)
     print(money)
 
     customers_value = get_customers(meta_info)
