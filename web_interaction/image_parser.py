@@ -4,11 +4,6 @@ import matplotlib.pyplot as plt
 from os import listdir, getcwd, path
 from typing import Tuple
 
-BOARD_X0 = 715  # 1372
-BOARD_X1 = 925  # 1750
-BOARD_Y0 = 135  # 268
-BOARD_Y1 = 495  # 939
-
 
 class UserStoryImageInfo:
     def __init__(self, color, loyalty, customers, position) -> None:
@@ -35,10 +30,16 @@ def load_characters():
 CHARACTERS = load_characters()
 
 
-def get_black_white_image(image: cv2.typing.MatLike, backgruond_color):
+def get_black_white_image(
+    image: cv2.typing.MatLike, backgruond_color, original_shape: Tuple[int, int, int]
+):
     lower = backgruond_color * 0.6
     upper = backgruond_color * 1.01
-    mask = cv2.inRange(image, lower, upper)
+    if original_shape == (1028, 1920, 3):
+        black = np.array([0, 0, 0])
+        mask = cv2.inRange(image, black, black)
+    else:
+        mask = cv2.inRange(image, lower, upper)
     image = image.copy()
     image[mask == 255] = [255, 255, 255]
     image[mask == 0] = [0, 0, 0]
@@ -75,7 +76,7 @@ def get_float(nums, num_width, num_count):
             plt.show()
             filename = input()
             y, x, _ = num.shape
-            filename += f'_{y}x{x}'
+            filename += f"_{y}x{x}"
             cv2.imwrite(f"web_interaction/templates/{filename}.png", num)
             global CHARACTERS
             CHARACTERS = load_characters()
@@ -89,8 +90,14 @@ def get_user_story_float(nums):
     return get_float(nums, num_width, 5)
 
 
-def get_backlog_float(nums):
-    num_width = 11
+backlog_num_width = {
+    (540, 960, 3): 11,
+    (1028, 1920, 3): 20,
+}
+
+
+def get_backlog_float(nums: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    num_width = backlog_num_width[original_shape]
     return get_float(nums, num_width, 2)
 
 
@@ -118,24 +125,46 @@ def get_user_story_description(user_story):
     return color, loyalty_value, customers_value
 
 
+board_positions = {
+    (540, 960, 3): {"y_0": 135, "y_1": 495, "x_0": 715, "x_1": 925},
+    (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
+}
+
+
 def get_board(image: cv2.typing.MatLike):
-    board = image[BOARD_Y0:BOARD_Y1, BOARD_X0:BOARD_X1]
+    position = board_positions[image.shape]
+    x_0 = position["x_0"]
+    x_1 = position["x_1"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    board = image[y_0:y_1, x_0:x_1]
     return board
 
 
-def get_rows(board_image: cv2.typing.MatLike):
+rows_params = {
+    (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
+    (1028, 1920, 3): {"w": 169, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
+}
+
+
+def get_rows(board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, int]):
+    row_params = rows_params[origingal_shape]
+    position = board_positions[origingal_shape]
+    board_x0 = position["x_0"]
+    board_y0 = position["y_0"]
     rows = []
-    w, h = 88, 37
+    w = row_params["w"]
+    h = row_params["h"]
     for i in range(10):
-        x_0 = 10
-        y_0 = 48 + 46 * i
+        x_0 = row_params["x_0"]
+        y_0 = row_params["y_0"] + row_params["height"] * i
         row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
 
         color = row[0, 0]
         if (color == [255, 255, 255]).all():
             break
 
-        rows.append((row, (BOARD_X0 + x_0, BOARD_Y0 + y_0)))
+        rows.append((row, (board_x0 + x_0, board_y0 + y_0)))
 
     return rows
 
@@ -153,75 +182,115 @@ def get_user_stories(frame):
     return user_stories, positions
 
 
-def split_row(row: cv2.typing.MatLike, position: Tuple[int, int]):
-    left = row[:, :42]
-    right = row[:, 46:]
+cards_params = {
+    (540, 960, 3): {"l": 42, "r": 46},
+    (1028, 1920, 3): {"l": 81, "r": 85},
+}
+
+
+def split_row(
+    row: cv2.typing.MatLike,
+    position: Tuple[int, int],
+    original_shape: Tuple[int, int, int],
+):
+    plt.imshow(row)
+    plt.show()
+    card_params = cards_params[original_shape]
+    l = card_params["l"]
+    r = card_params["r"]
+    left = row[:, :l]
+    right = row[:, r:]
     if (right[0, 0] == [255, 255, 255]).all():
         return [left], [position]
     x, y = position
-    right_pos = (x + 46, y)
+    right_pos = (x + r, y)
     return [left, right], [position, right_pos]
 
 
+hours_positions = {
+    (540, 960, 3): {"x_0": 3, "x_1": 25, "y_0": 9, "y_1": 24},
+    (1028, 1920, 3): {"x_0": 8, "x_1": 48, "y_0": 17, "y_1": 44},
+}
+
+
 def get_backlog_card_descripton(
-    card_image: cv2.typing.MatLike, position: Tuple[int, int]
+    card_image: cv2.typing.MatLike,
+    position: Tuple[int, int],
+    original_shape: Tuple[int, int, int],
 ):
     color = np.array(card_image[0, 0])
-    card_image = get_black_white_image(card_image, color)
+    card_image = get_black_white_image(card_image, color, original_shape)
 
-    hours = card_image[9:24, 3:25]
-    hours_value = get_backlog_float(hours)
+    hours_position = hours_positions[original_shape]
+    x_0 = hours_position["x_0"]
+    x_1 = hours_position["x_1"]
+    y_0 = hours_position["y_0"]
+    y_1 = hours_position["y_1"]
+
+    hours = card_image[y_0:y_1, x_0:x_1]
+
+    plt.imshow(hours)
+    plt.show()
+    hours_value = get_backlog_float(hours, original_shape)
 
     color = frozenset(enumerate(color))
 
     return color, hours_value, position
 
 
-def get_backlog_card_images(image):
+def get_backlog_card_images(image: cv2.typing.MatLike):
     backlog_board = get_board(image)
 
-    backlog_rows = get_rows(backlog_board)
+    backlog_rows = get_rows(backlog_board, image.shape)
     cards = []
     positions = []
     for row, position in backlog_rows:
-        row_cards, row_positions = split_row(row, position)
+        row_cards, row_positions = split_row(row, position, image.shape)
         cards.extend(row_cards)
         positions.extend(row_positions)
 
     return cards, positions
 
 
-def get_backlog(image):
+def get_backlog(image: cv2.typing.MatLike):
     backlog_cards = []
     cards, positions = get_backlog_card_images(image)
 
     for card, position in zip(cards, positions):
-        card_descripton = get_backlog_card_descripton(card, position)
+        plt.imshow(card)
+        plt.show()
+        card_descripton = get_backlog_card_descripton(card, position, image.shape)
         backlog_cards.append(card_descripton)
 
     return backlog_cards
 
+
 sprint_positions = {
-    (540, 960, 3): {'y_0': 14, 'y_1': 30, 'x_0': 487, 'x_1': 530, 'width': 11},
-    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, 'width': 21},
+    (540, 960, 3): {"y_0": 14, "y_1": 30, "x_0": 487, "x_1": 530, "width": 11},
+    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, "width": 21},
 }
 
-def get_sprint_number(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+
+def get_sprint_number(
+    meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+):
     position = sprint_positions[original_shape]
     x_0 = position["x_0"]
     x_1 = position["x_1"]
     y_0 = position["y_0"]
     y_1 = position["y_1"]
-    width = position['width']
+    width = position["width"]
 
     sprint = meta_info[y_0:y_1, x_0:x_1]
     sprint_n = get_float(sprint, width, 3)
     return sprint_n
 
+
 money_positions = {
-    (540, 960, 3): {'y_0': 33, 'y_1': 49, 'x_0': 421, 'x_1': 480, 'width': 11},
-    (1028, 1920, 3): {"x_0": 750, "y_0": 44, "x_1": 900, "y_1": 69, 'width': 21},
+    (540, 960, 3): {"y_0": 33, "y_1": 49, "x_0": 421, "x_1": 480, "width": 11},
+    (1028, 1920, 3): {"x_0": 750, "y_0": 44, "x_1": 900, "y_1": 69, "width": 21},
 }
+
 
 def get_game_money(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
     position = money_positions[original_shape]
@@ -229,7 +298,7 @@ def get_game_money(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int
     x_1 = position["x_1"]
     y_0 = position["y_0"]
     y_1 = position["y_1"]
-    width = position['width']
+    width = position["width"]
     money = meta_info[y_0:y_1, x_0:x_1]
     unique_colors = np.unique(money[:, 0], axis=0)
     while len(unique_colors) == 1:
@@ -239,10 +308,12 @@ def get_game_money(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int
     money_value = get_float(money, width, 5)
     return money_value
 
+
 customers_positions = {
-    (540, 960, 3): {'y_0': 18, 'y_1': 29, 'x_0': 161, 'x_1': 206, 'width': 9},
-    (1028, 1920, 3): {"x_0": 291, "y_0": 12, "x_1": 900, "y_1": 34, 'width': 18},
+    (540, 960, 3): {"y_0": 18, "y_1": 29, "x_0": 161, "x_1": 206, "width": 9},
+    (1028, 1920, 3): {"x_0": 291, "y_0": 12, "x_1": 900, "y_1": 34, "width": 18},
 }
+
 
 def get_customers(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
     position = customers_positions[original_shape]
@@ -250,7 +321,7 @@ def get_customers(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int,
     x_1 = position["x_1"]
     y_0 = position["y_0"]
     y_1 = position["y_1"]
-    num_width = position['width']
+    num_width = position["width"]
     num_count = 6
     image_width = num_width * num_count
     customers_nums = meta_info[y_0:y_1, x_0 : x_0 + image_width]
@@ -258,10 +329,12 @@ def get_customers(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int,
     customers_value = get_float(customers_nums, num_width, num_count)
     return customers_value / 1000
 
+
 loyalty_positions = {
-    (540, 960, 3): {'y_0': 38, 'y_1': 49, 'x_0': 143, 'x_1': 206, 'width': 9},
-    (1028, 1920, 3): {"x_0": 255, "y_0": 49, "x_1": 900, "y_1": 71, 'width': 18},
+    (540, 960, 3): {"y_0": 38, "y_1": 49, "x_0": 143, "x_1": 206, "width": 9},
+    (1028, 1920, 3): {"x_0": 255, "y_0": 49, "x_1": 900, "y_1": 71, "width": 18},
 }
+
 
 def get_loyalty(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
     position = loyalty_positions[original_shape]
@@ -269,7 +342,7 @@ def get_loyalty(meta_info: cv2.typing.MatLike, original_shape: Tuple[int, int, i
     x_1 = position["x_1"]
     y_0 = position["y_0"]
     y_1 = position["y_1"]
-    num_width = position['width']
+    num_width = position["width"]
     num_count = 6
     image_width = num_width * num_count
     loyalty_nums = meta_info[y_0:y_1, x_0 : x_0 + image_width]
@@ -312,7 +385,7 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 def main():
     # image = cv2.imread("web_interaction/game_state.png")
-    image = cv2.imread('tests/test_images/yellow_backlog.png')
+    image = cv2.imread("tests/test_images/yellow_backlog.png")
     original_shape = image.shape
     meta_info = get_meta_info_image(image)
 
