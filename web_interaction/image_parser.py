@@ -113,9 +113,9 @@ def get_user_story_customers(user_story):
     return customers_value / 1000
 
 
-def get_user_story_description(user_story):
+def get_user_story_description(user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
     color = np.array(user_story[0, 0])
-    user_story_bw = get_black_white_image(user_story, color)
+    user_story_bw = get_black_white_image(user_story, color, original_shape)
 
     loyalty_value = get_user_story_loyalty(user_story_bw)
     customers_value = get_user_story_customers(user_story_bw)
@@ -169,13 +169,13 @@ def get_rows(board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, i
     return rows
 
 
-def get_user_stories(frame):
+def get_user_stories(frame: cv2.typing.MatLike):
     user_stories = []
     positions = []
     user_stories_board = get_board(frame)
-    user_stories_cards = get_rows(user_stories_board)
+    user_stories_cards = get_rows(user_stories_board, frame.shape)
     for user_story, position in user_stories_cards:
-        description = get_user_story_description(user_story)
+        description = get_user_story_description(user_story, frame.shape)
         user_stories.append(description)
         positions.append(position)
 
@@ -193,8 +193,6 @@ def split_row(
     position: Tuple[int, int],
     original_shape: Tuple[int, int, int],
 ):
-    plt.imshow(row)
-    plt.show()
     card_params = cards_params[original_shape]
     l = card_params["l"]
     r = card_params["r"]
@@ -229,8 +227,6 @@ def get_backlog_card_descripton(
 
     hours = card_image[y_0:y_1, x_0:x_1]
 
-    plt.imshow(hours)
-    plt.show()
     hours_value = get_backlog_float(hours, original_shape)
 
     color = frozenset(enumerate(color))
@@ -257,8 +253,6 @@ def get_backlog(image: cv2.typing.MatLike):
     cards, positions = get_backlog_card_images(image)
 
     for card, position in zip(cards, positions):
-        plt.imshow(card)
-        plt.show()
         card_descripton = get_backlog_card_descripton(card, position, image.shape)
         backlog_cards.append(card_descripton)
 
