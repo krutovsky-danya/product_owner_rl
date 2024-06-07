@@ -196,6 +196,12 @@ def fill_game_main_info_from_image(game: ProductOwnerGame, image: cv2.typing.Mat
     context.credit = credit
 
 
+board_icons_positions = {
+    (540, 960): {"x": 700, "backlog_y": 245, "user_stories_y": 396},
+    (1028, 1920): {},
+}
+
+
 def apply_start_sprint_action(
     driver, iframe: WebElement, width: int, height: int, env: ProductOwnerEnv
 ):
@@ -220,8 +226,12 @@ def apply_start_sprint_action(
 
     fill_game_main_info_from_image(env.game, game_image)
 
-    click_on_element(driver, iframe, 700, 245)
-    click_on_element(driver, iframe, 700, 396)
+    position = board_icons_positions[(height, width)]
+    x = position['x']
+    backlog_y = position['backlog_y']
+    user_stories_y = position['user_stories_y']
+    click_on_element(driver, iframe, x, backlog_y)
+    click_on_element(driver, iframe, x, user_stories_y)
 
 
 def apply_decompose_action(
@@ -263,6 +273,7 @@ def apply_user_story_action(
     insert_user_stories_from_image(env.game, image)
 
     print(reward)
+
 
 def find_backlog_card_position(card: Card, image: cv2.typing.MatLike):
     card: CardInfo = card.info
