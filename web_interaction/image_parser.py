@@ -84,10 +84,14 @@ def get_float(nums, num_width, num_count):
         value += str(digit)
     return float(value)
 
+user_story_num_width = {
+    (540, 960, 3): 6,
+    (1028, 1920, 3): 11,
+}
 
-def get_user_story_float(nums):
-    num_width = 6
-    return get_float(nums, num_width, 5)
+def get_user_story_float(nums: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+    num_width = user_story_num_width[original_shape]
+    return get_float(nums, num_width, 6)
 
 
 backlog_num_width = {
@@ -101,24 +105,50 @@ def get_backlog_float(nums: cv2.typing.MatLike, original_shape: Tuple[int, int, 
     return get_float(nums, num_width, 2)
 
 
-def get_user_story_loyalty(user_story):
-    loyalty_nums = user_story[7:15, 55:]
-    loyalty_value = get_user_story_float(loyalty_nums)
+loyalty_nums_positions = {
+    (540, 960, 3): {"x_0": 55, "y_0": 7, "y_1": 15},
+    (1028, 1920, 3): {"x_0": 95, "y_0": 15, "y_1": 28},
+}
+
+
+def get_user_story_loyalty(
+    user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+):
+    position = loyalty_nums_positions[original_shape]
+    x_0 = position["x_0"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    loyalty_nums = user_story[y_0:y_1, x_0:]
+    loyalty_value = get_user_story_float(loyalty_nums, original_shape)
     return loyalty_value
 
 
-def get_user_story_customers(user_story):
-    customers_nums = user_story[19:27, 55:]
-    customers_value = get_user_story_float(customers_nums)
+customers_nums_positions = {
+    (540, 960, 3): {"x_0": 55, "y_0": 19, "y_1": 27},
+    (1028, 1920, 3): {"x_0": 95, "y_0": 36, "y_1": 49},
+}
+
+
+def get_user_story_customers(
+    user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+):
+    position = customers_nums_positions[original_shape]
+    x_0 = position["x_0"]
+    y_0 = position["y_0"]
+    y_1 = position["y_1"]
+    customers_nums = user_story[y_0:y_1, x_0:]
+    customers_value = get_user_story_float(customers_nums, original_shape)
     return customers_value / 1000
 
 
-def get_user_story_description(user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+def get_user_story_description(
+    user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+):
     color = np.array(user_story[0, 0])
     user_story_bw = get_black_white_image(user_story, color, original_shape)
 
-    loyalty_value = get_user_story_loyalty(user_story_bw)
-    customers_value = get_user_story_customers(user_story_bw)
+    loyalty_value = get_user_story_loyalty(user_story_bw, original_shape)
+    customers_value = get_user_story_customers(user_story_bw, original_shape)
 
     color = frozenset(enumerate(color))
 
@@ -379,7 +409,9 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 def main():
     # image = cv2.imread("web_interaction/game_state.png")
-    image = cv2.imread("tests/test_images/yellow_backlog.png")
+    # image = cv2.imread("tests/test_images/yellow_backlog.png")
+    image = cv2.imread("web_interaction\game_state1.png")
+    print(image.shape)
     original_shape = image.shape
     meta_info = get_meta_info_image(image)
 
@@ -398,11 +430,11 @@ def main():
     # current_sprint_hours = get_current_sprint_hours(image)
     # print(current_sprint_hours)
 
-    # user_stories = get_user_stories(image)
-    # print(user_stories)
+    user_stories = get_user_stories(image)
+    print(user_stories)
 
-    backlog_cards = get_backlog(image)
-    print(backlog_cards)
+    # backlog_cards = get_backlog(image)
+    # print(backlog_cards)
 
 
 if __name__ == "__main__":
