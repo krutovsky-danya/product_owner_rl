@@ -106,7 +106,7 @@ def get_backlog_float(nums: cv2.typing.MatLike, original_shape: Tuple[int, int, 
 
 
 loyalty_nums_positions = {
-    (540, 960, 3): {"x_0": 55, "y_0": 7, "y_1": 15},
+    (540, 960, 3): {"x_0": 49, "y_0": 7, "y_1": 15},
     (1028, 1920, 3): {"x_0": 95, "y_0": 15, "y_1": 28},
 }
 
@@ -124,7 +124,7 @@ def get_user_story_loyalty(
 
 
 customers_nums_positions = {
-    (540, 960, 3): {"x_0": 55, "y_0": 19, "y_1": 27},
+    (540, 960, 3): {"x_0": 49, "y_0": 19, "y_1": 27},
     (1028, 1920, 3): {"x_0": 95, "y_0": 36, "y_1": 49},
 }
 
@@ -409,8 +409,8 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 def main():
     # image = cv2.imread("web_interaction/game_state.png")
-    # image = cv2.imread("tests/test_images/yellow_backlog.png")
-    image = cv2.imread("web_interaction\game_state1.png")
+    image = cv2.imread("tests/test_images/iframe_user_stories.png")
+    # image = cv2.imread("web_interaction\game_state1.png")
     print(image.shape)
     original_shape = image.shape
     meta_info = get_meta_info_image(image)
