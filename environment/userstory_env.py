@@ -43,13 +43,13 @@ class UserstoryEnv:
     
     def get_encoded_card(self, index: int):
         # resturns card by index
-        if index < self.us_common_count:
+        if 0 <= index < len(self.userstories_common):
             return self.userstories_common[index]
         index -= self.us_common_count
-        if index < self.us_bug_count:
+        if 0 <= index < len(self.userstories_bugs):
             return self.userstories_bugs[index]
         index -= self.us_bug_count
-        if index < self.us_td_count:
+        if 0 <= index < len(self.userstories_td):
             return self.userstories_td[index]
         return None
 
