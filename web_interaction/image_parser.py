@@ -157,7 +157,8 @@ def get_user_story_description(
 
 board_positions = {
     (540, 960, 3): {"y_0": 135, "y_1": 495, "x_0": 715, "x_1": 925},
-    (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
+    (1028, 1920, 3): {"x_0": 1463, "y_0": 268, "x_1": 1841, "y_1": 939},
+    # (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
 }
 
 
@@ -185,7 +186,7 @@ def get_rows(board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, i
     rows = []
     w = row_params["w"]
     h = row_params["h"]
-    for i in range(10):
+    for i in range(6):
         x_0 = row_params["x_0"]
         y_0 = row_params["y_0"] + row_params["height"] * i
         row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
@@ -408,8 +409,8 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 
 def main():
-    # image = cv2.imread("web_interaction/game_state.png")
-    image = cv2.imread("tests/test_images/iframe_user_stories.png")
+    image = cv2.imread("web_interaction/game_state.png")
+    # image = cv2.imread("tests/test_images/iframe_user_stories.png")
     # image = cv2.imread("web_interaction\game_state1.png")
     print(image.shape)
     original_shape = image.shape

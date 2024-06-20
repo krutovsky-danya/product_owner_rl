@@ -9,6 +9,7 @@ from operator import itemgetter
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from single_color_storage import SingleColorStorage
 from typing import List, Sequence, Tuple, FrozenSet
@@ -18,7 +19,7 @@ import time
 import image_parser
 
 
-def open_game():
+def open_game() -> WebDriver:
     driver = webdriver.Chrome()
 
     driver.get("https://npg-team.itch.io/product-owner-simulator")
@@ -181,16 +182,16 @@ def fill_game_main_info_from_image(game: ProductOwnerGame, image: cv2.typing.Mat
     # current_sprint_hours = image_parser.get_current_sprint_hours(image)
     # context.current_sprint_hours = current_sprint_hours
 
-    current_sprint = image_parser.get_sprint_number(meta_info)
+    current_sprint = image_parser.get_sprint_number(meta_info, image.shape)
     context.current_sprint = current_sprint
 
-    money = image_parser.get_game_money(meta_info)
+    money = image_parser.get_game_money(meta_info, image.shape)
     context.set_money(money)
 
-    loyalty = image_parser.get_loyalty(meta_info)
+    loyalty = image_parser.get_loyalty(meta_info, image.shape)
     context.set_loyalty(loyalty)
 
-    context.customers = image_parser.get_customers(meta_info)
+    context.customers = image_parser.get_customers(meta_info, image.shape)
 
     credit = max(300_000 - (current_sprint - 1) * 9_000, 0)
     context.credit = credit
