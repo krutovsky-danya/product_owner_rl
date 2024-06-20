@@ -199,7 +199,7 @@ def fill_game_main_info_from_image(game: ProductOwnerGame, image: cv2.typing.Mat
 
 board_icons_positions = {
     (540, 960): {"x": 700, "backlog_y": 245, "user_stories_y": 396},
-    (1028, 1920): {},
+    (1028, 1920): {'x': 1892, "backlog_y": 466, "user_stories_y": 754},
 }
 
 
