@@ -13,6 +13,7 @@ class EmpiricalRewardSystem(BaseRewardSystem):
         self.remove_sprint_card_reward = -2
         self.valid_action_reward = 1
         self.money_weight = 1e-3
+        self.money_boundary = 1e6
 
     def get_reward(self, state_old, action, state_new, success) -> float:
         if not success:
@@ -29,7 +30,7 @@ class EmpiricalRewardSystem(BaseRewardSystem):
         done = self.get_done(state_new)
         if not done:
             return 0
-        if self.get_money(state_new) > 10:
+        if self.get_money(state_new) >= self.money_boundary:
             return self.win_reward
         return self.lose_reward
 
