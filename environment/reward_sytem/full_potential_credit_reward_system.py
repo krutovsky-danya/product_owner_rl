@@ -14,6 +14,7 @@ class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
         self.get_action_reward = lambda old, action, new: 0
         self.potential_weight = 0.3 * coefficient
         self.money_weight = 1e-3 * coefficient
+        self.money_boundary = 0
 
     def get_reward(self, state_old, action, state_new, success) -> float:
         reward = super().get_reward(state_old, action, state_new, success)

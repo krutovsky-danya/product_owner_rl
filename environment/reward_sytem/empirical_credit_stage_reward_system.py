@@ -10,6 +10,7 @@ class EmpiricalCreditStageRewardSystem(EmpiricalRewardSystem):
         self.with_late_purchase_punishment = with_late_purchase_punishment
         self.potential_weight = 3
         self.late_purchases_reward = -100
+        self.money_boundary = 0
 
     def get_reward(self, state_old, action, state_new, success) -> float:
         reward = super().get_reward(state_old, action, state_new, success)
