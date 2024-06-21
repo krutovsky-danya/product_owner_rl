@@ -77,8 +77,8 @@ def start_game(driver, iframe: WebElement):
 
 def select_user_story_board(driver, iframe: WebElement, width: int, height: int):
     position = board_icons_positions[(height, width)]
-    x = position['x_off']
-    y = position['user_stories_y']
+    x = position["x_off"]
+    y = position["user_stories_y"]
     click_on_element(driver, iframe, x, y)
 
 
@@ -88,10 +88,17 @@ def select_backlog_board(driver, iframe: WebElement, width: int, height: int):
     ).click().perform()
 
 
+board_action_positions = {
+    (540, 960): {"x": 817, "y": 480},
+    (1028, 1920): {"x": 1654, "y": 911},
+}
+
+
 def click_board_button(driver, iframe: WebElement, width: int, height: int):
-    ActionChains(driver).move_to_element_with_offset(
-        iframe, 817 - width // 2, 480 - height // 2  # click to decompose button
-    ).click().perform()
+    position = board_action_positions[(width, height)]
+    x = position["x"]
+    y = position["y"]
+    click_on_element(driver, iframe, x, y)
 
 
 def click_on_element(driver, iframe: WebElement, x: int, y: int):
@@ -199,7 +206,12 @@ def fill_game_main_info_from_image(game: ProductOwnerGame, image: cv2.typing.Mat
 
 board_icons_positions = {
     (540, 960): {"x_on": 700, "x_off": 950, "backlog_y": 245, "user_stories_y": 396},
-    (1028, 1920): {'x_on': 1434, 'x_off': 1892, "backlog_y": 466, "user_stories_y": 754},
+    (1028, 1920): {
+        "x_on": 1434,
+        "x_off": 1892,
+        "backlog_y": 466,
+        "user_stories_y": 754,
+    },
 }
 
 
@@ -228,9 +240,9 @@ def apply_start_sprint_action(
     fill_game_main_info_from_image(env.game, game_image)
 
     position = board_icons_positions[(height, width)]
-    x = position['x_on']
-    backlog_y = position['backlog_y']
-    user_stories_y = position['user_stories_y']
+    x = position["x_on"]
+    backlog_y = position["backlog_y"]
+    user_stories_y = position["user_stories_y"]
     click_on_element(driver, iframe, x, backlog_y)
     click_on_element(driver, iframe, x, user_stories_y)
 
