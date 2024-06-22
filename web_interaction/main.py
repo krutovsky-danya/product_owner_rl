@@ -83,9 +83,10 @@ def select_user_story_board(driver, iframe: WebElement, width: int, height: int)
 
 
 def select_backlog_board(driver, iframe: WebElement, width: int, height: int):
-    ActionChains(driver).move_to_element_with_offset(
-        iframe, 950 - width // 2, 250 - height // 2  # click to user story segment
-    ).click().perform()
+    position = board_icons_positions[(height, width)]
+    x = position["x_off"]
+    y = position["backlog_y"]
+    click_on_element(driver, iframe, x, y)
 
 
 board_action_positions = {
@@ -95,7 +96,7 @@ board_action_positions = {
 
 
 def click_board_button(driver, iframe: WebElement, width: int, height: int):
-    position = board_action_positions[(width, height)]
+    position = board_action_positions[(height, width)]
     x = position["x"]
     y = position["y"]
     click_on_element(driver, iframe, x, y)
