@@ -121,7 +121,6 @@ def click_user_story(driver, iframe: WebElement, x: int, y: int):
     select_user_story_board(driver, iframe, width, height)
     time.sleep(2)
     click_on_element(driver, iframe, x, y)
-    time.sleep(2)
 
 
 def buy_research(driver, iframe: WebElement, width: int, height: int):
