@@ -215,7 +215,7 @@ def get_user_stories(frame: cv2.typing.MatLike):
 
 cards_params = {
     (540, 960, 3): {"l": 42, "r": 46},
-    (1028, 1920, 3): {"l": 81, "r": 85},
+    (1028, 1920, 3): {"l": 81, "r": 87},
 }
 
 
@@ -229,6 +229,8 @@ def split_row(
     r = card_params["r"]
     left = row[:, :l]
     right = row[:, r:]
+    plt.imshow(right)
+    plt.show()
     if (right[0, 0] == [255, 255, 255]).all():
         return [left], [position]
     x, y = position
@@ -291,8 +293,8 @@ def get_backlog(image: cv2.typing.MatLike):
 
 
 sprint_positions = {
-    (540, 960, 3): {"y_0": 14, "y_1": 30, "x_0": 487, "x_1": 530, "width": 11},
-    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1000, "y_1": 32, "width": 21},
+    (540, 960, 3): {"y_0": 14, "y_1": 30, "x_0": 487, "x_1": 630, "width": 11},
+    (1028, 1920, 3): {"x_0": 902, "y_0": 7, "x_1": 1100, "y_1": 32, "width": 21},
 }
 
 
@@ -307,7 +309,7 @@ def get_sprint_number(
     width = position["width"]
 
     sprint = meta_info[y_0:y_1, x_0:x_1]
-    sprint_n = get_float(sprint, width, 3)
+    sprint_n = get_float(sprint, width, 5)
     return sprint_n
 
 
@@ -410,8 +412,8 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 def main():
     # image = cv2.imread("web_interaction/game_state.png")
-    # image = cv2.imread("tests/test_images/backlog_1028_1980.png")
-    image = cv2.imread("tests/test_images/user_stories_1028_1980.png")
+    image = cv2.imread("tests/test_images/backlog_1028_1980.png")
+    # image = cv2.imread("tests/test_images/user_stories_1028_1980.png")
     # image = cv2.imread("web_interaction\game_state1.png")
     print(image.shape)
     original_shape = image.shape
