@@ -409,8 +409,9 @@ def get_meta_info_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
 
 
 def main():
-    image = cv2.imread("web_interaction/game_state.png")
-    # image = cv2.imread("tests/test_images/iframe_user_stories.png")
+    # image = cv2.imread("web_interaction/game_state.png")
+    # image = cv2.imread("tests/test_images/backlog_1028_1980.png")
+    image = cv2.imread("tests/test_images/user_stories_1028_1980.png")
     # image = cv2.imread("web_interaction\game_state1.png")
     print(image.shape)
     original_shape = image.shape
@@ -431,11 +432,13 @@ def main():
     # current_sprint_hours = get_current_sprint_hours(image)
     # print(current_sprint_hours)
 
+    image = cv2.imread("tests/test_images/user_stories_1028_1980.png")
     user_stories = get_user_stories(image)
     print(user_stories)
 
-    # backlog_cards = get_backlog(image)
-    # print(backlog_cards)
+    image = cv2.imread("tests/test_images/backlog_1028_1980.png")
+    backlog_cards = get_backlog(image)
+    print(backlog_cards)
 
 
 if __name__ == "__main__":
