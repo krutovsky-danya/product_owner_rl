@@ -239,12 +239,12 @@ def apply_start_sprint_action(
 
     fill_game_main_info_from_image(env.game, game_image)
 
-    position = board_icons_positions[(height, width)]
-    x = position["x_on"]
-    backlog_y = position["backlog_y"]
-    user_stories_y = position["user_stories_y"]
-    click_on_element(driver, iframe, x, backlog_y)
-    click_on_element(driver, iframe, x, user_stories_y)
+    # position = board_icons_positions[(height, width)]
+    # x = position["x_on"]
+    # backlog_y = position["backlog_y"]
+    # user_stories_y = position["user_stories_y"]
+    # click_on_element(driver, iframe, x, backlog_y)
+    # click_on_element(driver, iframe, x, user_stories_y)
 
 
 def apply_decompose_action(
