@@ -1,4 +1,5 @@
 import cv2
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir, getcwd, path
@@ -77,7 +78,10 @@ def get_float(nums, num_width, num_count):
             filename = input()
             y, x, _ = num.shape
             filename += f"_{y}x{x}"
-            cv2.imwrite(f"web_interaction/templates/{filename}.png", num)
+            cwd = os.getcwd()
+            if 'web_interaction' not in cwd:
+                cwd = os.path.join(cwd, 'web_interaction')
+            cv2.imwrite(os.path.join(cwd, "templates", f"{filename}.png"), num)
             global CHARACTERS
             CHARACTERS = load_characters()
             digit = filename[0]
@@ -174,7 +178,7 @@ def get_board(image: cv2.typing.MatLike):
 
 rows_params = {
     (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
-    (1028, 1920, 3): {"w": 169, "h": 70, "x_0": 8, "y_0": 81, "height": 88},
+    (1028, 1920, 3): {"w": 169, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
 }
 
 
@@ -190,8 +194,8 @@ def get_rows(board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, i
         x_0 = row_params["x_0"]
         y_0 = row_params["y_0"] + row_params["height"] * i
         row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
-        plt.imshow(row)
-        plt.show()
+        # plt.imshow(row)
+        # plt.show()
 
         color = row[0, 0]
         if (color == [255, 255, 255]).all():
