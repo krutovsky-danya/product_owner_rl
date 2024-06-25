@@ -174,7 +174,7 @@ def get_board(image: cv2.typing.MatLike):
 
 rows_params = {
     (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
-    (1028, 1920, 3): {"w": 169, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
+    (1028, 1920, 3): {"w": 169, "h": 70, "x_0": 8, "y_0": 81, "height": 88},
 }
 
 
@@ -190,6 +190,8 @@ def get_rows(board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, i
         x_0 = row_params["x_0"]
         y_0 = row_params["y_0"] + row_params["height"] * i
         row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
+        plt.imshow(row)
+        plt.show()
 
         color = row[0, 0]
         if (color == [255, 255, 255]).all():
@@ -229,8 +231,6 @@ def split_row(
     r = card_params["r"]
     left = row[:, :l]
     right = row[:, r:]
-    plt.imshow(right)
-    plt.show()
     if (right[0, 0] == [255, 255, 255]).all():
         return [left], [position]
     x, y = position

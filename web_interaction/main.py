@@ -324,7 +324,10 @@ def apply_backlog_card_action(
     env._perform_action_backlog_card(action)
 
 
-release_button_positions = {(540, 960): {"x": 115, "y": 455}, (1028, 1920): {}}
+release_button_positions = {
+    (540, 960): {"x": 115, "y": 455},
+    (1028, 1920): {"x": 211, "y": 865},
+}
 
 
 def apply_release_action(
@@ -345,7 +348,6 @@ def apply_release_action(
     env._perform_release()
     fill_game_main_info_from_image(env.game, game_image)
 
-statistical_research_button_positions = {(540, 960): {"x": 765, "y": 115}, (1028, 1920): {}}
 
 def apply_buy_statistical_research_action(
     driver, iframe: WebElement, env: ProductOwnerEnv
