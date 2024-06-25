@@ -80,6 +80,7 @@ def select_user_story_board(driver, iframe: WebElement, width: int, height: int)
     x = position["x_off"]
     y = position["user_stories_y"]
     click_on_element(driver, iframe, x, y)
+    time.sleep(2)
 
 
 def select_backlog_board(driver, iframe: WebElement, width: int, height: int):
@@ -119,7 +120,6 @@ def click_user_story(driver, iframe: WebElement, x: int, y: int):
     width = iframe.rect["width"]  # 960
 
     select_user_story_board(driver, iframe, width, height)
-    time.sleep(2)
     click_on_element(driver, iframe, x, y)
 
 
@@ -252,8 +252,6 @@ def apply_decompose_action(
 ):
     print("Start decomposition")
     select_user_story_board(driver, iframe, width, height)
-    time.sleep(2)
-
     click_board_button(driver, iframe, width, height)
     time.sleep(1)
 
@@ -326,10 +324,16 @@ def apply_backlog_card_action(
     env._perform_action_backlog_card(action)
 
 
+release_button_positions = {(540, 960): {"x": 115, "y": 455}, (1028, 1920): {}}
+
+
 def apply_release_action(
     driver, iframe: WebElement, width: int, height: int, env: ProductOwnerEnv
 ):
-    click_on_element(driver, iframe, 115, 455)
+    position = release_button_positions[(height, width)]
+    x = position["x"]
+    y = position["y"]
+    click_on_element(driver, iframe, x, y)
 
     time.sleep(1)
 
@@ -338,21 +342,17 @@ def apply_release_action(
     game_image = cv2.imread(filename)
     # os.remove(filename)
 
+    env._perform_release()
     fill_game_main_info_from_image(env.game, game_image)
 
-    env._perform_release()
-
+statistical_research_button_positions = {(540, 960): {"x": 765, "y": 115}, (1028, 1920): {}}
 
 def apply_buy_statistical_research_action(
     driver, iframe: WebElement, env: ProductOwnerEnv
 ):
     height = iframe.rect["height"]  # 540
     width = iframe.rect["width"]  # 960
-    select_user_story_board(driver, iframe, width, height)
-    time.sleep(2)
-
-    click_on_element(driver, iframe, 765, 115)
-    time.sleep(2)
+    buy_research(driver, iframe, width, height)
 
     env._perform_statistical_research()
 
