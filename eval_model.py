@@ -231,11 +231,18 @@ def get_environments(userstory_environments, backlog_environments, reward_system
     return res
 
 
-def show_usual_plots(results):
-    for name, result in results.items():
-        plt.plot(result, '.')
+def show_usual_plots(results: dict, names, colors=None, alpha=1.0):
+    for name in names:
+        plt.figure(figsize=FIGURE_SIZE)
+        for label, result in results.items():
+            if colors is not None:
+                plt.plot(result[name], '.', label=label, color=colors[label]["other"], alpha=alpha)
+            else:
+                plt.plot(result[name], '.', label=label, alpha=alpha)
         plt.xlabel("Trajectory")
         plt.ylabel(name)
+        if len(results) > 1:
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=2)
         plt.show()
 
 
@@ -253,7 +260,7 @@ def show_plots_with_wins(results: dict, colors=None, alpha=1.0):
                      label=f"other {label}", color=other_color, alpha=alpha)
         plt.xlabel("Trajectory")
         plt.ylabel(name)
-        plt.legend()
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=2)
         plt.show()
 
 
