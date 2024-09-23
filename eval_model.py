@@ -10,7 +10,8 @@ from pipeline import TUTORIAL, CREDIT_FULL, CREDIT_START, CREDIT_END, END
 from pipeline.aggregator_study import update_reward_system_config
 from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
                                       EmpiricalRewardSystem,
-                                      FullPotentialCreditRewardSystem)
+                                      FullPotentialCreditRewardSystem,
+                                      EmpiricalEndStageRewardSystem)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 20
@@ -162,7 +163,7 @@ def get_reward_systems():
         CREDIT_START: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=False,
                                                        config={}),
         CREDIT_END: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=True, config={}),
-        END: EmpiricalRewardSystem(config={})
+        END: EmpiricalEndStageRewardSystem(config={})
     }
 
 
