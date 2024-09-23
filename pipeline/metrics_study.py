@@ -11,9 +11,9 @@ from typing import List
 class MetricsStudy(BaseStudy):
     def __init__(self, env: ProductOwnerEnv, agent, trajectory_max_len) -> None:
         super().__init__(env, agent, trajectory_max_len)
-        self.rewards_log: List[int] = []
+        self.rewards_log: List[float] = []
         self.discounted_rewards_log: List[float] = []
-        self.q_value_log: List[int] = []
+        self.q_value_log: List[float] = []
 
     def play_trajectory(self, init_state, init_info, init_discount=1):
         with torch.no_grad():

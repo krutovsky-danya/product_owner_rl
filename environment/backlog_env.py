@@ -67,15 +67,15 @@ class BacklogEnv:
         self.sprint_tech_debt = tech_debt
 
     def get_card(self, index: int):
-        if index < self.backlog_commons_count:
+        if 0 <= index < len(self.backlog_commons):
             return self.backlog_commons[index]
 
         bug_card_id = index - self.backlog_commons_count
-        if bug_card_id < self.backlog_bugs_count:
+        if 0 <= bug_card_id < len(self.backlog_bugs):
             return self.backlog_bugs[bug_card_id]
 
         tech_debt_card_id = bug_card_id - self.backlog_bugs_count
-        if tech_debt_card_id < self.backlog_tech_debt_count:    
+        if 0 <= tech_debt_card_id < len(self.backlog_tech_debt):    
             return self.backlog_tech_debt[tech_debt_card_id]
 
     def encode(self, backlog: Backlog) -> List[float]:

@@ -49,4 +49,7 @@ class BoundedEmpiricalCreditStageRewardSystem(EmpiricalCreditStageRewardSystem):
         super().__init__(with_late_purchase_punishment, config)
         self.potential_weight = 0.03
         self.money_weight = 1e-5
-        self.late_purchases_reward = -0.5
+        self.late_purchases_reward = -1
+        self.valid_action_reward = 0.01
+        self.credit_payment_reward = 0.1
+        self.lose_reward = -0.5
