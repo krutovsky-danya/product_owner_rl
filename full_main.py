@@ -31,7 +31,7 @@ for i in range(n):
     # eval model
     # collect quality metrics
 
-# analyze collected metrics
+# analize collected metrics
 # show results
 
 # choose best variant
