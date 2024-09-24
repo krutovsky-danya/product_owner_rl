@@ -2,6 +2,12 @@ import datetime
 import os
 import sys
 
+import numpy as np
+import pandas as pd
+
+from scipy.stats import chi2_contingency
+from typing import List
+
 sys.path.append("..")
 
 from environment import CreditPayerEnv
@@ -31,3 +37,44 @@ def eval_agent(study: LoggingStudy):
     is_win = game_context.is_victory
     sprint = game_context.current_sprint
     return reward, is_win, sprint
+
+
+def update_data_frame(path: str, df: pd.DataFrame):
+    if os.path.exists(path):
+        data = pd.read_csv(path)
+    else:
+        data = pd.DataFrame()
+
+    data: pd.DataFrame = pd.concat([data, df])
+    data.to_csv(path, index=False, float_format="%.5f")
+
+
+def save_rewards(sub_name: str, rewards_log: List[float], now: str, flag: bool):
+    df = pd.DataFrame(
+        {
+            "Trajectory": list(range(len(rewards_log))),
+            "Reward": rewards_log,
+        }
+    )
+    df["DateTime"] = now
+    df["Flag"] = flag
+    rewards_path = f"train_rewards_{sub_name}.csv"
+    update_data_frame(rewards_path, df)
+
+
+def save_evaluation(sub_name: str, evaluations: List, now: str, flag: bool):
+    df = pd.DataFrame(evaluations, columns=["Reward", "Win", "Sprint"])
+    df["DateTime"] = now
+    df["Flag"] = flag
+    evaluations_path = f"evaluations_{sub_name}.csv"
+    update_data_frame(evaluations_path, df)
+
+
+def get_wins_stat(a_wins: np.ndarray, b_wins: np.ndarray):
+    wins = np.array([a_wins.sum(), b_wins.sum()])
+    sizes = np.array([a_wins.size, b_wins.size])
+    loses = sizes - wins
+
+    print(wins, loses)
+    res = chi2_contingency([wins, loses])
+    return res
