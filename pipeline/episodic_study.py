@@ -1,10 +1,12 @@
 import torch
+from environment import ProductOwnerEnv
+from algorithms.proximal_policy_optimization import PPO
 
 
-class EpisodicStudy:
-    def __init__(self, env, agent, trajectory_max_len: int) -> None:
-        self.env = env
-        self.agent = agent
+class EpisodicPpoStudy:
+    def __init__(self, env: ProductOwnerEnv, agent: PPO, trajectory_max_len: int) -> None:
+        self.env : ProductOwnerEnv = env
+        self.agent: PPO = agent
         self.trajectory_max_len = trajectory_max_len
 
     def play_trajectory(self):
@@ -17,7 +19,7 @@ class EpisodicStudy:
             action = self.agent.get_action(state)
             actions.append(action)
 
-            state, reward, done, _, _ = self.env.step(action)
+            state, reward, done, _ = self.env.step(action)
             rewards.append(reward)
             dones.append(done)
 
@@ -30,6 +32,7 @@ class EpisodicStudy:
     def study_agent(self, episode_n: int, trajectory_n: int):
         total_rewards = []
         for episode in range(episode_n):
+            print(f'Started episode {episode + 1}')
             states, actions, rewards, dones = [], [], [], []
 
             for _ in range(trajectory_n):
