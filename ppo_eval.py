@@ -3,7 +3,7 @@ import torch
 
 import matplotlib.pyplot as plt
 
-from algorithms.proximal_policy_optimization import PPO, PPO_Discrete_2, PPO_Discrete_3
+from algorithms.proximal_policy_optimization import PPO, PPO_Discrete_Softmax, PPO_Discrete_Logits, PPO_Discrete_Softmax_Advantage, PPO_Discrete_Logits_Advantage
 from environment import ProductOwnerEnv, CreditPayerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
@@ -28,7 +28,7 @@ update_reward_system_config(env, reward_system)
 state_dim = env.state_dim
 action_n = env.action_n
 
-agent = PPO_Discrete_2(state_dim, action_n)
+agent = PPO_Discrete_Logits_Advantage(state_dim, action_n)
 
 study = EpisodicPpoStudy(env, agent, 200)
 

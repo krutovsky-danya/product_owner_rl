@@ -4,7 +4,7 @@ import torch
 import gymnasium as gym
 import matplotlib.pyplot as plt
 
-from algorithms.proximal_policy_optimization import PPO, PPO_Discrete_2, PPO_Discrete_3
+from algorithms.proximal_policy_optimization import PPO, PPO_Discrete_Softmax, PPO_Discrete_Logits
 from pipeline.study_agent import save_dqn_agent
 from pipeline.episodic_study import study_ppo_agent
 
@@ -13,7 +13,7 @@ env: gym.Env = gym.make("LunarLander-v2", continuous=False)
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
 
-agent = PPO_Discrete_2(state_dim, action_dim)
+agent = PPO_Discrete_Softmax(state_dim, action_dim)
 
 returns_total_reward = study_ppo_agent(env, agent, 100, 20)
 
