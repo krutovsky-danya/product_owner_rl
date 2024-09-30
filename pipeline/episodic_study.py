@@ -12,6 +12,7 @@ class EpisodicPpoStudy:
     def play_trajectory(self):
         total_reward = 0
         state = self.env.reset()
+        info = self.env.get_info()
         states, actions, rewards, dones = [], [], [], []
         for t in range(self.trajectory_max_len):
             states.append(state)
@@ -19,7 +20,7 @@ class EpisodicPpoStudy:
             action = self.agent.get_action(state)
             actions.append(action)
 
-            state, reward, done, _ = self.env.step(action)
+            state, reward, done, info = self.env.step(action)
             rewards.append(reward)
             dones.append(done)
 
