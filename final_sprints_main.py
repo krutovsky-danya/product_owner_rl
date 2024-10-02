@@ -1,6 +1,7 @@
 from environment import ProductOwnerEnv
 from environment.backlog_env import BacklogEnv
-from environment.reward_sytem import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, EmpiricalEndStageRewardSystem
+from environment.reward_sytem import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, \
+    EmpiricalEndStageRewardSystem, PotentialEndStageRewardSystem
 from environment.userstory_env import UserstoryEnv
 from main import create_usual_agent
 from pipeline import AggregatorStudy, STUDY, END, TUTORIAL, CREDIT_START, CREDIT_END
