@@ -32,13 +32,15 @@ agent = PPO_Discrete_Logits_Advantage(state_dim, action_n)
 
 study = EpisodicPpoStudy(env, agent, 200)
 
-returns_total_reward = study.study_agent(100, 15)
+returns_total_reward = study.study_agent(100, 20)
 
 env_name = env.__class__.__name__
 agent_name = agent.__class__.__name__
 
 plt.plot(returns_total_reward, ".")
-plt.title("Total Rewards")
+plt.title(agent_name)
+plt.xlabel('Trajectory')
+plt.ylabel('Reward')
 plt.grid()
 plt.savefig(f"{env_name}_{agent_name}.png")
 # plt.show()
