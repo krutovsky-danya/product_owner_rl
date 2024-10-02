@@ -11,7 +11,7 @@ from pipeline.aggregator_study import update_reward_system_config
 from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
                                       EmpiricalRewardSystem,
                                       FullPotentialCreditRewardSystem,
-                                      EmpiricalEndStageRewardSystem)
+                                      PotentialEndStageRewardSystem)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 20
@@ -163,7 +163,7 @@ def get_reward_systems():
         CREDIT_START: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=False,
                                                        config={}),
         CREDIT_END: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=True, config={}),
-        END: EmpiricalEndStageRewardSystem(config={})
+        END: PotentialEndStageRewardSystem(config={}, potential_weight=1)
     }
 
 

@@ -2,12 +2,13 @@ from .base_reward_system import BaseRewardSystem
 
 
 class PotentialEndStageRewardSystem(BaseRewardSystem):
-    def __init__(self, config: dict, reward_bias=0, gamma=1) -> None:
+    def __init__(self, config: dict, reward_bias=0, gamma=1, potential_weight=1) -> None:
         super().__init__(config)
         self.wrong_action_reward = -10
         self.lose_reward = -100
         self.win_reward = 0
         self.reward_bias = reward_bias
+        self.potential_weight = potential_weight
         self.money_weight = 1e-3
         # discount factor gamma
         self.gamma = gamma
@@ -15,9 +16,12 @@ class PotentialEndStageRewardSystem(BaseRewardSystem):
     def get_reward(self, state_old, action, state_new, success) -> float:
         if not success:
             return self.wrong_action_reward
-        action_reward = self.get_action_reward(state_old, state_new)
+        potential_part = self.get_potential_part(state_old, state_new)
         done_reward = self.get_done_reward(state_new) + self.reward_bias
-        return action_reward + done_reward
+        return potential_part + done_reward
+
+    def get_potential_part(self, state_old, state_new):
+        return self.get_action_reward(state_old, state_new) * self.potential_weight
 
     def get_action_reward(self, state_old, state_new):
         return self.gamma * self.eval_state(state_new) - self.eval_state(state_old)
