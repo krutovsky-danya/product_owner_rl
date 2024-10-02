@@ -16,43 +16,14 @@ from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
 SMALL_SIZE = 16
 MEDIUM_SIZE = 20
 BIGGER_SIZE = 22
-FIGURE_SIZE = (9, 6)
-# FIGURE_SIZE = (10, 8)
 
-plt.rc("font", size=MEDIUM_SIZE)         # controls default text sizes
-plt.rc("axes", titlesize=SMALL_SIZE)     # font size of the axes title
-plt.rc("axes", labelsize=MEDIUM_SIZE)    # font size of the x and y labels
-plt.rc("xtick", labelsize=SMALL_SIZE)    # font size of the tick labels
-plt.rc("ytick", labelsize=SMALL_SIZE)    # font size of the tick labels
-plt.rc("legend", fontsize=SMALL_SIZE)    # legend font size
-plt.rc("figure", titlesize=BIGGER_SIZE)  # font size of the figure title
-
-ROOT_DIR = "../models"
-COLOR_SCHEMES = [{"win": "red", "other": "blue"},
-                 {"win": "orange", "other": "black"}]
-
-MONEY_LABEL = "money"
-SPRINTS_LABEL = "sprints"
-LOYALTY_LABEL = "loyalty"
-CUSTOMERS_LABEL = "customers"
-POTENTIAL_MONEY_LABEL = "potential money"
-WINS_LABEL = "wins"
-REWARDS_LABEL = "rewards"
-WIN_CHECK_LABEL = "win check"
-
-FIRST_PLACE_SPRINTS = 47
-SECOND_PLACE_SPRINTS = 48
-THIRD_PLACE_SPRINTS = 50
-
-
-def eval_wins_and_losses(wins, money):
-    wins = np.array(wins)
-    wins_check = (wins == 1)
-    print(f"wins: {len(wins[wins_check])}")
-    money = np.array(money)
-    print(f"losses: {len(money[money < 0])}")
-
-    return wins_check
+plt.rc('font', size=MEDIUM_SIZE)         # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # font size of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # font size of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # font size of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # font size of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend font size
+plt.rc('figure', titlesize=BIGGER_SIZE)  # font size of the figure title
 
 
 def eval_model(environments, agents, order, repeat_count: int, is_silent: bool):
@@ -67,15 +38,12 @@ def eval_model(environments, agents, order, repeat_count: int, is_silent: bool):
     loyalties = np.array(loyalties)
 
     return (np.median(rewards),
-            {MONEY_LABEL: money,
-             SPRINTS_LABEL: sprints,
-             LOYALTY_LABEL: loyalties,
-             CUSTOMERS_LABEL: customers,
-             POTENTIAL_MONEY_LABEL: customers * loyalties * 300,
-             WINS_LABEL: wins,
-             REWARDS_LABEL: rewards,
-             WIN_CHECK_LABEL: eval_wins_and_losses(wins, money),
-             })
+            {"money": money,
+             "sprints": sprints,
+             "loyalty": loyalties,
+             "customers": customers,
+             "potential money": customers * loyalties * 300,
+             "wins": wins})
 
 
 def play_eval_trajectory(environments, agents, order, is_silent):
@@ -231,168 +199,67 @@ def get_environments(userstory_environments, backlog_environments, reward_system
     return res
 
 
-def show_usual_plots(results: dict, names, colors=None, alpha=1.0):
-    for name in names:
-        plt.figure(figsize=FIGURE_SIZE)
-        for label, result in results.items():
-            if colors is not None:
-                plt.plot(result[name], '.', label=label, color=colors[label]["other"], alpha=alpha)
-            else:
-                plt.plot(result[name], '.', label=label, alpha=alpha)
+def show_usual_plots(results):
+    for name, result in results.items():
+        plt.plot(result, '.')
         plt.xlabel("Trajectory")
         plt.ylabel(name)
-        if len(results) > 1:
-            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=2)
         plt.show()
 
 
-def show_plots_with_wins(results: dict, colors=None, alpha=1.0):
-    for name in [MONEY_LABEL, SPRINTS_LABEL]:
-        plt.figure(figsize=FIGURE_SIZE)
-        for label, result in results.items():
-            wins_check = result[WIN_CHECK_LABEL]
-            trajectories = np.arange(len(wins_check), dtype=np.int32)
-            win_color = "red" if colors is None else colors[label]["win"]
-            other_color = "blue" if colors is None else colors[label]["other"]
-            plt.plot(trajectories[wins_check], np.array(result[name])[wins_check], '.',
-                     label=f"win {label}", color=win_color, alpha=alpha)
-            plt.plot(trajectories[~wins_check], np.array(result[name])[~wins_check], '.',
-                     label=f"other {label}", color=other_color, alpha=alpha)
+def eval_wins_and_losses(results):
+    wins = np.array(results["wins"])
+    wins_check = (wins == 1)
+    print(f"wins: {len(wins[wins_check])}")
+    money = np.array(results["money"])
+    print(f"losses: {len(money[money < 0])}")
+
+    return wins_check
+
+
+def show_plots_with_wins(results, show_plots=True):
+    wins_check = eval_wins_and_losses(results)
+
+    if not show_plots:
+        return
+
+    trajectories = np.arange(len(wins_check), dtype=np.int32)
+    for name in ["money", "sprints"]:
+        plt.plot(trajectories[wins_check], np.array(results[name])[wins_check], '.',
+                 label="win", color="red")
+        plt.plot(trajectories[~wins_check], np.array(results[name])[~wins_check], '.',
+                 label="other", color="blue")
         plt.xlabel("Trajectory")
         plt.ylabel(name)
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=2)
+        plt.legend()
         plt.show()
 
 
-def show_rewards_sprints_plot(results: dict, colors=None, alpha=1.0):
-    plt.figure(figsize=FIGURE_SIZE)
-    for label, result in results.items():
-        x = np.array(result[REWARDS_LABEL])
-        y = np.array(result[SPRINTS_LABEL])
-        wins_check = result[WIN_CHECK_LABEL]
-        win_color = "red" if colors is None else colors[label]["win"]
-        other_color = "blue" if colors is None else colors[label]["other"]
-        plt.plot(x[wins_check], y[wins_check], '.',
-                 label=f"win {label}", color=win_color, alpha=alpha)
-        plt.plot(x[~wins_check], y[~wins_check], '.',
-                 label=f"other {label}", color=other_color, alpha=alpha)
-    plt.xlabel("Rewards")
-    plt.ylabel("Sprints")
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=2)
-    plt.show()
-
-
-def load_and_get_results(paths, repeats=10, is_silent=True, with_info=True):
+def load_and_eval_model(paths, repeats=10, with_plots=True, is_silent=False, with_info=True):
     agents = load_agents(paths)
-    environments = get_environments(get_userstory_environments(), get_backlog_environments(),
-                                    get_reward_systems(), with_info)
-    full_order = [CREDIT_FULL, END]
+    environments = get_environments(get_backlog_environments(), get_reward_systems(), with_info)
+    full_order = [TUTORIAL, CREDIT_FULL, END]
 
     results = eval_model(environments, agents, full_order, repeats, is_silent=is_silent)
     print(results[0])
-    return results[1]
+    results = results[1]
 
+    if with_plots:
+        show_usual_plots(results)
 
-def transform_result_to_metrics(result, repeats):
-    sprints = np.array(result[SPRINTS_LABEL])
-    wins_check = result[WIN_CHECK_LABEL]
-    return (len(wins_check[wins_check]),
-            (len(sprints[sprints < THIRD_PLACE_SPRINTS]) / repeats,
-             len(sprints[sprints < SECOND_PLACE_SPRINTS]) / repeats,
-             len(sprints[sprints < FIRST_PLACE_SPRINTS]) / repeats))
-
-
-NO_PLOTS = 0
-WITH_USUAL_PLOTS = 1
-WITH_WINS_PLOTS = 2
-WITH_REWARDS_SPRINTS_PLOTS = 4
-
-
-def check_plots_state(state, condition):
-    return state & condition
-
-
-def load_and_eval_models(models,
-                         repeats=10, plots_state=NO_PLOTS, is_silent=False, with_info=True,
-                         colors=None, alpha=1.0):
-    results = {}
-    names = []
-    metrics = {}
-
-    for label, model in models.items():
-        result = load_and_get_results(model, repeats, is_silent, with_info)
-        results[label] = result
-        names = result.keys()
-        metrics[label] = transform_result_to_metrics(result, repeats)
-
-    if colors is None:
-        colors = {}
-        for i, label in enumerate(models.keys()):
-            colors[label] = COLOR_SCHEMES[i % len(COLOR_SCHEMES)]
-
-    if check_plots_state(plots_state, WITH_USUAL_PLOTS):
-        show_usual_plots(results, names, colors, alpha)
-    if check_plots_state(plots_state, WITH_WINS_PLOTS):
-        show_plots_with_wins(results, colors, alpha)
-    if check_plots_state(plots_state, WITH_REWARDS_SPRINTS_PLOTS):
-        show_rewards_sprints_plot(results, colors, alpha)
-
-    return metrics
+    show_plots_with_wins(results, with_plots)
 
 
 def main():
-    repeats = 10
-    win_coefficient = 0.5
-    tutorial_path = f"{ROOT_DIR}/DoubleDQN/model_0_TutorialSolverEnv.pt"
-    credit_path = f"{ROOT_DIR}/DoubleDQN - (67) - with desc/model_197_CreditPayerEnv.pt"
-    model_label = ""
-    best_models = []
-    best_models_with_wins_count = []
+    tutorial_path = "./DoubleDQN/model_0_TutorialSolverEnv.pt"
 
-    for i in [215, 387]:
+    for i in range(1, 50):
         paths = {
-            model_label: {
-                # TUTORIAL: tutorial_path,
-                CREDIT_FULL: credit_path,
-                END: f"{ROOT_DIR}/DoubleDQN - (67--+) - with desc/model_{i}_ProductOwnerEnv.pt"
-            }
+            TUTORIAL: tutorial_path,
+            CREDIT_FULL: f"./DoubleDQN/model_{i}_CreditPayerEnv.pt"
         }
         print(f"current model: {i}")
-        wins_count, sprints_res = load_and_eval_models(paths,
-                                                       repeats=repeats,
-                                                       plots_state=WITH_WINS_PLOTS,
-                                                       is_silent=True,
-                                                       with_info=True)[model_label]
-        if wins_count > win_coefficient * repeats:
-            best_models.append(i)
-            best_models_with_wins_count.append((i, wins_count / repeats, *sprints_res))
-        print(f"done model: {i}")
-    print(best_models)
-    print(best_models_with_wins_count)
-
-
-def compare_between_models(with_info=True, repeats=10, is_silent=True):
-    models = {
-        # "обычный": {
-        #     CREDIT_FULL: f"{ROOT_DIR}/DoubleDQN - (60++--) - with desc/model_174_CreditPayerEnv.pt"
-        # },
-        # "батч-нормализация": {
-        #     CREDIT_FULL: f"{ROOT_DIR}/DoubleDQN - (50+) - with desc/model_174_CreditPayerEnv.pt"
-        # }
-        "обычный": {
-            CREDIT_FULL: f"{ROOT_DIR}/DoubleDQN - (67) - with desc/model_197_CreditPayerEnv.pt"
-        },
-        "батч-нормализация": {
-            CREDIT_FULL: f"{ROOT_DIR}/DoubleDQN - (67) - with desc/model_197_CreditPayerEnv.pt"
-        }
-    }
-
-    load_and_eval_models(models,
-                         repeats=repeats,
-                         plots_state=WITH_USUAL_PLOTS | WITH_REWARDS_SPRINTS_PLOTS,
-                         is_silent=is_silent,
-                         with_info=with_info,
-                         alpha=0.5)
+        load_and_eval_model(paths, repeats=1000, with_plots=False, is_silent=True, with_info=True)
 
 
 if __name__ == "__main__":
