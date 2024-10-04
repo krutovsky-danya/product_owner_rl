@@ -13,11 +13,12 @@ class EpisodicPpoStudy:
         total_reward = 0
         state = self.env.reset()
         info = self.env.get_info()
-        states, actions, rewards, dones = [], [], [], []
+        states, actions, rewards, dones, infos = [], [], [], [], []
         for t in range(self.trajectory_max_len):
             states.append(state)
+            infos.append(info)
 
-            action = self.agent.get_action(state)
+            action = self.agent.get_action(state, info)
             actions.append(action)
 
             state, reward, done, info = self.env.step(action)
@@ -28,16 +29,16 @@ class EpisodicPpoStudy:
 
             if done:
                 break
-        return total_reward, states, actions, rewards, dones
+        return total_reward, states, actions, rewards, dones, infos
 
     def study_agent(self, episode_n: int, trajectory_n: int):
         total_rewards = []
         for episode in range(episode_n):
             print(f'Started episode {episode + 1}')
-            states, actions, rewards, dones = [], [], [], []
+            states, actions, rewards, dones, infos = [], [], [], [], []
 
             for _ in range(trajectory_n):
-                tr_total_reward, tr_states, tr_actions, tr_rewards, tr_dones = (
+                tr_total_reward, tr_states, tr_actions, tr_rewards, tr_dones, tr_infos = (
                     self.play_trajectory()
                 )
                 total_rewards.append(tr_total_reward)
@@ -45,8 +46,9 @@ class EpisodicPpoStudy:
                 actions.extend(tr_actions)
                 rewards.extend(tr_rewards)
                 dones.extend(tr_dones)
+                infos.extend(tr_infos)
 
-            self.agent.fit(states, actions, rewards, dones)
+            self.agent.fit(states, actions, rewards, dones, infos)
         return total_rewards
 
 
