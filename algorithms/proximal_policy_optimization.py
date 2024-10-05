@@ -5,7 +5,40 @@ import matplotlib.pyplot as plt
 from torch.distributions import Normal, Categorical
 
 
-class PPO(nn.Module):
+class PPO_Base(nn.Module):
+    def __init__(
+        self, pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+    ):
+        self.pi_model = pi_model
+        self.v_model = v_model
+        self.gamma = gamma
+        self.batch_size = batch_size
+        self.epsilon = epsilon
+        self.epoch_n = epoch_n
+        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
+        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+
+    def _update_pi_model(self, advantage, ratio):
+        pi_loss_1 = ratio * advantage.detach()
+        pi_loss_2 = (
+            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
+            * advantage.detach()
+        )
+        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
+
+        pi_loss.backward()
+        self.pi_optimizer.step()
+        self.pi_optimizer.zero_grad()
+
+    def _update_v_model(self, advantage):
+        v_loss = torch.mean(advantage**2)
+
+        v_loss.backward()
+        self.v_optimizer.step()
+        self.v_optimizer.zero_grad()
+
+
+class PPO(PPO_Base):
     def __init__(
         self,
         state_dim,
@@ -17,11 +50,9 @@ class PPO(nn.Module):
         pi_lr=1e-4,
         v_lr=5e-4,
     ):
-        super().__init__()
-
         self.action_dim = action_dim
 
-        self.pi_model = nn.Sequential(
+        pi_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -30,7 +61,7 @@ class PPO(nn.Module):
             nn.Tanh(),
         )
 
-        self.v_model = nn.Sequential(
+        v_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -38,12 +69,9 @@ class PPO(nn.Module):
             nn.Linear(128, 1),
         )
 
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.epsilon = epsilon
-        self.epoch_n = epoch_n
-        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
-        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def get_dist(self, pi_values, states_n):
         values = pi_values.reshape(states_n, self.action_dim, 2)
@@ -105,25 +133,6 @@ class PPO(nn.Module):
 
                 self._update_v_model(b_advantage)
 
-    def _update_pi_model(self, advantage, ratio):
-        pi_loss_1 = ratio * advantage.detach()
-        pi_loss_2 = (
-            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
-            * advantage.detach()
-        )
-        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
-
-        pi_loss.backward()
-        self.pi_optimizer.step()
-        self.pi_optimizer.zero_grad()
-
-    def _update_v_model(self, advantage):
-        v_loss = torch.mean(advantage**2)
-
-        v_loss.backward()
-        self.v_optimizer.step()
-        self.v_optimizer.zero_grad()
-
 
 class PPOAdvantage(PPO):
     def fit(self, states, actions, rewards, dones):
@@ -163,7 +172,7 @@ class PPOAdvantage(PPO):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Softmax(nn.Module):
+class PPO_Discrete_Softmax(PPO_Base):
     def __init__(
         self,
         state_dim,
@@ -175,11 +184,9 @@ class PPO_Discrete_Softmax(nn.Module):
         pi_lr=1e-4,
         v_lr=5e-4,
     ):
-        super().__init__()
-
         self.action_n = action_n
 
-        self.pi_model = nn.Sequential(
+        pi_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -188,7 +195,7 @@ class PPO_Discrete_Softmax(nn.Module):
             nn.Softmax(dim=-1),
         )
 
-        self.v_model = nn.Sequential(
+        v_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -196,12 +203,9 @@ class PPO_Discrete_Softmax(nn.Module):
             nn.Linear(128, 1),
         )
 
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.epsilon = epsilon
-        self.epoch_n = epoch_n
-        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
-        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def get_dist(self, pi_values):
         dist = Categorical(pi_values)
@@ -260,25 +264,6 @@ class PPO_Discrete_Softmax(nn.Module):
 
                 self._update_v_model(b_advantage)
 
-    def _update_pi_model(self, advantage, ratio):
-        pi_loss_1 = ratio * advantage.detach()
-        pi_loss_2 = (
-            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
-            * advantage.detach()
-        )
-        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
-
-        pi_loss.backward()
-        self.pi_optimizer.step()
-        self.pi_optimizer.zero_grad()
-
-    def _update_v_model(self, advantage):
-        v_loss = torch.mean(advantage**2)
-
-        v_loss.backward()
-        self.v_optimizer.step()
-        self.v_optimizer.zero_grad()
-
 
 class PPO_Discrete_Softmax_Advantage(PPO_Discrete_Softmax):
     def fit(self, states, actions, rewards, dones):
@@ -318,7 +303,7 @@ class PPO_Discrete_Softmax_Advantage(PPO_Discrete_Softmax):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Logits(nn.Module):
+class PPO_Discrete_Logits(PPO_Base):
     def __init__(
         self,
         state_dim,
@@ -330,11 +315,9 @@ class PPO_Discrete_Logits(nn.Module):
         pi_lr=1e-4,
         v_lr=5e-4,
     ):
-        super().__init__()
-
         self.action_n = action_n
 
-        self.pi_model = nn.Sequential(
+        pi_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -342,7 +325,7 @@ class PPO_Discrete_Logits(nn.Module):
             nn.Linear(128, action_n),
         )
 
-        self.v_model = nn.Sequential(
+        v_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -350,12 +333,9 @@ class PPO_Discrete_Logits(nn.Module):
             nn.Linear(128, 1),
         )
 
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.epsilon = epsilon
-        self.epoch_n = epoch_n
-        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
-        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def get_dist(self, pi_values):
         dist = Categorical(logits=pi_values)
@@ -414,25 +394,6 @@ class PPO_Discrete_Logits(nn.Module):
 
                 self._update_v_model(b_advantage)
 
-    def _update_pi_model(self, advantage, ratio):
-        pi_loss_1 = ratio * advantage.detach()
-        pi_loss_2 = (
-            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
-            * advantage.detach()
-        )
-        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
-
-        pi_loss.backward()
-        self.pi_optimizer.step()
-        self.pi_optimizer.zero_grad()
-
-    def _update_v_model(self, advantage):
-        v_loss = torch.mean(advantage**2)
-
-        v_loss.backward()
-        self.v_optimizer.step()
-        self.v_optimizer.zero_grad()
-
 
 class PPO_Discrete_Logits_Advantage(PPO_Discrete_Logits):
     def fit(self, states, actions, rewards, dones):
@@ -472,7 +433,7 @@ class PPO_Discrete_Logits_Advantage(PPO_Discrete_Logits):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Softmax_Guided(nn.Module):
+class PPO_Discrete_Softmax_Guided(PPO_Base):
     def __init__(
         self,
         state_dim,
@@ -484,11 +445,9 @@ class PPO_Discrete_Softmax_Guided(nn.Module):
         pi_lr=1e-4,
         v_lr=5e-4,
     ):
-        super().__init__()
-
         self.action_n = action_n
 
-        self.pi_model = nn.Sequential(
+        pi_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -497,7 +456,7 @@ class PPO_Discrete_Softmax_Guided(nn.Module):
             nn.Softmax(dim=-1),
         )
 
-        self.v_model = nn.Sequential(
+        v_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -505,12 +464,9 @@ class PPO_Discrete_Softmax_Guided(nn.Module):
             nn.Linear(128, 1),
         )
 
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.epsilon = epsilon
-        self.epoch_n = epoch_n
-        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
-        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def get_dist(self, pi_values, available_actions_mask):
         pi_values *= available_actions_mask
@@ -591,27 +547,8 @@ class PPO_Discrete_Softmax_Guided(nn.Module):
 
                 self._update_v_model(b_advantage)
 
-    def _update_pi_model(self, advantage, ratio):
-        pi_loss_1 = ratio * advantage.detach()
-        pi_loss_2 = (
-            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
-            * advantage.detach()
-        )
-        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
 
-        pi_loss.backward()
-        self.pi_optimizer.step()
-        self.pi_optimizer.zero_grad()
-
-    def _update_v_model(self, advantage):
-        v_loss = torch.mean(advantage**2)
-
-        v_loss.backward()
-        self.v_optimizer.step()
-        self.v_optimizer.zero_grad()
-
-
-class PPO_Discrete_Logits_Guided(nn.Module):
+class PPO_Discrete_Logits_Guided(PPO_Base):
     def __init__(
         self,
         state_dim,
@@ -623,11 +560,9 @@ class PPO_Discrete_Logits_Guided(nn.Module):
         pi_lr=1e-4,
         v_lr=5e-4,
     ):
-        super().__init__()
-
         self.action_n = action_n
 
-        self.pi_model = nn.Sequential(
+        pi_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -635,7 +570,7 @@ class PPO_Discrete_Logits_Guided(nn.Module):
             nn.Linear(128, action_n),
         )
 
-        self.v_model = nn.Sequential(
+        v_model = nn.Sequential(
             nn.Linear(state_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -643,12 +578,9 @@ class PPO_Discrete_Logits_Guided(nn.Module):
             nn.Linear(128, 1),
         )
 
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.epsilon = epsilon
-        self.epoch_n = epoch_n
-        self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
-        self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def get_dist(self, pi_values, available_actions_mask):
         unavailable_actions_mask = ~available_actions_mask
@@ -688,6 +620,10 @@ class PPO_Discrete_Logits_Guided(nn.Module):
 
         return mask
 
+    def _get_advantage(self, returns, states, next_states):
+        advantage = returns.detach() - self.v_model(states)
+        return advantage
+
     def fit(self, states, actions, rewards, dones, infos):
         states, actions, rewards, dones = map(
             np.array, [states, actions, rewards, dones]
@@ -715,7 +651,7 @@ class PPO_Discrete_Logits_Guided(nn.Module):
                 b_old_log_probs = old_log_probs[b_idxs]
                 b_available_actions_mask = available_actions_mask[b_idxs]
 
-                b_advantage = b_returns.detach() - self.v_model(b_states)
+                b_advantage = self._get_advantage(b_returns, b_states)
 
                 b_new_log_probs = self._get_log_probs(
                     b_states, b_actions, b_available_actions_mask
@@ -726,21 +662,51 @@ class PPO_Discrete_Logits_Guided(nn.Module):
 
                 self._update_v_model(b_advantage)
 
-    def _update_pi_model(self, advantage, ratio):
-        pi_loss_1 = ratio * advantage.detach()
-        pi_loss_2 = (
-            torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
-            * advantage.detach()
+
+class PPO_Discrete_Logits_Guided_Advantage(PPO_Discrete_Logits_Guided):
+    def _get_advantage(self, rewards, states, next_states):
+        advantage = (
+            rewards.detach()
+            + self.gamma * self.v_model(next_states).detach()
+            - self.v_model(states)
         )
-        pi_loss = -torch.mean(torch.min(pi_loss_1, pi_loss_2))
+        return advantage
 
-        pi_loss.backward()
-        self.pi_optimizer.step()
-        self.pi_optimizer.zero_grad()
+    def fit(self, states, actions, rewards, dones, infos):
+        states, actions, rewards, dones = map(
+            np.array, [states, actions, rewards, dones]
+        )
+        rewards, dones = rewards.reshape(-1, 1), dones.reshape(-1, 1)
 
-    def _update_v_model(self, advantage):
-        v_loss = torch.mean(advantage**2)
+        states, actions, rewards = map(torch.FloatTensor, [states, actions, rewards])
 
-        v_loss.backward()
-        self.v_optimizer.step()
-        self.v_optimizer.zero_grad()
+        available_actions_mask = self._convert_infos(infos)
+
+        old_log_probs = self._get_log_probs(
+            states, actions, available_actions_mask
+        ).detach()
+
+        for epoch in range(self.epoch_n):
+
+            idxs = np.random.permutation(states.shape[0] - 1)
+            for i in range(0, idxs.shape[0] // self.batch_size):
+                b_idxs = idxs[i * self.batch_size : (i + 1) * self.batch_size]
+                b_dones_ = dones[b_idxs].flatten()
+                b_idxs = b_idxs[~b_dones_]  # remove terminal states from batch
+                b_states = states[b_idxs]
+                b_next_states = states[b_idxs + 1]
+                b_actions = actions[b_idxs]
+                b_rewards = rewards[b_idxs]
+                b_old_log_probs = old_log_probs[b_idxs]
+                b_available_actions_mask = available_actions_mask[b_idxs]
+
+                b_advantage = self._get_advantage(b_rewards, b_states, b_next_states)
+
+                b_new_log_probs = self._get_log_probs(
+                    b_states, b_actions, b_available_actions_mask
+                )
+
+                b_ratio = torch.exp(b_new_log_probs - b_old_log_probs)
+                self._update_pi_model(b_advantage, b_ratio)
+
+                self._update_v_model(b_advantage)
