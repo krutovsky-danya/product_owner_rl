@@ -9,6 +9,7 @@ class PPO_Base(nn.Module):
     def __init__(
         self, pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
     ):
+        super().__init__()
         self.pi_model = pi_model
         self.v_model = v_model
         self.gamma = gamma
@@ -588,7 +589,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         dist = Categorical(logits=pi_values)
         return dist
 
-    def _get_log_probs(self, states, actions, available_actions_mask):
+    def _get_log_probs(self, states, actions, available_actions_mask) -> torch.Tensor:
         pi_values = self.pi_model(states)
         dist = self.get_dist(pi_values, available_actions_mask)
         log_probs = dist.log_prob(actions)
@@ -598,12 +599,12 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         state = torch.FloatTensor(state)
         pi_values = self.pi_model(state)
         available_actions_mask = self._convert_infos([info])
-        dist = self.get_dist(pi_values, available_actions_mask)
+        dist = self.get_dist(pi_values, available_actions_mask[0])
         action = dist.sample()
         action = action.numpy()
         return action
 
-    def _get_returns(self, rewards, dones):
+    def _get_returns(self, rewards: np.ndarray, dones):
         returns = np.zeros(rewards.shape)
         returns[-1] = rewards[-1]
         for t in range(returns.shape[0] - 2, -1, -1):
@@ -620,7 +621,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
         return mask
 
-    def _get_advantage(self, returns, states, next_states):
+    def _get_advantage(self, returns: torch.Tensor, states, next_states):
         advantage = returns.detach() - self.v_model(states)
         return advantage
 
@@ -664,7 +665,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
 
 class PPO_Discrete_Logits_Guided_Advantage(PPO_Discrete_Logits_Guided):
-    def _get_advantage(self, rewards, states, next_states):
+    def _get_advantage(self, rewards: torch.Tensor, states, next_states):
         advantage = (
             rewards.detach()
             + self.gamma * self.v_model(next_states).detach()

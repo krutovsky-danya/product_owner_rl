@@ -18,10 +18,9 @@ from pipeline.aggregator_study import update_reward_system_config
 userstory_env = UserstoryEnv()
 backlog_env = BacklogEnv()
 reward_system = FullPotentialCreditRewardSystem(config={}, coefficient=1)
-env = CreditPayerEnv(
+env = ProductOwnerEnv(
     userstory_env,
     backlog_env,
-    with_end=True,
     with_info=True,
     reward_system=reward_system,
 )
@@ -33,7 +32,7 @@ agent = PPO_Discrete_Logits_Guided_Advantage(state_dim, action_n)
 
 study = EpisodicPpoStudy(env, agent, 200)
 
-returns_total_reward = study.study_agent(100, 20)
+returns_total_reward = study.study_agent(250, 20)
 
 env_name = env.__class__.__name__
 agent_name = agent.__class__.__name__
@@ -44,6 +43,6 @@ plt.xlabel('Trajectory')
 plt.ylabel('Reward')
 plt.grid()
 plt.savefig(f"{env_name}_{agent_name}.png")
-plt.show()
+# plt.show()
 
-save_dqn_agent(agent, f"{env_name}_{agent_name}.pt")
+# save_dqn_agent(agent, f"{env_name}_{agent_name}.pt")
