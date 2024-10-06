@@ -102,9 +102,12 @@ class BacklogEnv:
         commons, bugs, tech_debt = split_cards_in_types(cards)
         commons_count, bugs_count, tech_debt_count = counts
 
-        commons = sample_n_or_zero(commons, commons_count)
-        bugs = sample_n_or_zero(bugs, bugs_count)
-        tech_debt = sample_n_or_zero(tech_debt, tech_debt_count)
+        commons = sample_n_or_zero(commons, commons_count,
+                                   self.context.card_picker_random_gen)
+        bugs = sample_n_or_zero(bugs, bugs_count,
+                                self.context.card_picker_random_gen)
+        tech_debt = sample_n_or_zero(tech_debt, tech_debt_count,
+                                     self.context.card_picker_random_gen)
         setter(commons, bugs, tech_debt)
 
         commons_len = BACKLOG_COMMON_FEATURE_COUNT * commons_count
