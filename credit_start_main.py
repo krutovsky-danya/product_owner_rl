@@ -35,7 +35,9 @@ def make_credit_study(agents,
     reward_system = get_reward_system(stage, with_late_purchases_penalty)
     userstory_env = UserstoryEnv(2, 0, 0)
     backlog_env = BacklogEnv(6, 0, 0, 0, 0, 0)
-    env = CreditPayerEnv(userstory_env, backlog_env, with_end=with_end, with_info=with_info, reward_system=reward_system)
+    env = CreditPayerEnv(userstory_env, backlog_env, with_end=with_end, with_info=with_info,
+                         reward_system=reward_system,
+                         seed=None, card_picker_seed=None)
     update_reward_system_config(env, reward_system)
 
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
