@@ -116,19 +116,25 @@ class AggregatorStudy(LoggingStudy):
             return TutorialSolverEnv(backlog_env=backlog_env,
                                      userstory_env=userstory_env,
                                      with_info=self.env.with_info,
-                                     reward_system=reward_system)
+                                     reward_system=reward_system,
+                                     seed=None,
+                                     card_picker_seed=None)
         if name == CREDIT_FULL or name == CREDIT_END:
             return CreditPayerEnv(userstory_env=userstory_env,
                                   backlog_env=backlog_env,
                                   with_end=True,
                                   with_info=self.env.with_info,
-                                  reward_system=reward_system)
+                                  reward_system=reward_system,
+                                  seed=None,
+                                  card_picker_seed=None)
         if name == CREDIT_START:
             return CreditPayerEnv(userstory_env=userstory_env,
                                   backlog_env=backlog_env,
                                   with_end=False,
                                   with_info=self.env.with_info,
-                                  reward_system=reward_system)
+                                  reward_system=reward_system,
+                                  seed=None,
+                                  card_picker_seed=None)
         return self.env
 
     def get_backlog_env(self, name):
