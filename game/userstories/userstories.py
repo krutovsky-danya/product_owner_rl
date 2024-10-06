@@ -24,7 +24,11 @@ class UserStories:
 
     def generate_cards_with_generator(self, count: int, gen: UserStoriesGenerator):
         cards = gen.generate_userstories(
-            count, self.context.current_sprint, self.context.color_storage)
+            count,
+            self.context.current_sprint,
+            self.context.color_storage,
+            self.context.random_gen
+        )
         for card in cards:
             self.stories_list.append(card)
             self.context.available_stories[id(card.info)] = card.info

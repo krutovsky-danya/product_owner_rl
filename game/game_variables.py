@@ -1,6 +1,12 @@
 from game.game_colors import ColorStorage
 from game.game_constants import GlobalConstants
 from game.common_methods import clamp
+from random import Random
+import numpy as np
+from typing import Dict
+from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from game.userstory_card.bug_user_story_info import BugUserStoryInfo
+from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 
 
 def save_to_leaderboard(current_sprint):
@@ -9,16 +15,16 @@ def save_to_leaderboard(current_sprint):
 
 
 class GlobalContext:
-    def __init__(self) -> None:
+    def __init__(self, seed=None, card_picker_seed=None) -> None:
         self.current_sprint = 1
-        self.current_stories = {}  # : dict[int, UserStoryCardInfo]
+        self.current_stories: Dict[int, UserStoryCardInfo] = {}
         self._money = 200000
         self.done = False
         self.current_sprint_hours = 0
-        self.current_tech_debt = {}  # : dict[int, TechDebtInfo]
-        self.available_stories = {}  # : dict[int, UserStoryCardInfo]
+        self.current_tech_debt: Dict[int, TechDebtInfo] = {}
+        self.available_stories: Dict[int, UserStoryCardInfo] = {}
         self.is_new_game = True
-        self.current_bugs = {}  # : dict[int, BugUserStoryInfo]
+        self.current_bugs: Dict[int, BugUserStoryInfo] = {}
         self._loyalty = 0
         self.customers = 0
         self.blank_sprint_counter = 0
@@ -32,6 +38,8 @@ class GlobalContext:
         self.color_storage = ColorStorage()
         self.is_victory = False
         self.is_loss = False
+        self.random_gen = Random(x=seed) if seed is not None else Random()
+        self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
 
     def get_money(self):
         return self._money

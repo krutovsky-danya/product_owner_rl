@@ -1,7 +1,7 @@
 from game.game_colors import ColorStorage
 from game.userstory_card.userstory_card import UserStoryCard
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
-import random
+from random import Random
 
 
 class UserStoriesGenerator:
@@ -11,12 +11,17 @@ class UserStoriesGenerator:
         for size in sizes_count:
             self.a += [size[1]] * size[0]
 
-    def generate_userstories(self, count: int, spawn_sprint: int, color_storage: ColorStorage):
+    def generate_userstories(self, count: int, spawn_sprint: int, color_storage: ColorStorage,
+                             random_gen: Random):
         result = []
 
         for i in range(count):
-            card_type = self.a[random.randint(0, len(self.a) - 1)]
-            card = UserStoryCard(UserStoryCardInfo(card_type, spawn_sprint, color_storage))
+            random_index = random_gen.randint(0, len(self.a) - 1)
+            card_type = self.a[random_index]
+            card = UserStoryCard(UserStoryCardInfo(card_type, 
+                                                   spawn_sprint, 
+                                                   color_storage,
+                                                   random_gen))
 
             result.append(card)
 
