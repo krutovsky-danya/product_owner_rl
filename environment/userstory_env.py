@@ -43,7 +43,7 @@ class UserstoryEnv:
                                   self.us_td_count)
     
     def get_encoded_card(self, index: int):
-        # resturns card by index
+        # returns card by index
         if 0 <= index < len(self.userstories_common):
             return self.userstories_common[index]
         index -= self.us_common_count
