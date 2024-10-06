@@ -41,7 +41,8 @@ def sample_n_or_less(collection, count):
     count = min(count, len(collection))
     return random.sample(collection, count)
 
-def sample_n_or_zero(collection: Sequence, count: int):
+
+def sample_n_or_zero(collection: Sequence, count: int, gen: np.random.Generator):
     if len(collection) == 0:
         return []
     
