@@ -16,11 +16,12 @@ class TestEnvFunctions(unittest.TestCase):
                                      userstories_bug_count=2,
                                      userstories_td_count=1)
         reward_system = BaseRewardSystem(config={})
-        self.env = ProductOwnerEnv(userstory_env, reward_system=reward_system)
+        self.env = ProductOwnerEnv(userstory_env, reward_system=reward_system,
+                                   seed=None, card_picker_seed=None)
 
     def test_start_game(self):
         # тестируются действия, выполняемые с момента начала игры до первого релиза включительно
-        state = self.env.reset()
+        state = self.env.reset(seed=None, card_picker_seed=None)
         if not IS_SILENT:
             print(state)
         game_sim = self.env.game
@@ -40,7 +41,7 @@ class TestEnvFunctions(unittest.TestCase):
     
     def test_state_dim(self):
         state_dim = self.env.state_dim
-        state = self.env.reset()
+        state = self.env.reset(seed=None, card_picker_seed=None)
 
         self.assertEqual(len(state), state_dim)
 
@@ -149,7 +150,7 @@ class TestEnvFunctions(unittest.TestCase):
         self.assertTrue(len(game_sim.completed_us) == 0)
 
     def test_act_upon_not_existing_card(self):
-        state = self.env.reset()
+        state = self.env.reset(seed=None, card_picker_seed=None)
         new_state, reward, done, _ = self.env.step(self.env.action_n - 1)
 
         assert np.all(state == new_state)

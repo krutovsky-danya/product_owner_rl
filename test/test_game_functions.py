@@ -4,11 +4,12 @@ from game.game import ProductOwnerGame
 from game.game_constants import GlobalConstants
 from game.rooms.devroom.room import OfficeRoom
 from game.userstory_card.userstory_card import UserStoryCard, UserStoryCardInfo
+from random import Random
 
 
 class TestGameFunctions(unittest.TestCase):
     def setUp(self):
-        self.game = ProductOwnerGame()
+        self.game = ProductOwnerGame(seed=None, card_picker_seed=None)
 
     def test_availability_on_start(self):
         self.assertTrue(self.game.userstories.statistical_research_available)
@@ -158,8 +159,8 @@ class TestGameFunctions(unittest.TestCase):
 
     def test_cannot_move_one_card_to_release_twice(self):
         self.game.context.is_new_game = False
-        card1 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
-        card2 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage))
+        card1 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage, Random()))
+        card2 = UserStoryCard(UserStoryCardInfo('S', 0, self.game.context.color_storage, Random()))
         self.game.userstories.stories_list.append(card1)
         self.game.userstories.stories_list.append(card2)
 
