@@ -178,17 +178,21 @@ class ProductOwnerGame:
 
     def _update_profit_ordinary_card(self, us: UserStoryCardInfo):
         sprints_spent = self.context.current_sprint - us.spawn_sprint
-        for us_fp_key in GlobalConstants.sorted_keys_userstory_floating_profit:
-            us_fp = GlobalConstants.USERSTORY_FLOATING_PROFIT[us_fp_key]
-            is_last_key = us_fp_key == GlobalConstants.sorted_keys_userstory_floating_profit[-1]
-            if sprints_spent <= us_fp_key or is_last_key:
-                ran_val = self.context.random_gen.uniform(us_fp[0], us_fp[1])
-                ran_usr_to_bring = us.customers_to_bring * ran_val
-                self.context.customers += stepify(ran_usr_to_bring, 0.01)
-                ran_val = self.context.random_gen.uniform(us_fp[0], us_fp[1])
-                ran_lty_to_bring = us.loyalty * ran_val
+        benchmark_sprints = GlobalConstants.sorted_keys_userstory_floating_profit
+        for benchmark_sprint in benchmark_sprints:
+            floating_profit = GlobalConstants.USERSTORY_FLOATING_PROFIT[benchmark_sprint]
+            is_last_key = benchmark_sprint == benchmark_sprints[-1]
+            if sprints_spent <= benchmark_sprint or is_last_key:
+                random_coefficient = self.context.random_gen.uniform(floating_profit[0],
+                                                                     floating_profit[1])
+                random_customers_to_bring = us.customers_to_bring * random_coefficient
+                self.context.customers += stepify(random_customers_to_bring, 0.01)
+
+                random_coefficient = self.context.random_gen.uniform(floating_profit[0],
+                                                                     floating_profit[1])
+                random_loyalty_to_bring = us.loyalty * random_coefficient
                 self.context.set_loyalty(
-                    self.context.get_loyalty() + stepify(ran_lty_to_bring, 0.01))
+                    self.context.get_loyalty() + stepify(random_loyalty_to_bring, 0.01))
                 break
 
     def _check_and_spawn_bug(self):
