@@ -9,7 +9,7 @@ from random import Random
 
 class TestGameFunctions(unittest.TestCase):
     def setUp(self):
-        self.game = ProductOwnerGame(seed=None, card_picker_seed=None)
+        self.game = ProductOwnerGame(seed=None)
 
     def test_availability_on_start(self):
         self.assertTrue(self.game.userstories.statistical_research_available)

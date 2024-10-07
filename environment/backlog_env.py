@@ -3,6 +3,7 @@ from game.backlog_card.backlog_card import Card
 from game.backlog_card.card_info import CardInfo
 from game.common_methods import sample_n_or_zero
 from environment.card_methods import split_cards_in_types
+from numpy.random import Generator
 
 
 from typing import List, Tuple, Optional
@@ -78,13 +79,13 @@ class BacklogEnv:
         if 0 <= tech_debt_card_id < len(self.backlog_tech_debt):    
             return self.backlog_tech_debt[tech_debt_card_id]
 
-    def encode(self, backlog: Backlog) -> List[float]:
+    def encode(self, backlog: Backlog, card_picker_random_gen: Generator) -> List[float]:
         self.backlog = backlog
         self.context = backlog.context
         counts = (self.backlog_commons_count,
                   self.backlog_bugs_count, self.backlog_tech_debt_count)
         backlog_encoding = self._encode_queue(
-            backlog.backlog, counts, self._set_backlog_cards)
+            backlog.backlog, counts, self._set_backlog_cards, card_picker_random_gen)
         assert len(backlog_encoding) == self.backlog_space_dim
 
         sprint_encoding = []
@@ -93,21 +94,22 @@ class BacklogEnv:
             counts = (self.sprint_commons_count, self.sprint_bugs_count,
                       self.sprint_tech_debt_count)
             sprint_encoding = self._encode_queue(
-                backlog.sprint, counts, self._set_sprint_cards)
+                backlog.sprint, counts, self._set_sprint_cards, card_picker_random_gen)
             assert len(sprint_encoding) == self.sprint_space_dim
 
         return backlog_encoding + sprint_encoding
 
-    def _encode_queue(self, cards: List[Card], counts: Tuple[int, int, int], setter) -> List[float]:
+    def _encode_queue(self, cards: List[Card], counts: Tuple[int, int, int], setter,
+                      card_picker_random_gen: Generator) -> List[float]:
         commons, bugs, tech_debt = split_cards_in_types(cards)
         commons_count, bugs_count, tech_debt_count = counts
 
         commons = sample_n_or_zero(commons, commons_count,
-                                   self.context.card_picker_random_gen)
+                                   card_picker_random_gen)
         bugs = sample_n_or_zero(bugs, bugs_count,
-                                self.context.card_picker_random_gen)
+                                card_picker_random_gen)
         tech_debt = sample_n_or_zero(tech_debt, tech_debt_count,
-                                     self.context.card_picker_random_gen)
+                                     card_picker_random_gen)
         setter(commons, bugs, tech_debt)
 
         commons_len = BACKLOG_COMMON_FEATURE_COUNT * commons_count

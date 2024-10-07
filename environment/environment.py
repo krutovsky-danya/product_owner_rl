@@ -26,12 +26,13 @@ class ProductOwnerEnv:
     def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True,
                  reward_system: BaseRewardSystem = None,
                  seed=None, card_picker_seed=None):
-        self.game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+        self.game = ProductOwnerGame(seed=seed)
         if backlog_env is None:
             self.backlog_env = BacklogEnv()
         else:
             self.backlog_env = backlog_env
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env
+        self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
 
         self.meta_space_dim = 19
 
@@ -55,9 +56,13 @@ class ProductOwnerEnv:
         self.reward_system = reward_system
 
     def reset(self, seed=None, card_picker_seed=None):
-        self.game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+        self.game = ProductOwnerGame(seed=seed)
+        self._reset_card_picker_random_gen(card_picker_seed)
         self.current_state = self._get_state()
         return self.current_state
+
+    def _reset_card_picker_random_gen(self, card_picker_seed=None):
+        self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
 
     def recalculate_state(self):
         self.current_state = self._get_state()
@@ -83,8 +88,8 @@ class ProductOwnerEnv:
             self.game.userstories.user_survey_available,
             int(context.done),
             *self._get_completed_cards_count(),
-            *self.userstory_env.encode(self.game.userstories),
-            *self.backlog_env.encode(self.game.backlog)
+            *self.userstory_env.encode(self.game.userstories, self.card_picker_random_gen),
+            *self.backlog_env.encode(self.game.backlog, self.card_picker_random_gen)
         ]
         assert len(state) == self.state_dim
         if in_tensor:
@@ -336,10 +341,11 @@ class BuggyProductOwnerEnv(ProductOwnerEnv):
                  seed=None, card_picker_seed=None):
         super().__init__(userstory_env, backlog_env, with_info,
                          seed=seed, card_picker_seed=card_picker_seed)
-        self.game = get_buggy_game_1(seed=seed, card_picker_seed=card_picker_seed)
+        self.game = get_buggy_game_1(seed=seed)
         self.current_state = self._get_state()
     
     def reset(self, seed=None, card_picker_seed=None):
-        self.game = get_buggy_game_1(seed=seed, card_picker_seed=card_picker_seed)
+        self.game = get_buggy_game_1(seed=seed)
+        super()._reset_card_picker_random_gen(card_picker_seed)
         self.current_state = self._get_state()
         return self.current_state

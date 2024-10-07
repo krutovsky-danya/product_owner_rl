@@ -1,4 +1,5 @@
 from typing import List
+from numpy.random import Generator
 
 from game.common_methods import sample_n_or_zero
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
@@ -36,11 +37,12 @@ class UserstoryEnv:
         self.userstories_bugs = []
         self.userstories_td = []
 
-    def encode(self, userstories: UserStories):
+    def encode(self, userstories: UserStories, card_picker_random_gen: Generator):
         return self._encode_queue(userstories,
                                   self.us_common_count,
                                   self.us_bug_count,
-                                  self.us_td_count)
+                                  self.us_td_count,
+                                  card_picker_random_gen)
     
     def get_encoded_card(self, index: int):
         # returns card by index
@@ -54,16 +56,16 @@ class UserstoryEnv:
             return self.userstories_td[index]
         return None
 
-    def _encode_queue(self, userstories: UserStories, count_common, count_bug, count_td):
+    def _encode_queue(self, userstories: UserStories, count_common, count_bug, count_td,
+                      card_picker_random_gen: Generator):
         commons, bugs, tech_debts = split_cards_in_types(userstories.stories_list)
 
-        context = userstories.context
         sampled_cards_common = sample_n_or_zero(commons, count_common,
-                                                context.card_picker_random_gen)
+                                                card_picker_random_gen)
         sampled_cards_bugs = sample_n_or_zero(bugs, count_bug,
-                                              context.card_picker_random_gen)
+                                              card_picker_random_gen)
         sampled_cards_td = sample_n_or_zero(tech_debts, count_td,
-                                            context.card_picker_random_gen)
+                                            card_picker_random_gen)
 
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td)

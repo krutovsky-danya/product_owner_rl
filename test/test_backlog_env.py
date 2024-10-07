@@ -8,11 +8,15 @@ from game.game_variables import GlobalContext
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from random import Random
+import numpy as np
 
 
 class TestBacklogEnv(unittest.TestCase):
     def setUp(self):
-        self.context = GlobalContext(seed=0, card_picker_seed=None)
+        self.context = GlobalContext()
+        self.random_gen = Random(x=0)
+        self.card_picker_random_gen = np.random.default_rng(seed=0)
         self.color_storage = self.context.color_storage
         self.backlog = Backlog(self.context)
         self.env = BacklogEnv(
@@ -22,7 +26,7 @@ class TestBacklogEnv(unittest.TestCase):
         self.size = self.env.backlog_space_dim + self.env.sprint_space_dim
     
     def test_encode_empty_backlog(self):
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_gen)
 
         self.assertSequenceEqual(encoding, [0] * self.size)
     
@@ -30,7 +34,7 @@ class TestBacklogEnv(unittest.TestCase):
         queue = self.backlog.backlog
         self.fill_queue(queue)
         
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_gen)
         backlog = encoding[:self.env.backlog_space_dim]
         sprint = encoding[self.env.backlog_space_dim:]
 
@@ -39,7 +43,7 @@ class TestBacklogEnv(unittest.TestCase):
     
     def test_encode_full_sprint(self):
         self.fill_queue(self.backlog.sprint)
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_gen)
         backlog = encoding[:self.env.backlog_space_dim]
         sprint = encoding[self.env.backlog_space_dim:]
         
@@ -48,7 +52,7 @@ class TestBacklogEnv(unittest.TestCase):
 
     def fill_queue(self, queue):
         self.context.current_stories[1] = UserStoryCardInfo("S", 0, self.color_storage,
-                                                            self.context.random_gen)
+                                                            self.random_gen)
         for i in range(self.env.backlog_commons_count):
             card = Card()
             card_info = CardInfo(1, None, 1, None, UserCardType.S)
@@ -57,7 +61,7 @@ class TestBacklogEnv(unittest.TestCase):
             queue.append(card)
         
         self.context.current_stories[2] = BugUserStoryInfo(0, self.color_storage,
-                                                           self.context.random_gen)
+                                                           self.random_gen)
         for i in range(self.env.backlog_bugs_count):
             card = Card()
             card_info = CardInfo(2, None, 2, None, UserCardType.BUG)
@@ -66,7 +70,7 @@ class TestBacklogEnv(unittest.TestCase):
             queue.append(card)
         
         self.context.current_stories[3] = TechDebtInfo(0, self.color_storage,
-                                                       self.context.random_gen)
+                                                       self.random_gen)
         for i in range(self.env.backlog_tech_debt_count):
             card = Card()
             card_info = CardInfo(3, None, 3, None, UserCardType.TECH_DEBT)

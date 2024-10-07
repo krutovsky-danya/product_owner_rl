@@ -39,7 +39,8 @@ class StochasticGameStartEnv(ProductOwnerEnv):
         ]
 
     def reset(self, seed=None, card_picker_seed=None):
-        self.game = self.generators[self.index](seed, card_picker_seed)
+        self.game = self.generators[self.index](seed)
+        super()._reset_card_picker_random_gen(card_picker_seed)
         self.index = (self.index + 1) % len(self.generators)
         self.current_state = self._get_state()
         return self.current_state

@@ -1,8 +1,8 @@
 from game.game import ProductOwnerGame
 
 
-def get_buggy_game_1(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_buggy_game_1(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.current_sprint = 35
     game.context.credit = 0
     game.context.set_money(200_000)
@@ -15,8 +15,8 @@ def get_buggy_game_1(seed=None, card_picker_seed=None):
     return game
 
 
-def get_buggy_game_2(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_buggy_game_2(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.current_sprint = 35
     game.context.credit = 0
     game.context.set_money(77_000 + 50_000)
@@ -30,8 +30,8 @@ def get_buggy_game_2(seed=None, card_picker_seed=None):
     return game
 
 
-def get_buggy_game_3(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_buggy_game_3(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.current_sprint = 35
     game.context.credit = 0
     game.context.set_money(161_000)
@@ -44,8 +44,8 @@ def get_buggy_game_3(seed=None, card_picker_seed=None):
     return game
 
 
-def get_game_on_sprint_26(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_game_on_sprint_26(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.is_new_game = False
     game.is_first_release = False
     game.userstories.disable_restrictions()
@@ -59,8 +59,8 @@ def get_game_on_sprint_26(seed=None, card_picker_seed=None):
     return game
 
 
-def get_game_on_sprint_21(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_game_on_sprint_21(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.is_new_game = False
     game.is_first_release = False
     game.userstories.disable_restrictions()
@@ -73,8 +73,8 @@ def get_game_on_sprint_21(seed=None, card_picker_seed=None):
     return game
 
 
-def get_game_on_sprint_6(seed=None, card_picker_seed=None):
-    game = ProductOwnerGame(seed=seed, card_picker_seed=card_picker_seed)
+def get_game_on_sprint_6(seed=None):
+    game = ProductOwnerGame(seed=seed)
     game.context.is_new_game = False
     game.is_first_release = False
     game.userstories.disable_restrictions()
