@@ -18,16 +18,16 @@ class UserStories:
         self.release_available = False
         self.available = True
 
-        self.statistical_research_card_generator = UserStoriesGenerator(
-            100, 0, 0, 0)
-        self.user_survey_card_generator = UserStoriesGenerator(1, 59, 30, 10)
+        self.statistical_research_card_generator = UserStoriesGenerator(100, 0, 0, 0,
+                                                                        self.context.random_gen)
+        self.user_survey_card_generator = UserStoriesGenerator(1, 59, 30, 10,
+                                                               self.context.random_gen)
 
     def generate_cards_with_generator(self, count: int, gen: UserStoriesGenerator):
         cards = gen.generate_userstories(
             count,
             self.context.current_sprint,
-            self.context.color_storage,
-            self.context.random_gen
+            self.context.color_storage
         )
         for card in cards:
             self.stories_list.append(card)
