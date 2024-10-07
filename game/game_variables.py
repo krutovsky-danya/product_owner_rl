@@ -38,7 +38,7 @@ class GlobalContext:
         self.color_storage = ColorStorage()
         self.is_victory = False
         self.is_loss = False
-        self.random_gen = Random(x=seed) if seed is not None else Random()
+        self.random_gen = Random(x=seed)
         self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
 
     def get_money(self):
