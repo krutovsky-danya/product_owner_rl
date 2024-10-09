@@ -7,7 +7,15 @@ from torch.distributions import Normal, Categorical
 
 class PPO_Base(nn.Module):
     def __init__(
-        self, pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        self,
+        pi_model: nn.Module,
+        v_model: nn.Module,
+        gamma,
+        batch_size,
+        epsilon,
+        epoch_n,
+        pi_lr,
+        v_lr,
     ):
         super().__init__()
         self.pi_model = pi_model
