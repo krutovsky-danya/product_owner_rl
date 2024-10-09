@@ -37,12 +37,12 @@ class UserstoryEnv:
         self.userstories_bugs = []
         self.userstories_td = []
 
-    def encode(self, userstories: UserStories, card_picker_random_gen: Generator):
+    def encode(self, userstories: UserStories, card_picker_random_generator: Generator):
         return self._encode_queue(userstories,
                                   self.us_common_count,
                                   self.us_bug_count,
                                   self.us_td_count,
-                                  card_picker_random_gen)
+                                  card_picker_random_generator)
     
     def get_encoded_card(self, index: int):
         # returns card by index
@@ -57,15 +57,15 @@ class UserstoryEnv:
         return None
 
     def _encode_queue(self, userstories: UserStories, count_common, count_bug, count_td,
-                      card_picker_random_gen: Generator):
+                      card_picker_random_generator: Generator):
         commons, bugs, tech_debts = split_cards_in_types(userstories.stories_list)
 
         sampled_cards_common = sample_n_or_zero(commons, count_common,
-                                                card_picker_random_gen)
+                                                card_picker_random_generator)
         sampled_cards_bugs = sample_n_or_zero(bugs, count_bug,
-                                              card_picker_random_gen)
+                                              card_picker_random_generator)
         sampled_cards_td = sample_n_or_zero(tech_debts, count_td,
-                                            card_picker_random_gen)
+                                            card_picker_random_generator)
 
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td)

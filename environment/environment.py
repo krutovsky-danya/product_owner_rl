@@ -32,7 +32,7 @@ class ProductOwnerEnv:
         else:
             self.backlog_env = backlog_env
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env
-        self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
+        self.card_picker_random_generator = np.random.default_rng(seed=card_picker_seed)
 
         self.meta_space_dim = 19
 
@@ -57,12 +57,12 @@ class ProductOwnerEnv:
 
     def reset(self, seed=None, card_picker_seed=None):
         self.game = ProductOwnerGame(seed=seed)
-        self._reset_card_picker_random_gen(card_picker_seed)
+        self._reset_card_picker_random_generator(card_picker_seed)
         self.current_state = self._get_state()
         return self.current_state
 
-    def _reset_card_picker_random_gen(self, card_picker_seed=None):
-        self.card_picker_random_gen = np.random.default_rng(seed=card_picker_seed)
+    def _reset_card_picker_random_generator(self, card_picker_seed=None):
+        self.card_picker_random_generator = np.random.default_rng(seed=card_picker_seed)
 
     def recalculate_state(self):
         self.current_state = self._get_state()
@@ -88,8 +88,8 @@ class ProductOwnerEnv:
             self.game.userstories.user_survey_available,
             int(context.done),
             *self._get_completed_cards_count(),
-            *self.userstory_env.encode(self.game.userstories, self.card_picker_random_gen),
-            *self.backlog_env.encode(self.game.backlog, self.card_picker_random_gen)
+            *self.userstory_env.encode(self.game.userstories, self.card_picker_random_generator),
+            *self.backlog_env.encode(self.game.backlog, self.card_picker_random_generator)
         ]
         assert len(state) == self.state_dim
         if in_tensor:
@@ -346,6 +346,6 @@ class BuggyProductOwnerEnv(ProductOwnerEnv):
     
     def reset(self, seed=None, card_picker_seed=None):
         self.game = get_buggy_game_1(seed=seed)
-        super()._reset_card_picker_random_gen(card_picker_seed)
+        super()._reset_card_picker_random_generator(card_picker_seed)
         self.current_state = self._get_state()
         return self.current_state

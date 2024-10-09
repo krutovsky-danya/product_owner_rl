@@ -9,7 +9,7 @@ from typing import List
 
 class UserStoryCardInfo:
     def __init__(self, label_val: str, spawn_sprint: int, color_storage: ColorStorage,
-                 random_gen: Random):
+                 random_generator: Random):
         self.customers_to_bring = 0
         self.loyalty = 0
         self.time_to_complete = 0
@@ -43,26 +43,26 @@ class UserStoryCardInfo:
             self.time_to_complete = 304
             self.card_type = UserCardType.XL
         elif label_val == "Bug":
-            self.time_to_complete = random_gen.randint(1, 38)
+            self.time_to_complete = random_generator.randint(1, 38)
             self.card_type = UserCardType.BUG
         elif label_val == "TechDebt":
-            self.time_to_complete = random_gen.randint(1, 5)
+            self.time_to_complete = random_generator.randint(1, 5)
             self.card_type = UserCardType.TECH_DEBT
 
-    def _set_loyalty_and_customers_ordinary_us(self, random_gen: Random):
+    def _set_loyalty_and_customers_ordinary_us(self, random_generator: Random):
         user_story_loyalty = GlobalConstants.USERSTORY_LOYALTY
         user_story_customers = GlobalConstants.USERSTORY_CUSTOMER
         min_lty, max_lty = user_story_loyalty[self.card_type]
-        r_lty = random_gen.uniform(min_lty, max_lty)
+        r_lty = random_generator.uniform(min_lty, max_lty)
         self.loyalty = stepify(r_lty, 0.005)
         min_user, max_user = user_story_customers[self.card_type]
-        r_user = random_gen.uniform(min_user, max_user)
+        r_user = random_generator.uniform(min_user, max_user)
         self.customers_to_bring = stepify(r_user, 0.5)
 
-    def generate_related_cards(self, random_gen: Random):
+    def generate_related_cards(self, random_generator: Random):
         time = 0
         while time < self.time_to_complete:
-            time_for_card = random_gen.randint(6, 19)
+            time_for_card = random_generator.randint(6, 19)
             if time_for_card + time > self.time_to_complete:
                 time_for_card = self.time_to_complete - time
             card = CardInfo(hours_val=time_for_card, color_val=self.color, us_id_val=id(self),

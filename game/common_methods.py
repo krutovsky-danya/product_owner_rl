@@ -42,11 +42,11 @@ def sample_n_or_less(collection, count):
     return random.sample(collection, count)
 
 
-def sample_n_or_zero(collection: Sequence, count: int, gen: np.random.Generator):
+def sample_n_or_zero(collection: Sequence, count: int, random_generator: np.random.Generator):
     if len(collection) == 0:
         return []
     
     replace = len(collection) < count
 
-    result = gen.choice(collection, size=count, replace=replace)
+    result = random_generator.choice(collection, size=count, replace=replace)
     return result

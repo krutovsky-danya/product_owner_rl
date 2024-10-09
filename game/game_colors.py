@@ -17,7 +17,7 @@ class ColorStorage:
                                UserCardColor.PINK, UserCardColor.PURPLE, UserCardColor.RED,
                                UserCardColor.YELLOW]
 
-    def get_unused_color(self, uc_type: UserCardType, random_gen: Random):
+    def get_unused_color(self, uc_type: UserCardType, random_generator: Random):
         if len(self.used_colors[uc_type]) == 7:
             print("Не осталось не использованных цветов.")
             return
@@ -25,7 +25,7 @@ class ColorStorage:
         cfu = copy(self.colors_for_use)
         for i in self.used_colors[uc_type]:
             cfu.remove(i)
-        i = random_gen.randint(0, len(cfu) - 1)
+        i = random_generator.randint(0, len(cfu) - 1)
         color = cfu[i]
         self.used_colors[uc_type].append(color)
         return color
