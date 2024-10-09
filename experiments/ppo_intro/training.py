@@ -51,13 +51,13 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPp
 
 
 def main(agent_class):
-    episode_n = 1  # 00
+    episode_n = 100
     trajectory_n = 15
     study = make_credit_study(200, episode_n, trajectory_n)
-    experiment_name = study.agent.__class__
+    experiment_name = study.agent.__class__.__name__
     data_sub_name = f"{episode_n}_episodes_{trajectory_n}_trajectory_n"
     now = datetime.datetime.now()
-    save_rewards(episode_n, study.rewards_log, now, experiment_name)
+    save_rewards(data_sub_name, study.rewards_log, now, experiment_name)
 
     evaluations = []
     for i in range(100):
