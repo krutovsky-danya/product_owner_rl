@@ -12,6 +12,7 @@ sys.path.append("..")
 
 from environment import CreditPayerEnv
 from pipeline import LoggingStudy
+from pipeline.episodic_study import EpisodicPpoStudy
 
 
 def play_forward_with_empty_sprints(env: CreditPayerEnv):
@@ -32,6 +33,16 @@ def eval_agent(study: LoggingStudy):
     state = study.env.reset()
     info = study.env.get_info()
     reward, _ = study.play_trajectory(state, info)
+    play_forward_with_empty_sprints(study.env)
+    game_context = study.env.game.context
+    is_win = game_context.is_victory
+    sprint = game_context.current_sprint
+    return reward, is_win, sprint
+
+
+def eval_ppo_agent(study: EpisodicPpoStudy):
+    study.agent.eval()
+    reward, _ = study.play_trajectory()
     play_forward_with_empty_sprints(study.env)
     game_context = study.env.game.context
     is_win = game_context.is_victory
