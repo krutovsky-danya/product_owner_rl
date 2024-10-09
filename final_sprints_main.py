@@ -1,5 +1,8 @@
 from environment import ProductOwnerEnv
-from environment.reward_sytem import EmpiricalRewardSystem
+from environment.backlog_env import BacklogEnv
+from environment.reward_sytem import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, \
+    EmpiricalEndStageRewardSystem, PotentialEndStageRewardSystem
+from environment.userstory_env import UserstoryEnv
 from main import create_usual_agent
 from pipeline import AggregatorStudy, STUDY, END, TUTORIAL, CREDIT_START, CREDIT_END
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent
@@ -15,7 +18,9 @@ def make_final_sprints_study(agents,
                              with_info,
                              save_rate=None):
     reward_system = EmpiricalRewardSystem(config={})
-    env = ProductOwnerEnv(with_info=with_info, reward_system=reward_system)
+    userstory_env = UserstoryEnv(6, 2, 2)
+    backlog_env = BacklogEnv(12, 4, 2, 0, 0, 0)
+    env = ProductOwnerEnv(userstory_env, backlog_env, with_info=with_info, reward_system=reward_system)
     update_reward_system_config(env, reward_system)
     agent = create_usual_agent(env, trajectory_max_len, episode_n)
 

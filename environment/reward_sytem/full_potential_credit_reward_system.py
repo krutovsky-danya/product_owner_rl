@@ -3,7 +3,7 @@ import torch
 
 
 class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
-    def __init__(self, config: dict, coefficient=1) -> None:
+    def __init__(self, config: dict, coefficient=1, gamma=1) -> None:
         super().__init__(config)
         self.remove_sprint_card_reward = 0
         self.valid_action_reward = 0
@@ -15,6 +15,8 @@ class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
         self.potential_weight = 0.3 * coefficient
         self.money_weight = 1e-3 * coefficient
         self.money_boundary = 0
+        # discount factor gamma
+        self.gamma = gamma
 
     def get_reward(self, state_old, action, state_new, success) -> float:
         reward = super().get_reward(state_old, action, state_new, success)
@@ -26,7 +28,7 @@ class FullPotentialCreditRewardSystem(EmpiricalRewardSystem):
         potential_income_old = self.get_potential_income(state_old)
         potential_income_new = self.get_potential_income(state_new)
 
-        reward = potential_income_new - potential_income_old
+        reward = self.gamma * potential_income_new - potential_income_old
 
         return reward
 

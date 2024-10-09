@@ -2,13 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from environment import CreditPayerEnv, TutorialSolverEnv, ProductOwnerEnv
+from environment.backlog_env import BacklogEnv
+from environment.userstory_env import UserstoryEnv
 from pipeline.study_agent import load_dqn_agent
 from pipeline.base_study import MAX_INNER_SPRINT_ACTION_COUNT
 from pipeline import TUTORIAL, CREDIT_FULL, CREDIT_START, CREDIT_END, END
 from pipeline.aggregator_study import update_reward_system_config
 from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
                                       EmpiricalRewardSystem,
-                                      FullPotentialCreditRewardSystem)
+                                      FullPotentialCreditRewardSystem,
+                                      PotentialEndStageRewardSystem)
 
 SMALL_SIZE = 16
 MEDIUM_SIZE = 20
@@ -135,11 +138,21 @@ def load_agents(paths):
 
 def get_backlog_environments():
     return {
+        TUTORIAL: BacklogEnv(4, 0, 0, 0, 0, 0),
+        CREDIT_FULL: BacklogEnv(12, 4, 2, 0, 0, 0),
+        CREDIT_END: BacklogEnv(12, 4, 2, 0, 0, 0),
+        CREDIT_START: BacklogEnv(12, 4, 2, 0, 0, 0),
+        END: BacklogEnv(12, 4, 2, 0, 0, 0)
+    }
+
+
+def get_userstory_environments():
+    return {
         TUTORIAL: None,
-        CREDIT_FULL: None,
-        CREDIT_END: None,
-        CREDIT_START: None,
-        END: None
+        CREDIT_FULL: UserstoryEnv(6, 2, 2),
+        CREDIT_END: UserstoryEnv(6, 2, 2),
+        CREDIT_START: UserstoryEnv(6, 2, 2),
+        END: UserstoryEnv(6, 2, 2)
     }
 
 
@@ -150,35 +163,35 @@ def get_reward_systems():
         CREDIT_START: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=False,
                                                        config={}),
         CREDIT_END: EmpiricalCreditStageRewardSystem(with_late_purchase_punishment=True, config={}),
-        END: EmpiricalRewardSystem(config={})
+        END: PotentialEndStageRewardSystem(config={}, potential_weight=1)
     }
 
 
-def get_environments(backlog_environments, reward_systems, with_info):
+def get_environments(userstory_environments, backlog_environments, reward_systems, with_info):
     res = {
-        TUTORIAL: TutorialSolverEnv(userstory_env=None,
+        TUTORIAL: TutorialSolverEnv(userstory_env=userstory_environments[TUTORIAL],
                                     backlog_env=backlog_environments[TUTORIAL],
                                     with_info=with_info,
                                     reward_system=reward_systems[TUTORIAL]),
-        CREDIT_FULL: CreditPayerEnv(userstory_env=None,
+        CREDIT_FULL: CreditPayerEnv(userstory_env=userstory_environments[CREDIT_FULL],
                                     backlog_env=backlog_environments[CREDIT_FULL],
                                     with_end=True,
                                     with_info=with_info,
                                     reward_system=reward_systems[CREDIT_FULL]),
-        CREDIT_START: CreditPayerEnv(userstory_env=None,
+        CREDIT_START: CreditPayerEnv(userstory_env=userstory_environments[CREDIT_START],
                                      backlog_env=backlog_environments[CREDIT_START],
                                      with_end=False,
                                      with_info=with_info,
                                      reward_system=reward_systems[CREDIT_START]),
-        CREDIT_END: CreditPayerEnv(userstory_env=None,
+        CREDIT_END: CreditPayerEnv(userstory_env=userstory_environments[CREDIT_END],
                                    backlog_env=backlog_environments[CREDIT_END],
                                    with_end=True,
                                    with_info=with_info,
                                    reward_system=reward_systems[CREDIT_END]),
-        END: ProductOwnerEnv(userstory_env=None,
+        END: ProductOwnerEnv(userstory_env=userstory_environments[END],
                              backlog_env=backlog_environments[END],
                              with_info=with_info,
-                             reward_system=reward_systems[END])
+                             reward_system=reward_systems[END]),
     }
 
     for stage, env in res.items():
