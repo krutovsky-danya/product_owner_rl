@@ -8,6 +8,7 @@ class EpisodicPpoStudy:
         self.env : ProductOwnerEnv = env
         self.agent: PPO = agent
         self.trajectory_max_len = trajectory_max_len
+        self.rewards_log = []
 
     def play_trajectory(self):
         total_reward = 0
@@ -32,7 +33,6 @@ class EpisodicPpoStudy:
         return total_reward, states, actions, rewards, dones, infos
 
     def study_agent(self, episode_n: int, trajectory_n: int):
-        total_rewards = []
         for episode in range(episode_n):
             print(f'Started episode {episode + 1}')
             states, actions, rewards, dones, infos = [], [], [], [], []
@@ -41,7 +41,7 @@ class EpisodicPpoStudy:
                 tr_total_reward, tr_states, tr_actions, tr_rewards, tr_dones, tr_infos = (
                     self.play_trajectory()
                 )
-                total_rewards.append(tr_total_reward)
+                self.rewards_log.append(tr_total_reward)
                 states.extend(tr_states)
                 actions.extend(tr_actions)
                 rewards.extend(tr_rewards)
@@ -49,7 +49,7 @@ class EpisodicPpoStudy:
                 infos.extend(tr_infos)
 
             self.agent.fit(states, actions, rewards, dones, infos)
-        return total_rewards
+        return self.rewards_log
 
 
 def study_ppo_agent(env, agent: torch.nn.Module, episode_n=50, trajectory_n=20):
