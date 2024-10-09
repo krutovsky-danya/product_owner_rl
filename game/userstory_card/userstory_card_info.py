@@ -19,17 +19,17 @@ class UserStoryCardInfo:
         self.completed_part = 0
         self.spawn_sprint = spawn_sprint
         self.card_type = UserCardType.S
-        self._set_card_type(label_val, random_gen)
+        self._set_card_type(label_val, random_generator)
         if not (self.card_type == UserCardType.BUG or self.card_type == UserCardType.TECH_DEBT):
-            self._set_loyalty_and_customers_ordinary_us(random_gen)
-        self.color = color_storage.get_unused_color(self.card_type, random_gen)
+            self._set_loyalty_and_customers_ordinary_us(random_generator)
+        self.color = color_storage.get_unused_color(self.card_type, random_generator)
         self.related_cards: List[CardInfo] = []
-        self.generate_related_cards(random_gen)
+        self.generate_related_cards(random_generator)
 
     def __repr__(self) -> str:
         return f'{self.label} l:{self.loyalty} c:{self.customers_to_bring}'
 
-    def _set_card_type(self, label_val: str, random_gen: Random):
+    def _set_card_type(self, label_val: str, random_generator: Random):
         if label_val == "S":
             self.time_to_complete = 38
             self.card_type = UserCardType.S
