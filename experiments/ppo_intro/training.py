@@ -2,28 +2,19 @@ import datetime
 import os
 import sys
 
-import pandas as pd
-
-from typing import List
-
 sys.path.append("..")
 sys.path.append("../..")
 sys.path.append("../../..")
 
-from algorithms import DoubleDQN
 from algorithms.proximal_policy_optimization import PPO_Discrete_Logits_Guided_Advantage
 from environment import CreditPayerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
-from environment.reward_sytem import (
-    EmpiricalCreditStageRewardSystem,
-    FullPotentialCreditRewardSystem,
-)
+from environment.reward_sytem import FullPotentialCreditRewardSystem
 from pipeline.aggregator_study import update_reward_system_config
 from pipeline import LoggingStudy
 from pipeline.episodic_study import EpisodicPpoStudy
 from experiments.training_utils import eval_ppo_agent, save_rewards, save_evaluation
-from main import create_usual_agent
 
 
 def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPpoStudy:
@@ -51,8 +42,8 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPp
 
 
 def main(agent_class):
-    episode_n = 100
-    trajectory_n = 15
+    episode_n = 300
+    trajectory_n = 5
     study = make_credit_study(200, episode_n, trajectory_n)
     experiment_name = study.agent.__class__.__name__
     data_sub_name = f"{episode_n}_episodes_{trajectory_n}_trajectory_n"

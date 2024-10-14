@@ -5,6 +5,16 @@ import matplotlib.pyplot as plt
 from torch.distributions import Normal, Categorical
 
 
+def get_v_model(state_dim: int, inner_layer_size: int):
+    return nn.Sequential(
+        nn.Linear(state_dim, inner_layer_size),
+        nn.ReLU(),
+        nn.Linear(inner_layer_size, inner_layer_size),
+        nn.ReLU(),
+        nn.Linear(inner_layer_size, 1),
+    )
+
+
 class PPO_Base(nn.Module):
     def __init__(
         self,
@@ -204,13 +214,7 @@ class PPO_Discrete_Softmax(PPO_Base):
             nn.Softmax(dim=-1),
         )
 
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
@@ -334,13 +338,7 @@ class PPO_Discrete_Logits(PPO_Base):
             nn.Linear(128, action_n),
         )
 
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
@@ -465,13 +463,7 @@ class PPO_Discrete_Softmax_Guided(PPO_Base):
             nn.Softmax(dim=-1),
         )
 
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
@@ -579,13 +571,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
             nn.Linear(128, action_n),
         )
 
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
