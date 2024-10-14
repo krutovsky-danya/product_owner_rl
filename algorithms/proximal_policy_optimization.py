@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
 from torch.distributions import Normal, Categorical
 
 
@@ -37,7 +36,7 @@ class PPO_Base(nn.Module):
         self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
         self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
 
-    def _update_pi_model(self, advantage, ratio):
+    def _update_pi_model(self, advantage: torch.Tensor, ratio: torch.Tensor):
         pi_loss_1 = ratio * advantage.detach()
         pi_loss_2 = (
             torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
@@ -49,12 +48,20 @@ class PPO_Base(nn.Module):
         self.pi_optimizer.step()
         self.pi_optimizer.zero_grad()
 
-    def _update_v_model(self, advantage):
+    def _update_v_model(self, advantage: torch.Tensor):
         v_loss = torch.mean(advantage**2)
 
         v_loss.backward()
         self.v_optimizer.step()
         self.v_optimizer.zero_grad()
+
+    def _get_returns(self, rewards: torch.Tensor, dones: torch.Tensor):
+        returns = np.zeros(rewards.shape)
+        returns[-1] = rewards[-1]
+        for t in range(returns.shape[0] - 2, -1, -1):
+            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
+
+        return returns
 
 
 class PPO(PPO_Base):
@@ -80,13 +87,7 @@ class PPO(PPO_Base):
             nn.Tanh(),
         )
 
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
@@ -112,14 +113,6 @@ class PPO(PPO_Base):
         action = dist.sample()
         action = action.numpy().reshape(self.action_dim)
         return action
-
-    def _get_returns(self, rewards, dones):
-        returns = np.zeros(rewards.shape)
-        returns[-1] = rewards[-1]
-        for t in range(returns.shape[0] - 2, -1, -1):
-            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-
-        return returns
 
     def fit(self, states, actions, rewards, dones):
         states, actions, rewards, dones = map(
@@ -238,14 +231,6 @@ class PPO_Discrete_Softmax(PPO_Base):
         action = action.numpy()
         return action
 
-    def _get_returns(self, rewards, dones):
-        returns = np.zeros(rewards.shape)
-        returns[-1] = rewards[-1]
-        for t in range(returns.shape[0] - 2, -1, -1):
-            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-
-        return returns
-
     def fit(self, states, actions, rewards, dones):
         states, actions, rewards, dones = map(
             np.array, [states, actions, rewards, dones]
@@ -361,14 +346,6 @@ class PPO_Discrete_Logits(PPO_Base):
         action = dist.sample()
         action = action.numpy()
         return action
-
-    def _get_returns(self, rewards, dones):
-        returns = np.zeros(rewards.shape)
-        returns[-1] = rewards[-1]
-        for t in range(returns.shape[0] - 2, -1, -1):
-            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-
-        return returns
 
     def fit(self, states, actions, rewards, dones):
         states, actions, rewards, dones = map(
@@ -489,14 +466,6 @@ class PPO_Discrete_Softmax_Guided(PPO_Base):
         action = action.numpy()
         return action
 
-    def _get_returns(self, rewards, dones):
-        returns = np.zeros(rewards.shape)
-        returns[-1] = rewards[-1]
-        for t in range(returns.shape[0] - 2, -1, -1):
-            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-
-        return returns
-
     def _convert_infos(self, infos):
         # want to place zeros in impossible moves
         # if mask will be tensor with True on possible moves and False on wrong moves
@@ -597,14 +566,6 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         action = dist.sample()
         action = action.numpy()
         return action
-
-    def _get_returns(self, rewards: np.ndarray, dones):
-        returns = np.zeros(rewards.shape)
-        returns[-1] = rewards[-1]
-        for t in range(returns.shape[0] - 2, -1, -1):
-            returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-
-        return returns
 
     def _convert_infos(self, infos):
         infos_count = len(infos)

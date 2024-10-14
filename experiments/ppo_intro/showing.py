@@ -4,7 +4,9 @@ import pandas as pd
 
 
 def main():
-    sub_name = "100_episodes_15_trajectory_n"
+    episode_n = 300
+    trajectory_n = 5
+    sub_name = f"{episode_n}_episodes_{trajectory_n}_trajectory_n"
     rewards_df = pd.read_csv(f"train_rewards_{sub_name}.csv")
     reward_groups = rewards_df.groupby(["Trajectory"])["Reward"]
     mean_rewards = reward_groups.mean().reset_index()
