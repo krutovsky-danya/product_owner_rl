@@ -7,7 +7,7 @@ sys.path.append("../..")
 sys.path.append("../../..")
 
 from algorithms.proximal_policy_optimization import PPO_Discrete_Logits_Guided_Advantage
-from environment import CreditPayerEnv
+from environment import CreditPayerEnv, ProductOwnerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
 from environment.reward_sytem import FullPotentialCreditRewardSystem
@@ -18,13 +18,12 @@ from experiments.training_utils import eval_ppo_agent, save_rewards, save_evalua
 
 
 def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPpoStudy:
-    userstory_env = UserstoryEnv(4, 0, 0)
-    backlog_env = BacklogEnv(12, 0, 0, 0, 0, 0)
+    userstory_env = UserstoryEnv()
+    backlog_env = BacklogEnv()
     reward_system = FullPotentialCreditRewardSystem(config={}, coefficient=1)
-    env = CreditPayerEnv(
+    env = ProductOwnerEnv(
         userstory_env,
         backlog_env,
-        with_end=True,
         with_info=True,
         reward_system=reward_system,
     )
