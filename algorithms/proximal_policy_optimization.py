@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.distributions import Normal, Categorical
 
 
-def get_v_model(state_dim: int, inner_layer_size: int):
+def get_v_model(state_dim: int, inner_layer_size: int = 256):
     return nn.Sequential(
         nn.Linear(state_dim, inner_layer_size),
         nn.ReLU(),
@@ -13,6 +13,14 @@ def get_v_model(state_dim: int, inner_layer_size: int):
         nn.Linear(inner_layer_size, 1),
     )
 
+def get_pi_model(state_dim: int, action_dim: int, inner_layer_size: int = 256):
+    return nn.Sequential(
+            nn.Linear(state_dim, inner_layer_size),
+            nn.ReLU(),
+            nn.Linear(inner_layer_size, inner_layer_size),
+            nn.ReLU(),
+            nn.Linear(inner_layer_size, action_dim),
+        )
 
 class PPO_Base(nn.Module):
     def __init__(
@@ -533,14 +541,16 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         self.action_n = action_n
 
         pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(128, action_n),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, action_n),
         )
 
-        v_model = get_v_model(state_dim, 128)
+        v_model = get_v_model(state_dim, 256)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr

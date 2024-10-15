@@ -4,8 +4,8 @@ import pandas as pd
 
 
 def main():
-    episode_n = 300
-    trajectory_n = 5
+    episode_n = 250
+    trajectory_n = 20
     sub_name = f"{episode_n}_episodes_{trajectory_n}_trajectory_n"
     rewards_df = pd.read_csv(f"train_rewards_{sub_name}.csv")
     reward_groups = rewards_df.groupby(["Trajectory"])["Reward"]
@@ -19,7 +19,7 @@ def main():
     plt.title("Rewards")
     plt.xlabel("trajectory")
     plt.ylabel("rewards")
-    plt.xticks(np.arange(0, 1501, 500))
+    plt.xticks(np.arange(0, 5001, 1000))
     plt.savefig(f"rewards_{sub_name}.png")
     plt.show()
 

@@ -42,8 +42,8 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPp
 
 
 def main(agent_class):
-    episode_n = 300
-    trajectory_n = 5
+    episode_n = 250
+    trajectory_n = 20
     study = make_credit_study(200, episode_n, trajectory_n)
     experiment_name = study.agent.__class__.__name__
     data_sub_name = f"{episode_n}_episodes_{trajectory_n}_trajectory_n"
