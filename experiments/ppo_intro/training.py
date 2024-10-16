@@ -33,7 +33,7 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPp
     state_dim = env.state_dim
     action_n = env.action_n
 
-    agent = PPO_Discrete_Logits_Guided(state_dim, action_n)
+    agent = PPO_Discrete_Logits_Guided_Advantage(state_dim, action_n)
 
     study = EpisodicPpoStudy(env, agent, trajectory_max_len)
     study.study_agent(episode_n, trajectory_n)
