@@ -586,7 +586,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
         return mask
 
-    def _get_advantage(self, returns: torch.Tensor, states, next_states):
+    def _get_advantage(self, returns: torch.Tensor, states):
         advantage = returns.detach() - self.v_model(states)
         return advantage
 
