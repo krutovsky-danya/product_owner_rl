@@ -1,6 +1,10 @@
 from game.game_colors import ColorStorage
 from game.game_constants import GlobalConstants
 from game.common_methods import clamp
+from typing import Dict
+from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from game.userstory_card.bug_user_story_info import BugUserStoryInfo
+from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 
 
 def save_to_leaderboard(current_sprint):
@@ -11,14 +15,14 @@ def save_to_leaderboard(current_sprint):
 class GlobalContext:
     def __init__(self) -> None:
         self.current_sprint = 1
-        self.current_stories = {}  # : dict[int, UserStoryCardInfo]
+        self.current_stories: Dict[int, UserStoryCardInfo] = {}
         self._money = 200000
         self.done = False
         self.current_sprint_hours = 0
-        self.current_tech_debt = {}  # : dict[int, TechDebtInfo]
-        self.available_stories = {}  # : dict[int, UserStoryCardInfo]
+        self.current_tech_debt: Dict[int, TechDebtInfo] = {}
+        self.available_stories: Dict[int, UserStoryCardInfo] = {}
         self.is_new_game = True
-        self.current_bugs = {}  # : dict[int, BugUserStoryInfo]
+        self.current_bugs: Dict[int, BugUserStoryInfo] = {}
         self._loyalty = 0
         self.customers = 0
         self.blank_sprint_counter = 0

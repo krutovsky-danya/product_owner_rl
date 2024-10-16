@@ -1,4 +1,3 @@
-import random
 import unittest
 from environment.backlog_env import BacklogEnv
 from game.backlog.backlog import Backlog
@@ -9,10 +8,15 @@ from game.game_variables import GlobalContext
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
 from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
+from random import Random
+import numpy as np
+
 
 class TestBacklogEnv(unittest.TestCase):
     def setUp(self):
         self.context = GlobalContext()
+        self.random_generator = Random(x=0)
+        self.card_picker_random_generator = np.random.default_rng(seed=0)
         self.color_storage = self.context.color_storage
         self.backlog = Backlog(self.context)
         self.env = BacklogEnv(
@@ -22,16 +26,15 @@ class TestBacklogEnv(unittest.TestCase):
         self.size = self.env.backlog_space_dim + self.env.sprint_space_dim
     
     def test_encode_empty_backlog(self):
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_generator)
 
         self.assertSequenceEqual(encoding, [0] * self.size)
     
     def test_encode_full_backlog(self):
-        random.seed(0)
         queue = self.backlog.backlog
         self.fill_queue(queue)
         
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_generator)
         backlog = encoding[:self.env.backlog_space_dim]
         sprint = encoding[self.env.backlog_space_dim:]
 
@@ -39,9 +42,8 @@ class TestBacklogEnv(unittest.TestCase):
         self.assertSequenceEqual(sprint, [0] * self.env.sprint_space_dim)
     
     def test_encode_full_sprint(self):
-        random.seed(0)
         self.fill_queue(self.backlog.sprint)
-        encoding = self.env.encode(self.backlog)
+        encoding = self.env.encode(self.backlog, self.card_picker_random_generator)
         backlog = encoding[:self.env.backlog_space_dim]
         sprint = encoding[self.env.backlog_space_dim:]
         
@@ -49,7 +51,8 @@ class TestBacklogEnv(unittest.TestCase):
         self.assertSequenceEqual(sprint, [1, 2, 1, 0, 0.07, 2.5, 1, 2, 3, 0, -0.05, -0.5, 3, 4, 0, 1])
 
     def fill_queue(self, queue):
-        self.context.current_stories[1] = UserStoryCardInfo("S", 0, self.color_storage)
+        self.context.current_stories[1] = UserStoryCardInfo("S", 0, self.color_storage,
+                                                            self.random_generator)
         for i in range(self.env.backlog_commons_count):
             card = Card()
             card_info = CardInfo(1, None, 1, None, UserCardType.S)
@@ -57,7 +60,8 @@ class TestBacklogEnv(unittest.TestCase):
             card.add_data(card_info)
             queue.append(card)
         
-        self.context.current_stories[2] = BugUserStoryInfo(0, self.color_storage)
+        self.context.current_stories[2] = BugUserStoryInfo(0, self.color_storage,
+                                                           self.random_generator)
         for i in range(self.env.backlog_bugs_count):
             card = Card()
             card_info = CardInfo(2, None, 2, None, UserCardType.BUG)
@@ -65,7 +69,8 @@ class TestBacklogEnv(unittest.TestCase):
             card.add_data(card_info)
             queue.append(card)
         
-        self.context.current_stories[3] = TechDebtInfo(0, self.color_storage)
+        self.context.current_stories[3] = TechDebtInfo(0, self.color_storage,
+                                                       self.random_generator)
         for i in range(self.env.backlog_tech_debt_count):
             card = Card()
             card_info = CardInfo(3, None, 3, None, UserCardType.TECH_DEBT)

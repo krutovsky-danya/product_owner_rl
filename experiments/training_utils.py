@@ -29,7 +29,7 @@ def play_forward_with_empty_sprints(env: CreditPayerEnv):
 
 def eval_agent(study: LoggingStudy):
     study.agent.eval()
-    state = study.env.reset()
+    state = study.env.reset(seed=None, card_picker_seed=None)
     info = study.env.get_info()
     reward, _ = study.play_trajectory(state, info)
     play_forward_with_empty_sprints(study.env)

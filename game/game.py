@@ -13,15 +13,17 @@ from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from game.userstory_card.userstory_card import UserStoryCard
 from game.common_methods import interpolate, stepify, clamp
 from game.rooms.devroom.room import get_current_room_cost, get_worker_cost
-import random
 from typing import List, Dict
+from random import Random
 
 
 class ProductOwnerGame:
-    def __init__(self):
+    def __init__(self, seed=None):
         self.context = GlobalContext()
+        self.random_generator = Random(x=seed)
+
         self.backlog = Backlog(self.context)
-        self.userstories = UserStories(self.context)
+        self.userstories = UserStories(self.context, self.random_generator)
         self.hud = HUD(self.context)
         self.office = Offices(self.context)
 
@@ -179,21 +181,27 @@ class ProductOwnerGame:
 
     def _update_profit_ordinary_card(self, us: UserStoryCardInfo):
         sprints_spent = self.context.current_sprint - us.spawn_sprint
-        for us_fp_key in GlobalConstants.sorted_keys_userstory_floating_profit:
-            us_fp = GlobalConstants.USERSTORY_FLOATING_PROFIT[us_fp_key]
-            if sprints_spent <= us_fp_key or us_fp_key == GlobalConstants.sorted_keys_userstory_floating_profit[-1]:
-                ran_usr_to_bring = us.customers_to_bring * \
-                    random.uniform(us_fp[0], us_fp[1])
-                self.context.customers += stepify(ran_usr_to_bring, 0.01)
-                ran_lty_to_bring = us.loyalty * \
-                    random.uniform(us_fp[0], us_fp[1])
+        benchmark_sprints = GlobalConstants.sorted_keys_userstory_floating_profit
+        for benchmark_sprint in benchmark_sprints:
+            floating_profit = GlobalConstants.USERSTORY_FLOATING_PROFIT[benchmark_sprint]
+            is_last_key = benchmark_sprint == benchmark_sprints[-1]
+            if sprints_spent <= benchmark_sprint or is_last_key:
+                random_coefficient = self.random_generator.uniform(floating_profit[0],
+                                                                   floating_profit[1])
+                random_customers_to_bring = us.customers_to_bring * random_coefficient
+                self.context.customers += stepify(random_customers_to_bring, 0.01)
+
+                random_coefficient = self.random_generator.uniform(floating_profit[0],
+                                                                   floating_profit[1])
+                random_loyalty_to_bring = us.loyalty * random_coefficient
                 self.context.set_loyalty(
-                    self.context.get_loyalty() + stepify(ran_lty_to_bring, 0.01))
+                    self.context.get_loyalty() + stepify(random_loyalty_to_bring, 0.01))
                 break
 
     def _check_and_spawn_bug(self):
         if self._is_ready_to_spawn_bug():
-            bug_us = BugUserStoryInfo(self.context.current_sprint, self.context.color_storage)
+            bug_us = BugUserStoryInfo(self.context.current_sprint, self.context.color_storage,
+                                      self.random_generator)
             self.userstories.add_us(bug_us)
             self.context.current_bugs[id(bug_us)] = bug_us
             self.context.is_first_bug = False
@@ -201,15 +209,17 @@ class ProductOwnerGame:
     def _is_ready_to_spawn_bug(self):
         has_color_for_bug = len(self.context.current_bugs) < 7
         paid_credit = self.context.credit == 0
-        chanced_bug = random.uniform(
-            0, 1) < GlobalConstants.BUG_SPAM_PROBABILITY
+        ran_val = self.random_generator.uniform(0, 1)
+        chanced_bug = ran_val < GlobalConstants.BUG_SPAM_PROBABILITY
         has_td = len(self.context.current_tech_debt) > 0
-        return has_color_for_bug and paid_credit and (chanced_bug or has_td or self.context.is_first_bug)
+        should_spawn_bug = chanced_bug or has_td or self.context.is_first_bug
+        return has_color_for_bug and paid_credit and should_spawn_bug
 
     def _check_and_spawn_tech_debt(self):
         if self._is_ready_to_spawn_tech_debt():
             self.force_td_spawn = False
-            tech_debt = TechDebtInfo(self.context.current_sprint, self.context.color_storage)
+            tech_debt = TechDebtInfo(self.context.current_sprint, self.context.color_storage,
+                                     self.random_generator)
             self.userstories.add_us(tech_debt)
             self.context.current_tech_debt[id(tech_debt)] = tech_debt
             self.context.is_first_tech_debt = False
@@ -217,8 +227,8 @@ class ProductOwnerGame:
     def _is_ready_to_spawn_tech_debt(self):
         has_color_for_td = len(self.context.current_tech_debt) < 7
         paid_credit = self.context.credit == 0
-        chanced_td = random.uniform(
-            0, 1) < GlobalConstants.TECH_DEBT_SPAWN_PROBABILITY
+        ran_val = self.random_generator.uniform(0, 1)
+        chanced_td = ran_val < GlobalConstants.TECH_DEBT_SPAWN_PROBABILITY
         return has_color_for_td and paid_credit and chanced_td and self.force_td_spawn
 
     def is_buy_robot_available(self):  # info

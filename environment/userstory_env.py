@@ -1,4 +1,5 @@
 from typing import List
+from numpy.random import Generator
 
 from game.common_methods import sample_n_or_zero
 from game.userstory_card.bug_user_story_info import BugUserStoryInfo
@@ -6,6 +7,7 @@ from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 from game.userstories.userstories import UserStoryCard
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from environment.card_methods import split_cards_in_types
+from game.userstories.userstories import UserStories
 
 USERSTORY_COMMON_FEATURE_COUNT = 4
 USERSTORY_BUG_FEATURE_COUNT = 2
@@ -35,14 +37,15 @@ class UserstoryEnv:
         self.userstories_bugs = []
         self.userstories_td = []
 
-    def encode(self, cards):
-        return self._encode_queue(cards,
+    def encode(self, userstories: UserStories, card_picker_random_generator: Generator):
+        return self._encode_queue(userstories,
                                   self.us_common_count,
                                   self.us_bug_count,
-                                  self.us_td_count)
+                                  self.us_td_count,
+                                  card_picker_random_generator)
     
     def get_encoded_card(self, index: int):
-        # resturns card by index
+        # returns card by index
         if 0 <= index < len(self.userstories_common):
             return self.userstories_common[index]
         index -= self.us_common_count
@@ -53,12 +56,16 @@ class UserstoryEnv:
             return self.userstories_td[index]
         return None
 
-    def _encode_queue(self, cards, count_common, count_bug, count_td):
-        commons, bugs, tech_debts = split_cards_in_types(cards)
+    def _encode_queue(self, userstories: UserStories, count_common, count_bug, count_td,
+                      card_picker_random_generator: Generator):
+        commons, bugs, tech_debts = split_cards_in_types(userstories.stories_list)
 
-        sampled_cards_common = sample_n_or_zero(commons, count_common)
-        sampled_cards_bugs = sample_n_or_zero(bugs, count_bug)
-        sampled_cards_td = sample_n_or_zero(tech_debts, count_td)
+        sampled_cards_common = sample_n_or_zero(commons, count_common,
+                                                card_picker_random_generator)
+        sampled_cards_bugs = sample_n_or_zero(bugs, count_bug,
+                                              card_picker_random_generator)
+        sampled_cards_td = sample_n_or_zero(tech_debts, count_td,
+                                            card_picker_random_generator)
 
         self._set_sampled_cards(sampled_cards_common, sampled_cards_bugs,
                                 sampled_cards_td)

@@ -15,12 +15,16 @@ class StochasticGameStartEnv(ProductOwnerEnv):
         self,
         userstories_env=None,
         backlog_env=None,
-        with_info=True
+        with_info=True,
+        seed=None,
+        card_picker_seed=None
     ):
         super().__init__(
             userstories_env,
             backlog_env,
-            with_info
+            with_info,
+            seed=seed,
+            card_picker_seed=card_picker_seed
         )
 
         self.index = 0
@@ -34,8 +38,9 @@ class StochasticGameStartEnv(ProductOwnerEnv):
             get_buggy_game_3,
         ]
 
-    def reset(self):
-        self.game = self.generators[self.index]()
+    def reset(self, seed=None, card_picker_seed=None):
+        self.game = self.generators[self.index](seed)
+        super()._reset_card_picker_random_generator(card_picker_seed)
         self.index = (self.index + 1) % len(self.generators)
         self.current_state = self._get_state()
         return self.current_state

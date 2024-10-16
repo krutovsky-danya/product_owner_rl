@@ -4,6 +4,7 @@ import numpy as np
 
 from typing import Sequence
 
+
 def clamp(x, minimum, maximum):
     if x < minimum:
         return minimum
@@ -35,15 +36,17 @@ def interpolate(value, table: dict):
 
     return None
 
+
 def sample_n_or_less(collection, count):
     count = min(count, len(collection))
     return random.sample(collection, count)
 
-def sample_n_or_zero(collection: Sequence, count: int):
+
+def sample_n_or_zero(collection: Sequence, count: int, random_generator: np.random.Generator):
     if len(collection) == 0:
         return []
     
     replace = len(collection) < count
 
-    result = np.random.choice(collection, size=count, replace=replace)
+    result = random_generator.choice(collection, size=count, replace=replace)
     return result

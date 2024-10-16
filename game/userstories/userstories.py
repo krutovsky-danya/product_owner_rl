@@ -4,10 +4,11 @@ from game.game_constants import GlobalConstants
 from game.userstories.userstories_generator import UserStoriesGenerator
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 from typing import List
+from random import Random
 
 
 class UserStories:
-    def __init__(self, context: GlobalContext):
+    def __init__(self, context: GlobalContext, random_gen: Random):
         self.context = context
 
         self.stories_list: List[UserStoryCard] = []
@@ -18,13 +19,15 @@ class UserStories:
         self.release_available = False
         self.available = True
 
-        self.statistical_research_card_generator = UserStoriesGenerator(
-            100, 0, 0, 0)
-        self.user_survey_card_generator = UserStoriesGenerator(1, 59, 30, 10)
+        self.statistical_research_card_generator = UserStoriesGenerator(100, 0, 0, 0, random_gen)
+        self.user_survey_card_generator = UserStoriesGenerator(1, 59, 30, 10, random_gen)
 
     def generate_cards_with_generator(self, count: int, gen: UserStoriesGenerator):
         cards = gen.generate_userstories(
-            count, self.context.current_sprint, self.context.color_storage)
+            count,
+            self.context.current_sprint,
+            self.context.color_storage
+        )
         for card in cards:
             self.stories_list.append(card)
             self.context.available_stories[id(card.info)] = card.info

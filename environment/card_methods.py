@@ -1,13 +1,14 @@
-from typing import List
+from typing import List, Union
 
 from game.backlog_card.backlog_card import Card
+from game.userstories.userstories import UserStoryCard
 from game.game_constants import UserCardType
 
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT
 
 
-def split_cards_in_types(cards: List[Card]):
+def split_cards_in_types(cards: List[Union[Card, UserStoryCard]]):
     commons = []
     bugs = []
     tech_debts = []

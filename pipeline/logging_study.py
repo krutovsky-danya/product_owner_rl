@@ -123,7 +123,7 @@ class LoggingStudy(MetricsStudy):
         self._log_before_action(action)
         return result
 
-    def study_agent(self, episode_n):
+    def study_agent(self, episode_n, seed=None, card_picker_seed=None):
         agent_name = type(self.agent).__name__
         env_name = type(self.env).__name__
         epoch_n = self.define_epoch_count_and_save_rate(episode_n)
@@ -132,7 +132,7 @@ class LoggingStudy(MetricsStudy):
 
         for epoch in range(epoch_n):
             path = f"{agent_name}/model_{epoch}_{env_name}.pt"
-            super().study_agent(self.save_rate)
+            super().study_agent(self.save_rate, seed=seed, card_picker_seed=card_picker_seed)
             self.save_model(path, agent_name, env_name, epoch)
 
     def define_epoch_count_and_save_rate(self, episode_n) -> int:
