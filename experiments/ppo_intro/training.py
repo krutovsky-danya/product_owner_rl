@@ -42,7 +42,7 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n) -> EpisodicPp
 
 
 def main():
-    episode_n = 250
+    episode_n = 1000
     trajectory_n = 20
     study = make_credit_study(200, episode_n, trajectory_n)
     env_name = study.env.__class__.__name__

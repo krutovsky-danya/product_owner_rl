@@ -10,8 +10,6 @@ def main():
     rewards_df = pd.read_csv(f"train_rewards_{sub_name}.csv")
     reward_groups = rewards_df.groupby(["Trajectory", "ExperimentName"])["Reward"]
     mean_rewards = reward_groups.mean().reset_index()
-    default_rewards = mean_rewards
-
 
     for exp_name in set(rewards_df['ExperimentName']):
         rewards = mean_rewards[mean_rewards['ExperimentName'] == exp_name]
