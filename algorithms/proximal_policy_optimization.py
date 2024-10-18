@@ -171,14 +171,14 @@ class PPOAdvantage(PPO):
                 b_dones_ = dones[b_idxs].flatten()
                 b_idxs = b_idxs[~b_dones_]  # remove terminal states from batch
                 b_states = states[b_idxs]
-                b_states_ = states[b_idxs + 1]
                 b_actions = actions[b_idxs]
                 b_rewards = rewards[b_idxs]
+                b_next_states = states[b_idxs + 1]
                 b_old_log_probs = old_log_probs[b_idxs]
 
                 b_advantage = (
                     b_rewards.detach()
-                    + self.gamma * self.v_model(b_states_).detach()
+                    + self.gamma * self.v_model(b_next_states).detach()
                     - self.v_model(b_states)
                 )
 
@@ -286,14 +286,14 @@ class PPO_Discrete_Softmax_Advantage(PPO_Discrete_Softmax):
                 b_dones_ = dones[b_idxs].flatten()
                 b_idxs = b_idxs[~b_dones_]  # remove terminal states from batch
                 b_states = states[b_idxs]
-                b_states_ = states[b_idxs + 1]
                 b_actions = actions[b_idxs]
                 b_rewards = rewards[b_idxs]
+                b_next_states = states[b_idxs + 1]
                 b_old_log_probs = old_log_probs[b_idxs]
 
                 b_advantage = (
                     b_rewards.detach()
-                    + self.gamma * self.v_model(b_states_).detach()
+                    + self.gamma * self.v_model(b_next_states).detach()
                     - self.v_model(b_states)
                 )
 
@@ -376,14 +376,14 @@ class PPO_Discrete_Logits_Advantage(PPO_Discrete_Logits):
                 b_dones_ = dones[b_idxs].flatten()
                 b_idxs = b_idxs[~b_dones_]  # remove terminal states from batch
                 b_states = states[b_idxs]
-                b_states_ = states[b_idxs + 1]
                 b_actions = actions[b_idxs]
                 b_rewards = rewards[b_idxs]
+                b_next_states = states[b_idxs + 1]
                 b_old_log_probs = old_log_probs[b_idxs]
 
                 b_advantage = (
                     b_rewards.detach()
-                    + self.gamma * self.v_model(b_states_).detach()
+                    + self.gamma * self.v_model(b_next_states).detach()
                     - self.v_model(b_states)
                 )
 

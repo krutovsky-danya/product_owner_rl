@@ -5,7 +5,7 @@ from game.common_methods import clamp
 
 def save_to_leaderboard(current_sprint):
     # отличается от годота
-    print(f"score: {1000000 - current_sprint}")
+    print(f"score: {current_sprint}")
 
 
 class GlobalContext:
