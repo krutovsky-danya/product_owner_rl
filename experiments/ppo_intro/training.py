@@ -39,8 +39,8 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n, agent_class) 
     agent = agent_class(
         state_dim,
         action_n,
-        gamma=0.9,
-        batch_size=64,
+        gamma=0.99,
+        batch_size=128,
         epsilon=0.2,
         epoch_n=30,
         pi_lr=1e-4,

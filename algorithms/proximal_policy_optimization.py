@@ -190,7 +190,7 @@ class PPOAdvantage(PPO):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Base(PPO_Base):
+class PPO_Discrete(PPO_Base):
     def get_dist(self, pi_values):
         dist = Categorical(logits=pi_values)
         return dist
@@ -210,7 +210,7 @@ class PPO_Discrete_Base(PPO_Base):
         return action
 
 
-class PPO_Discrete_Softmax(PPO_Discrete_Base):
+class PPO_Discrete_Softmax(PPO_Discrete):
     def __init__(
         self,
         state_dim,
@@ -305,7 +305,7 @@ class PPO_Discrete_Softmax_Advantage(PPO_Discrete_Softmax):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Logits(PPO_Discrete_Base):
+class PPO_Discrete_Logits(PPO_Discrete):
     def __init__(
         self,
         state_dim,
@@ -395,103 +395,6 @@ class PPO_Discrete_Logits_Advantage(PPO_Discrete_Logits):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Softmax_Guided(PPO_Base):
-    def __init__(
-        self,
-        state_dim,
-        action_n,
-        gamma=0.99,
-        batch_size=128,
-        epsilon=0.2,
-        epoch_n=30,
-        pi_lr=1e-4,
-        v_lr=5e-4,
-    ):
-        self.action_n = action_n
-
-        pi_model = nn.Sequential(
-            get_pi_model(state_dim, action_n, 128),
-            nn.Softmax(dim=-1),
-        )
-
-        v_model = get_v_model(state_dim, 128)
-
-        super().__init__(
-            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
-        )
-
-    def get_dist(self, pi_values, available_actions_mask):
-        pi_values *= available_actions_mask
-        dist = Categorical(pi_values)
-        return dist
-
-    def _get_log_probs(self, states, actions, available_actions_mask):
-        pi_values = self.pi_model(states)
-        dist = self.get_dist(pi_values, available_actions_mask)
-        log_probs = dist.log_prob(actions)
-        return log_probs
-
-    def get_action(self, state, info):
-        state = torch.FloatTensor(state)
-        pi_values = self.pi_model(state)
-        available_actions_mask = self._convert_infos([info])
-        dist = self.get_dist(pi_values, available_actions_mask)
-        action = dist.sample()
-        action = action.numpy()
-        return action
-
-    def _convert_infos(self, infos):
-        # want to place zeros in impossible moves
-        # if mask will be tensor with True on possible moves and False on wrong moves
-        # than pi_values[~mask] = 0
-        # will set probs to zero
-        infos_count = len(infos)
-        mask = np.full((infos_count, self.action_n), False)
-        for i, info in enumerate(infos):
-            available_actions = info["actions"]
-            mask[i, available_actions] = True
-
-        return mask
-
-    def fit(self, states, actions, rewards, dones, infos):
-        states, actions, rewards, dones = map(
-            np.array, [states, actions, rewards, dones]
-        )
-        rewards, dones = rewards.reshape(-1, 1), dones.reshape(-1, 1)
-
-        returns = self._get_returns(rewards, dones)
-
-        states, actions, returns = map(torch.FloatTensor, [states, actions, returns])
-
-        available_actions_mask = self._convert_infos(infos)
-
-        old_log_probs = self._get_log_probs(
-            states, actions, available_actions_mask
-        ).detach()
-
-        for epoch in range(self.epoch_n):
-
-            idxs = np.random.permutation(returns.shape[0])
-            for i in range(0, returns.shape[0], self.batch_size):
-                b_idxs = idxs[i : i + self.batch_size]
-                b_states = states[b_idxs]
-                b_actions = actions[b_idxs]
-                b_returns = returns[b_idxs]
-                b_old_log_probs = old_log_probs[b_idxs]
-                b_available_actions_mask = available_actions_mask[b_idxs]
-
-                b_advantage = b_returns.detach() - self.v_model(b_states)
-
-                b_new_log_probs = self._get_log_probs(
-                    b_states, b_actions, b_available_actions_mask
-                )
-
-                b_ratio = torch.exp(b_new_log_probs - b_old_log_probs)
-                self._update_pi_model(b_advantage, b_ratio)
-
-                self._update_v_model(b_advantage)
-
-
 class PPO_Discrete_Logits_Guided(PPO_Base):
     def __init__(
         self,
@@ -505,8 +408,8 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
-        pi_model = get_pi_model(state_dim, action_n, 256)
-        v_model = get_v_model(state_dim, 256)
+        pi_model = get_pi_model(state_dim, action_n, 128)
+        v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
