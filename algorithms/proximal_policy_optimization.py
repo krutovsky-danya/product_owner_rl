@@ -13,14 +13,16 @@ def get_v_model(state_dim: int, inner_layer_size: int = 256):
         nn.Linear(inner_layer_size, 1),
     )
 
+
 def get_pi_model(state_dim: int, action_dim: int, inner_layer_size: int = 256):
     return nn.Sequential(
-            nn.Linear(state_dim, inner_layer_size),
-            nn.ReLU(),
-            nn.Linear(inner_layer_size, inner_layer_size),
-            nn.ReLU(),
-            nn.Linear(inner_layer_size, action_dim),
-        )
+        nn.Linear(state_dim, inner_layer_size),
+        nn.ReLU(),
+        nn.Linear(inner_layer_size, inner_layer_size),
+        nn.ReLU(),
+        nn.Linear(inner_layer_size, action_dim),
+    )
+
 
 class PPO_Base(nn.Module):
     def __init__(
@@ -87,11 +89,7 @@ class PPO(PPO_Base):
         self.action_dim = action_dim
 
         pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 2 * action_dim),
+            get_pi_model(state_dim, 2 * action_dim, 128),
             nn.Tanh(),
         )
 
@@ -192,37 +190,9 @@ class PPOAdvantage(PPO):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Softmax(PPO_Base):
-    def __init__(
-        self,
-        state_dim,
-        action_n,
-        gamma=0.99,
-        batch_size=128,
-        epsilon=0.2,
-        epoch_n=30,
-        pi_lr=1e-4,
-        v_lr=5e-4,
-    ):
-        self.action_n = action_n
-
-        pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, action_n),
-            nn.Softmax(dim=-1),
-        )
-
-        v_model = get_v_model(state_dim, 128)
-
-        super().__init__(
-            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
-        )
-
+class PPO_Discrete_Base(PPO_Base):
     def get_dist(self, pi_values):
-        dist = Categorical(pi_values)
+        dist = Categorical(logits=pi_values)
         return dist
 
     def _get_log_probs(self, states, actions):
@@ -238,6 +208,32 @@ class PPO_Discrete_Softmax(PPO_Base):
         action = dist.sample()
         action = action.numpy()
         return action
+
+
+class PPO_Discrete_Softmax(PPO_Discrete_Base):
+    def __init__(
+        self,
+        state_dim,
+        action_n,
+        gamma=0.99,
+        batch_size=128,
+        epsilon=0.2,
+        epoch_n=30,
+        pi_lr=1e-4,
+        v_lr=5e-4,
+    ):
+        self.action_n = action_n
+
+        pi_model = nn.Sequential(
+            get_pi_model(state_dim, action_n, 128),
+            nn.Softmax(dim=-1),
+        )
+
+        v_model = get_v_model(state_dim, 128)
+
+        super().__init__(
+            pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
+        )
 
     def fit(self, states, actions, rewards, dones):
         states, actions, rewards, dones = map(
@@ -309,7 +305,7 @@ class PPO_Discrete_Softmax_Advantage(PPO_Discrete_Softmax):
                 self._update_v_model(b_advantage)
 
 
-class PPO_Discrete_Logits(PPO_Base):
+class PPO_Discrete_Logits(PPO_Discrete_Base):
     def __init__(
         self,
         state_dim,
@@ -322,38 +318,12 @@ class PPO_Discrete_Logits(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
-
-        pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, action_n),
-        )
-
+        pi_model = get_pi_model(state_dim, action_n, 128)
         v_model = get_v_model(state_dim, 128)
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
         )
-
-    def get_dist(self, pi_values):
-        dist = Categorical(logits=pi_values)
-        return dist
-
-    def _get_log_probs(self, states, actions):
-        pi_values = self.pi_model(states)
-        dist = self.get_dist(pi_values)
-        log_probs = dist.log_prob(actions)
-        return log_probs
-
-    def get_action(self, state):
-        state = torch.FloatTensor(state)
-        pi_values = self.pi_model(state)
-        dist = self.get_dist(pi_values)
-        action = dist.sample()
-        action = action.numpy()
-        return action
 
     def fit(self, states, actions, rewards, dones):
         states, actions, rewards, dones = map(
@@ -440,11 +410,7 @@ class PPO_Discrete_Softmax_Guided(PPO_Base):
         self.action_n = action_n
 
         pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, action_n),
+            get_pi_model(state_dim, action_n, 128),
             nn.Softmax(dim=-1),
         )
 
@@ -539,17 +505,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
-
-        pi_model = nn.Sequential(
-            nn.Linear(state_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, action_n),
-        )
-
+        pi_model = get_pi_model(state_dim, action_n, 256)
         v_model = get_v_model(state_dim, 256)
 
         super().__init__(
