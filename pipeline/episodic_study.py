@@ -4,8 +4,10 @@ from algorithms.proximal_policy_optimization import PPO
 
 
 class EpisodicPpoStudy:
-    def __init__(self, env: ProductOwnerEnv, agent: PPO, trajectory_max_len: int) -> None:
-        self.env : ProductOwnerEnv = env
+    def __init__(
+        self, env: ProductOwnerEnv, agent: PPO, trajectory_max_len: int
+    ) -> None:
+        self.env: ProductOwnerEnv = env
         self.agent: PPO = agent
         self.trajectory_max_len = trajectory_max_len
         self.rewards_log = []
@@ -32,23 +34,30 @@ class EpisodicPpoStudy:
                 break
         return total_reward, states, actions, rewards, dones, infos
 
+    def play_batch_trajectories(self, trajectory_n):
+        wins = 0
+        states, actions, rewards, dones, infos = [], [], [], [], []
+
+        for _ in range(trajectory_n):
+            tr_total_reward, tr_states, tr_actions, tr_rewards, tr_dones, tr_infos = (
+                self.play_trajectory()
+            )
+            wins += int(self.env.game.context.is_victory)
+            self.rewards_log.append(tr_total_reward)
+            states.extend(tr_states)
+            actions.extend(tr_actions)
+            rewards.extend(tr_rewards)
+            dones.extend(tr_dones)
+            infos.extend(tr_infos)
+
+        print(f"Wins count: {wins}")
+        return states, actions, rewards, dones, infos
+
     def study_agent(self, episode_n: int, trajectory_n: int):
         for episode in range(episode_n):
-            print(f'Started episode {episode + 1}')
-            states, actions, rewards, dones, infos = [], [], [], [], []
-
-            for _ in range(trajectory_n):
-                tr_total_reward, tr_states, tr_actions, tr_rewards, tr_dones, tr_infos = (
-                    self.play_trajectory()
-                )
-                self.rewards_log.append(tr_total_reward)
-                states.extend(tr_states)
-                actions.extend(tr_actions)
-                rewards.extend(tr_rewards)
-                dones.extend(tr_dones)
-                infos.extend(tr_infos)
-
-            self.agent.fit(states, actions, rewards, dones, infos)
+            print(f"Started episode {episode + 1}")
+            data = self.play_batch_trajectories(trajectory_n)
+            self.agent.fit(*data)
         return self.rewards_log
 
 
