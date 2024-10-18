@@ -43,7 +43,7 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n, agent_class) 
         batch_size=64,
         epsilon=0.2,
         epoch_n=30,
-        pi_lr=1e-3,
+        pi_lr=1e-4,
         v_lr=5e-4,
     )
 
