@@ -3,8 +3,7 @@ import torch
 
 import matplotlib.pyplot as plt
 
-from algorithms.proximal_policy_optimization import PPO, PPO_Discrete_Softmax, PPO_Discrete_Logits, PPO_Discrete_Softmax_Advantage, PPO_Discrete_Logits_Advantage
-from algorithms.proximal_policy_optimization import PPO_Discrete_Softmax_Guided, PPO_Discrete_Logits_Guided, PPO_Discrete_Logits_Guided_Advantage
+from algorithms.proximal_policy_optimization import PPO_Discrete_Logits_Guided, PPO_Discrete_Logits_Guided_Advantage
 from environment import ProductOwnerEnv, CreditPayerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
@@ -34,14 +33,14 @@ agent = PPO_Discrete_Logits_Guided_Advantage(
         gamma=0.99,
         batch_size=128,
         epsilon=0.2,
-        epoch_n=10,
+        epoch_n=30,
         pi_lr=1e-4,
         v_lr=5e-4,
     )
 
 study = EpisodicPpoStudy(env, agent, 200)
 
-returns_total_reward = study.study_agent(250, 20)
+returns_total_reward = study.study_agent(150, 20)
 
 env_name = env.__class__.__name__
 agent_name = agent.__class__.__name__
