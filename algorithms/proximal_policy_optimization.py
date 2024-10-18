@@ -65,7 +65,7 @@ class PPO_Base(nn.Module):
         self.v_optimizer.step()
         self.v_optimizer.zero_grad()
 
-    def _get_returns(self, rewards: torch.Tensor, dones: torch.Tensor):
+    def _get_returns(self, rewards: np.ndarray, dones: np.ndarray):
         returns = np.zeros(rewards.shape)
         returns[-1] = rewards[-1]
         for t in range(returns.shape[0] - 2, -1, -1):
@@ -408,8 +408,22 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
-        pi_model = get_pi_model(state_dim, action_n, 128)
-        v_model = get_v_model(state_dim, 128)
+
+        pi_model = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_n),
+        )
+
+        v_model = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1),
+        )
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr

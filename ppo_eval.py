@@ -40,7 +40,7 @@ agent = PPO_Discrete_Logits_Guided_Advantage(
 
 study = EpisodicPpoStudy(env, agent, 200)
 
-returns_total_reward = study.study_agent(150, 20)
+returns_total_reward = study.study_agent(250, 20)
 
 env_name = env.__class__.__name__
 agent_name = agent.__class__.__name__
