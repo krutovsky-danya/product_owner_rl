@@ -107,21 +107,26 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
+        self.inner_layer = 256
 
         pi_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(128, action_n),
+            nn.Linear(self.inner_layer, self.inner_layer),
+            nn.ReLU(),
+            nn.Linear(self.inner_layer, action_n),
         )
 
         v_model = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(self.inner_layer, self.inner_layer),
             nn.ReLU(),
-            nn.Linear(128, 1),
+            nn.Linear(self.inner_layer, self.inner_layer),
+            nn.ReLU(),
+            nn.Linear(self.inner_layer, 1),
         )
 
         super().__init__(
