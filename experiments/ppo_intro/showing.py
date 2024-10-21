@@ -28,8 +28,15 @@ def show_win_rate(sub_name):
     print(groups_wins)
 
     total_wins = groups_wins.reset_index()
-    total_wins = total_wins.groupby(["ExperimentName"])['Win'].sum()
+    total_wins = total_wins.groupby(["ExperimentName"])["Win"].sum()
     print(total_wins)
+
+    show_win_sprints(evals_df)
+
+
+def show_win_sprints(evals_df: pd.DataFrame):
+    wins = evals_df[evals_df["Win"]]
+    print(wins)
 
 
 def main():
