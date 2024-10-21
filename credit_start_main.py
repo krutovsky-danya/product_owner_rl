@@ -5,7 +5,7 @@ from environment.reward_sytem import EmpiricalCreditStageRewardSystem
 from pipeline import AggregatorStudy, STUDY, CREDIT_END, CREDIT_FULL, CREDIT_START, TUTORIAL
 from environment.userstory_env import UserstoryEnv
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent
-from pipeline.aggregator_study import update_reward_system_config
+from pipeline.aggregator_study import update_reward_system_config, KeyLogState
 from main import create_usual_agent
 
 import visualizer
@@ -44,7 +44,9 @@ def make_credit_study(agents,
     agents[STUDY] = agent
     environments = {STUDY: env}
 
-    study = AggregatorStudy(environments, agents, order, trajectory_max_len, save_rate=save_rate)
+    study = AggregatorStudy(environments, agents, order, trajectory_max_len, save_rate=save_rate,
+                            base_epoch_log_state=KeyLogState.DO_NOT_LOG)
+    study.set_log_state(study.LOSS_LOG_KEY, KeyLogState.ONLY_LEN_LOG, is_after_study=False)
     study.study_agent(episode_n)
 
     order.append(stage)

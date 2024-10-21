@@ -8,10 +8,15 @@ import os
 import sys
 import logging
 from typing import List, Tuple, Optional
+from pipeline.logging_utils import KeyLogState, get_log_entry_creator
 
 
 class LoggingStudy(MetricsStudy):
-    SAVE_MEMORY = False
+    REWARDS_LOG_KEY = "rewards"
+    DISCOUNTED_REWARDS_LOG_KEY = "discounted_rewards"
+    ESTIMATES_LOG_KEY = "estimates"
+    SPRINTS_LOG_KEY = "sprints"
+    LOSS_LOG_KEY = "loss"
 
     def __init__(
         self,
@@ -19,6 +24,9 @@ class LoggingStudy(MetricsStudy):
         agent,
         trajectory_max_len,
         save_rate: Optional[int] = None,
+        save_memory=False,
+        base_epoch_log_state=KeyLogState.FULL_LOG,
+        base_end_log_state=KeyLogState.FULL_LOG,
         log_level=logging.INFO,
     ) -> None:
         super().__init__(env, agent, trajectory_max_len)
@@ -27,7 +35,16 @@ class LoggingStudy(MetricsStudy):
         self.loss_log: List[float] = []
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
+        self.save_memory = save_memory
         self.logger = self._get_logger(log_level)
+        create_log_entry = get_log_entry_creator(base_epoch_log_state, base_end_log_state)
+        self._logs = {
+            self.REWARDS_LOG_KEY: create_log_entry(self.rewards_log),
+            self.DISCOUNTED_REWARDS_LOG_KEY: create_log_entry(self.discounted_rewards_log),
+            self.ESTIMATES_LOG_KEY: create_log_entry(self.q_value_log),
+            self.SPRINTS_LOG_KEY: create_log_entry(self.sprints_log),
+            self.LOSS_LOG_KEY: create_log_entry(self.loss_log),
+        }
 
     def _get_logger(self, log_level):
         logger = logging.getLogger(f'{datetime.datetime.now()}')
@@ -124,7 +141,9 @@ class LoggingStudy(MetricsStudy):
         return result
 
     def study_agent(self, episode_n, seed=None, card_picker_seed=None):
+        root = "../models"
         agent_name = type(self.agent).__name__
+        agent_name = f"{root}/{agent_name}"
         env_name = type(self.env).__name__
         epoch_n = self.define_epoch_count_and_save_rate(episode_n)
 
@@ -133,7 +152,9 @@ class LoggingStudy(MetricsStudy):
         for epoch in range(epoch_n):
             path = f"{agent_name}/model_{epoch}_{env_name}.pt"
             super().study_agent(self.save_rate, seed=seed, card_picker_seed=card_picker_seed)
-            self.save_model(path, agent_name, env_name, epoch)
+            self.save_model(path, agent_name, env_name, epoch, is_after_study=False)
+        path = f"{agent_name}/model_{epoch_n}_{env_name}.pt"
+        self.save_model(path, agent_name, env_name, epoch_n, is_after_study=True)
 
     def define_epoch_count_and_save_rate(self, episode_n) -> int:
         if self.save_rate is None:
@@ -144,19 +165,29 @@ class LoggingStudy(MetricsStudy):
 
         return epoch_n
 
-    def save_model(self, path, agent_name, env_name, epoch):
+    def save_model(self, path, agent_name, env_name, epoch, is_after_study):
         memory = self.agent.memory
-        if not self.SAVE_MEMORY:
+        if not self.save_memory:
             self.agent.memory = []
         save_dqn_agent(self.agent, path=path)
         self.agent.memory = memory
-        with open(f"{agent_name}/rewards_{epoch}_{env_name}.txt", mode="w") as f:
-            f.write(repr(self.rewards_log))
-        with open(f"{agent_name}/discounted_rewards_{epoch}_{env_name}.txt", mode="w") as f:
-            f.write(repr(self.discounted_rewards_log))
-        with open(f"{agent_name}/estimates_{epoch}_{env_name}.txt", mode="w") as f:
-            f.write(repr(self.q_value_log))
-        with open(f"{agent_name}/sprints_{epoch}_{env_name}.txt", mode="w") as f:
-            f.write(repr(self.sprints_log))
-        with open(f"{agent_name}/loss_{epoch}_{env_name}.txt", mode="w") as f:
-            f.write(repr(self.loss_log))
+        for key in self._logs.keys():
+            self.save_log(agent_name, env_name, epoch, key, is_after_study)
+
+    def save_log(self, agent_name, env_name, epoch, key, is_after_study):
+        entry = self._logs[key]
+        state = entry.get_log_state(is_after_study)
+        if state == KeyLogState.DO_NOT_LOG:
+            return
+        data = entry.data
+        if state == KeyLogState.ONLY_LEN_LOG:
+            data = len(data)
+        data = repr(data)
+        with open(f"{agent_name}/{key}_{epoch}_{env_name}.txt", mode="w") as f:
+            f.write(data)
+
+    def set_log_state(self, key, state, is_after_study):
+        if key not in self._logs.keys():
+            return
+        self._logs[key].set_log_state(state, is_after_study)
+

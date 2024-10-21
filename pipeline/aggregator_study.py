@@ -1,11 +1,11 @@
 from environment.reward_sytem import BaseRewardSystem
 from environment.reward_sytem import EmpiricalRewardSystem, EmpiricalCreditStageRewardSystem
 from environment.reward_sytem import FullPotentialCreditRewardSystem
-from pipeline.logging_study import LoggingStudy
+from pipeline.logging_study import LoggingStudy, KeyLogState
 from environment import TutorialSolverEnv, CreditPayerEnv, ProductOwnerEnv
-from environment.credit_payer_env import USUAL_CREDIT_ENV_END_SPRINT, EARLY_CREDIT_ENV_END_SPRINT
 
 from typing import Dict, Optional, List
+import logging
 
 STUDY = "study"
 TUTORIAL = "tutorial"
@@ -24,9 +24,13 @@ def update_reward_system_config(env: ProductOwnerEnv, reward_system: BaseRewardS
 
 class AggregatorStudy(LoggingStudy):
     def __init__(self, environments: Dict, agents: Dict, order: List[str],
-                 trajectory_max_len, save_rate=None, backlog_environments: Optional[Dict] = None,
+                 trajectory_max_len, save_rate=None, save_memory=False,
+                 base_epoch_log_state=KeyLogState.FULL_LOG,
+                 base_end_log_state=KeyLogState.FULL_LOG,
+                 backlog_environments: Optional[Dict] = None,
                  userstory_environments: Optional[Dict] = None,
-                 reward_systems: Optional[Dict] = None) -> None:
+                 reward_systems: Optional[Dict] = None,
+                 log_level=logging.DEBUG) -> None:
         # предполагается, что STUDY идет после всех элементов из order
         assert STUDY in environments
         assert STUDY in agents
@@ -42,7 +46,8 @@ class AggregatorStudy(LoggingStudy):
         if userstory_environments is None:
             self.userstory_environments = {}
         self.reward_systems = reward_systems
-        super().__init__(environments[STUDY], agents[STUDY], trajectory_max_len, save_rate)
+        super().__init__(environments[STUDY], agents[STUDY], trajectory_max_len, save_rate,
+                         save_memory, base_epoch_log_state, base_end_log_state, log_level=log_level)
 
     def play_trajectory(self, state, info, init_discount=1):
         full_reward = 0
