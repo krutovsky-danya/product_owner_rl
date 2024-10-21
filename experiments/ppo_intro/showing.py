@@ -6,7 +6,7 @@ import pandas as pd
 def main():
     episode_n = 250
     trajectory_n = 20
-    sub_name = f"CreditPayerEnv_{episode_n}_episodes_{trajectory_n}_trajectory_n_2x256_inner_layer"
+    sub_name = f"CreditPayerEnv_{episode_n}_episodes_{trajectory_n}_trajectory_nn_2x256_inner_layer_gamma_0.9"
     rewards_df = pd.read_csv(f"train_rewards_{sub_name}.csv")
     reward_groups = rewards_df.groupby(["Trajectory", "ExperimentName"])["Reward"]
     mean_rewards = reward_groups.mean().reset_index()
