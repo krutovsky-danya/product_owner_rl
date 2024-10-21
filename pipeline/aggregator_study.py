@@ -3,6 +3,7 @@ from environment.reward_sytem import EmpiricalRewardSystem, EmpiricalCreditStage
 from environment.reward_sytem import FullPotentialCreditRewardSystem
 from pipeline.logging_study import LoggingStudy, KeyLogState
 from environment import TutorialSolverEnv, CreditPayerEnv, ProductOwnerEnv
+from environment.credit_payer_env import USUAL_CREDIT_ENV_END_SPRINT, EARLY_CREDIT_ENV_END_SPRINT
 
 from typing import Dict, Optional, List
 import logging
