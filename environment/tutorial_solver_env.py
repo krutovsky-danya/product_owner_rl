@@ -13,7 +13,7 @@ class TutorialSolverEnv(ProductOwnerEnv):
         super().__init__(userstory_env, backlog_env, with_info, reward_system,
                          seed=seed, card_picker_seed=card_picker_seed)
 
-    def step(self, action: int):
-        next_state, reward, done, info = super().step(action)
-        done = not self.game.context.is_new_game or done
-        return next_state, reward, done, info
+    def get_done(self, info):
+        done_game = super().get_done(info)
+        done_tutorial = not self.game.context.is_new_game
+        return done_game or done_tutorial

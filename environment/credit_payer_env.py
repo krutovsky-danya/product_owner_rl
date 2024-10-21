@@ -24,9 +24,7 @@ class CreditPayerEnv(ProductOwnerEnv):
         else:
             self.end_sprint = EARLY_CREDIT_ENV_END_SPRINT
 
-    def step(self, action: int):
-        context = self.game.context
-        new_state, reward, done, info = super().step(action)
-        done = done or context.current_sprint == self.end_sprint
-        return new_state, reward, done, info
-
+    def get_done(self, info):
+        done_game = super().get_done(info)
+        done_credit = self.game.context.current_sprint == self.end_sprint
+        return done_game or done_credit
