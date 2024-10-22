@@ -39,7 +39,7 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n, agent_class) 
     agent = agent_class(
         state_dim,
         action_n,
-        gamma=0.99,
+        gamma=0.9,
         batch_size=128,
         epsilon=0.2,
         epoch_n=30,
@@ -59,7 +59,7 @@ def main(agent_class):
     study = make_credit_study(200, episode_n, trajectory_n, agent_class)
     env_name = study.env.__class__.__name__
     experiment_name = study.agent.__class__.__name__
-    data_sub_name = f"{env_name}_{episode_n}_episodes_{trajectory_n}_trajectory_n_2x256_inner_layer"
+    data_sub_name = f"{env_name}_{episode_n}_episodes_{trajectory_n}_trajectory_nn_2x256_inner_layer_gamma_0.9"
     now = datetime.datetime.now()
     save_rewards(data_sub_name, study.rewards_log, now, experiment_name)
 
@@ -72,7 +72,7 @@ def main(agent_class):
 
 
 if __name__ == "__main__":
-    n = 3
+    n = 1
     for i in range(n):
         main(PPO_Discrete_Logits_Guided)
         main(PPO_Discrete_Logits_Guided_Advantage)
