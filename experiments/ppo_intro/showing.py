@@ -43,7 +43,7 @@ def main():
     episode_n = 250
     trajectory_n = 20
     sub_name = f"CreditPayerEnv_{episode_n}_episodes_{trajectory_n}_trajectory_nn_2x256_inner_layer_gamma_0.9"
-    # show_rewards_fitting(sub_name)
+    show_rewards_fitting(sub_name)
     show_win_rate(sub_name)
 
 
