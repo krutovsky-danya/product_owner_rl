@@ -22,7 +22,7 @@ class BaseStudy:
         info = init_info
         t = 0
         inner_sprint_action_count = 0
-        done = False
+        done = self.env.get_done(info)
 
         while not done:
             action = self.agent.get_action(state, info)
