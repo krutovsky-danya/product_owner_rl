@@ -34,6 +34,7 @@ class BaseNeuralFunction(nn.Module):
     def forward(self, states):
         return self.network(states)
 
+    @torch.no_grad()
     def predict(self, state):
         self.network.eval()
         result = self.network(state.unsqueeze(0))
@@ -68,6 +69,7 @@ class PolicyFunction(BaseNeuralFunction):
         logits = super().forward(states)
         return self.softmax(logits)
 
+    @torch.no_grad()
     def predict(self, state):
         logits = super().predict(state)
         return self.softmax(logits)
@@ -80,6 +82,7 @@ class PolicyFunction(BaseNeuralFunction):
         logits = logits.masked_fill(~guides, -torch.inf)
         return self.softmax(logits)
 
+    @torch.no_grad()
     def predict_guided(self, state, guide):
         logits = super().predict(state)
         guide = guide.unsqueeze(dim=0)
@@ -142,17 +145,36 @@ class SAC(nn.Module):
         mask = self._convert_info(torch.tensor(mask))
         state = torch.FloatTensor(state).to(device=self.device)
         masked_probs = self.policy_function.predict_guided(state, mask).squeeze().cpu()
-        # had an error with probs sum not being equal to 1 due to problems with accuracy
-        # and inner implicit casting from float32 to float64
-        np_probs = np.asarray(masked_probs).astype("float64")
-        np_probs /= np.sum(np_probs)
-        action = np.random.choice(self.action_n, p=np_probs)
+        if self.training:
+            # had an error with probs sum not being equal to 1 due to problems with accuracy
+            # and inner implicit casting from float32 to float64
+            np_probs = np.asarray(masked_probs).astype("float64")
+            np_probs /= np.sum(np_probs)
+            action = np.random.choice(self.action_n, p=np_probs)
+        else:
+            action = torch.argmax(masked_probs).item()
         return action
 
     def _convert_info(self, guide: torch.Tensor):
         converted = torch.zeros(self.action_n, dtype=torch.bool)
         converted[guide] = True
         return converted
+
+    def _sample_batch(self):
+        batch = random.sample(self.memory, self.batch_size)
+        states, guides, actions, rewards, dones, next_states, next_guides = map(
+            torch.stack, list(zip(*batch))
+        )
+
+        states = states.to(self.device)
+        guides = guides.to(self.device)
+        actions = actions.to(self.device)
+        rewards = rewards.to(self.device)
+        dones = dones.to(self.device)
+        next_states = next_states.to(self.device)
+        next_guides = next_guides.to(self.device)
+
+        return states, guides, actions, rewards, dones, next_states, next_guides
 
     def fit(self, state, info, action, reward, done, next_state, next_info):
         if not self.training:
@@ -174,21 +196,9 @@ class SAC(nn.Module):
         if len(self.memory) < self.batch_size:
             return
 
-        batch = random.sample(self.memory, self.batch_size)
-        states, guides, actions, rewards, dones, next_states, next_guides = map(
-            torch.stack, list(zip(*batch))
-        )
+        batch = self._sample_batch()
 
-        states = states.to(self.device)
-        guides = guides.to(self.device)
-        actions = actions.to(self.device)
-        rewards = rewards.to(self.device)
-        dones = dones.to(self.device)
-        next_states = next_states.to(self.device)
-        next_guides = next_guides.to(self.device)
-
-        loss = self._gradient_step(states, guides, actions, rewards, dones,
-                                   next_states, next_guides)
+        loss = self._gradient_step(*batch)
 
         self._update_targets()
 
@@ -200,16 +210,27 @@ class SAC(nn.Module):
 
         return (loss_policy, *loss_q)
 
+    def _get_probs_and_log_probs(self, states, guides):
+        probs = self.policy_function.forward_guided(states, guides)
+        log_probs = get_nan_safe_log(probs, self.small_const)
+
+        return probs, log_probs
+
+    def _get_probs_and_entropy(self, states, guides):
+        probs, log_probs = self._get_probs_and_log_probs(states, guides)
+
+        entropy = probs * self.alpha.detach() * log_probs
+
+        return probs, entropy
+
     def _q_gradient_step(self, states, actions, rewards, dones, next_states, next_guides):
         next_q_target_1 = self.target_q_function_1.forward(next_states)
         next_q_target_2 = self.target_q_function_2.forward(next_states)
         next_min_q_target = torch.min(next_q_target_1, next_q_target_2)
 
-        next_action_probs = self.policy_function.forward_guided(next_states, next_guides)
-        next_action_log_probs = get_nan_safe_log(next_action_probs, self.small_const)
-        entropy = self.alpha.detach() * next_action_log_probs
+        next_action_probs, entropy = self._get_probs_and_entropy(next_states, next_guides)
 
-        min_v_value = torch.sum(next_action_probs * (next_min_q_target - entropy), dim=1)
+        min_v_value = torch.sum(next_action_probs * next_min_q_target - entropy, dim=1)
         targets = rewards + self.gamma * (1 - dones) * min_v_value
         targets = targets.detach()
 
@@ -234,11 +255,9 @@ class SAC(nn.Module):
 
         min_q_value = torch.min(q_value_1, q_value_2)
 
-        action_probs = self.policy_function.forward_guided(states, guides)
-        action_log_probs = get_nan_safe_log(action_probs, self.small_const)
-        entropy = self.alpha.detach() * action_log_probs
+        action_probs, entropy = self._get_probs_and_entropy(states, guides)
 
-        loss_policy = torch.mean(torch.sum(action_probs * (entropy - min_q_value), dim=1))
+        loss_policy = torch.mean(torch.sum(entropy - action_probs * min_q_value, dim=1))
         _take_optimization_step(self.policy_optimizer, loss_policy)
 
         return loss_policy
@@ -292,12 +311,14 @@ class SACWithLearnedTemperature(SAC):
         return (*losses, loss_alpha)
 
     def _alpha_gradient_step(self, states, guides):
-        action_probs = self.policy_function.forward_guided(states, guides).detach()
-        action_log_probs = get_nan_safe_log(action_probs, self.small_const)
+        action_probs, action_log_probs = self._get_probs_and_log_probs(states, guides)
+        action_probs = action_probs.detach()
+        action_log_probs = action_log_probs.detach()
 
-        loss_alpha = torch.sum(action_probs *
-                               (-self.alpha *
-                                (action_log_probs + self.entropy_target)), dim=1).mean()
+        loss_alpha = torch.sum(
+            action_probs * (-self.alpha * (action_log_probs + self.entropy_target)),
+            dim=1
+        ).mean()
         _take_optimization_step(self.alpha_optimizer, loss_alpha)
 
         return loss_alpha
