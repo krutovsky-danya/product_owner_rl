@@ -82,6 +82,12 @@ class PolicyFunction(BaseNeuralFunction):
         logits = logits.masked_fill(~guides, -torch.inf)
         return self.softmax(logits)
 
+    def get_normalized_guided_logits(self, states, guides):
+        logits: torch.Tensor = super().forward(states)
+        logits = logits.masked_fill(~guides, -torch.inf)
+        logits = logits - torch.logsumexp(logits, dim=1, keepdim=True)
+        return logits
+
     @torch.no_grad()
     def predict_guided(self, state, guide):
         logits = super().predict(state)
@@ -220,7 +226,14 @@ class SAC(nn.Module):
 
     def _get_probs_and_log_probs(self, states, guides):
         probs = self.policy_function.forward_guided(states, guides)
-        log_probs = get_nan_safe_log(probs, self.small_const)
+        # log_probs = get_nan_safe_log(probs, self.small_const)
+        log_probs = self.policy_function.get_normalized_guided_logits(states, guides)
+        # since probs[~guides] values are supposed to be equal to 0.0
+        # as long as we multiply probs and log_probs
+        # we do not care what is the value of log_probs[~guides]
+        # and also encountering -torch.inf during backward gives us nan
+        # so we'll set log_probs[~guides] to 0.0
+        log_probs = log_probs.masked_fill(~guides, 0.0)
 
         return probs, log_probs
 
@@ -323,10 +336,9 @@ class SACWithLearnedTemperature(SAC):
         action_probs = action_probs.detach()
         action_log_probs = action_log_probs.detach()
 
-        loss_alpha = torch.sum(
-            action_probs * (-self.alpha * (action_log_probs + self.entropy_target)),
-            dim=1
-        ).mean()
+        pre_loss_alpha = action_probs * (-self.alpha * (action_log_probs + self.entropy_target))
+
+        loss_alpha = torch.mean(torch.sum(pre_loss_alpha, dim=1))
         _take_optimization_step(self.alpha_optimizer, loss_alpha)
 
         return loss_alpha
