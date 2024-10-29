@@ -96,6 +96,10 @@ def _take_optimization_step(optimizer, loss):
     optimizer.zero_grad()
 
 
+def _convert_loss(loss):
+    return loss.cpu().detach().numpy()
+
+
 class SAC(nn.Module):
     def __init__(
             self,
@@ -208,7 +212,11 @@ class SAC(nn.Module):
         loss_q = self._q_gradient_step(states, actions, rewards, dones, next_states, next_guides)
         loss_policy = self._policy_gradient_step(states, guides)
 
-        return (loss_policy, *loss_q)
+        losses = (loss_policy, *loss_q)
+
+        losses_for_log = list(map(_convert_loss, losses))
+
+        return losses_for_log
 
     def _get_probs_and_log_probs(self, states, guides):
         probs = self.policy_function.forward_guided(states, guides)
@@ -308,7 +316,7 @@ class SACWithLearnedTemperature(SAC):
                                         next_states, next_guides)
         loss_alpha = self._alpha_gradient_step(states, guides)
 
-        return (*losses, loss_alpha)
+        return (*losses, _convert_loss(loss_alpha))
 
     def _alpha_gradient_step(self, states, guides):
         action_probs, action_log_probs = self._get_probs_and_log_probs(states, guides)
