@@ -4,16 +4,6 @@ import numpy as np
 import random
 
 
-def get_nan_safe_log(values, small_const):
-    has_small_value = values <= 0.0
-    if torch.any(has_small_value).item():
-        small_value = torch.abs(torch.min(values[has_small_value])).detach()
-        small_value = has_small_value.float() * (small_value + small_const)
-        values = values + small_value
-    log_values = torch.log(values)
-    return log_values
-
-
 class BaseNeuralFunction(nn.Module):
     def __init__(self, state_dim, action_n, inner_layer=128):
         super().__init__()
@@ -226,7 +216,6 @@ class SAC(nn.Module):
 
     def _get_probs_and_log_probs(self, states, guides):
         probs = self.policy_function.forward_guided(states, guides)
-        # log_probs = get_nan_safe_log(probs, self.small_const)
         log_probs = self.policy_function.get_normalized_guided_logits(states, guides)
         # since probs[~guides] values are supposed to be equal to 0.0
         # as long as we multiply probs and log_probs
