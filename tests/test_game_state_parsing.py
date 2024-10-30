@@ -1,5 +1,7 @@
 import cv2
 
+import web_interaction
+
 import numpy as np
 
 from game import ProductOwnerGame
@@ -18,9 +20,13 @@ class TestInitialGameParsing:
     game = ProductOwnerGame()
 
     expected_board_path = image_directory + '/expected_user_story_board.png'
+    _expected_board = cv2.imread(expected_board_path)
+
+    expected_row_path = image_directory + '/initial_user_story.png'
+    _expected_row = cv2.imread(expected_row_path)
 
     def setup_method(self):
-        self.initial_image = self._initial_image.copy()
+        self.original_shape = (1028, 1920, 3)
 
         self.game = ProductOwnerGame()
     
@@ -28,11 +34,35 @@ class TestInitialGameParsing:
         assert len(self.image_parser.templates) > 0
     
     def test_image_parser_selects_user_story_board(self):
-        actual_board = self.image_parser.get_board(self.initial_image)
-        expected_board = cv2.imread(self.expected_board_path)
+        # arrange
+        initial_image = self._initial_image.copy()
+        expected_board = self._expected_board.copy()
+
+        # act
+        actual_board = self.image_parser.get_board(initial_image)
+
+        # assert
         assert actual_board.size == expected_board.size
         images_diff = cv2.absdiff(actual_board, expected_board)
         assert np.all(images_diff == 0)
+
+    def test_image_parser_selects_row(self):
+        # arrange
+        original_shape = (1028, 1920, 3)
+        board = self._expected_board.copy()
+        expected_row = self._expected_row.copy()
+
+        # act
+        rows = self.image_parser.get_rows(board, original_shape)
+        
+        # assert
+        assert len(rows) == 1
+        row, position = rows[0]
+        assert row.shape == (70, 170, 3)
+        assert position == (1557, 384)
+        images_diff = cv2.absdiff(row, expected_row)
+        assert np.all(images_diff == 0)
+        
 
 
     # def test_user_stories_parsing(self):
