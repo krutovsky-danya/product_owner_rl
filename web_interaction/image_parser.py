@@ -26,6 +26,11 @@ class GameImageParser:
             (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
         }
 
+        self.rows_params = {
+            (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
+            (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
+        }
+
     def _get_image_char(self, filename: str):
         if filename.startswith("empty"):
             return ""
@@ -49,6 +54,29 @@ class GameImageParser:
         y_1 = position["y_1"]
         board = image[y_0:y_1, x_0:x_1]
         return board
+    
+    def get_rows(self, board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, int]):
+        row_params = self.rows_params[origingal_shape]
+        position = board_positions[origingal_shape]
+        board_x0 = position["x_0"]
+        board_y0 = position["y_0"]
+        rows = []
+        w = row_params["w"]
+        h = row_params["h"]
+        for i in range(6):
+            x_0 = row_params["x_0"]
+            y_0 = row_params["y_0"] + row_params["height"] * i
+            row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
+
+            color = row[0, 0]
+            if (color == [255, 255, 255]).all():
+                break
+            
+            center_x = board_x0 + x_0 + w // 2
+            center_y = board_y0 + y_0 + h // 2
+            rows.append((row, (center_x, center_y)))
+
+        return rows
 
 
 def load_characters():
