@@ -2,8 +2,10 @@ import cv2
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir, getcwd, path
+from os import listdir, path
 from typing import Tuple
+
+_DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 
 
 class UserStoryImageInfo:
@@ -14,9 +16,44 @@ class UserStoryImageInfo:
         self.position = position
 
 
+class GameImageParser:
+    def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
+        self.templates_path = templates_path
+        self.templates = self._load_templates()
+
+        self.board_positions = {
+            (540, 960, 3): {"y_0": 135, "y_1": 495, "x_0": 715, "x_1": 925},
+            (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
+        }
+
+    def _get_image_char(self, filename: str):
+        if filename.startswith("empty"):
+            return ""
+        if filename[0] == "k":
+            return "000"
+        return filename[0]
+
+    def _load_templates(self):
+        templates = []
+        for template_filename in listdir(self.templates_path):
+            image_char = self._get_image_char(template_filename)
+            image = cv2.imread(path.join(self.templates_path, template_filename))
+            templates.append((image_char, image))
+        return templates
+
+    def get_board(self, image: cv2.typing.MatLike):
+        position = self.board_positions[image.shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        board = image[y_0:y_1, x_0:x_1]
+        return board
+
+
 def load_characters():
     characters = []
-    template_dir = getcwd()
+    template_dir = path.curdir
     if "web_interaction" not in template_dir:
         template_dir = path.join(template_dir, "web_interaction")
     template_dir = path.join(template_dir, "templates")
@@ -79,8 +116,8 @@ def get_float(nums, num_width, num_count):
             y, x, _ = num.shape
             filename += f"_{y}x{x}"
             cwd = os.getcwd()
-            if 'web_interaction' not in cwd:
-                cwd = os.path.join(cwd, 'web_interaction')
+            if "web_interaction" not in cwd:
+                cwd = os.path.join(cwd, "web_interaction")
             cv2.imwrite(os.path.join(cwd, "templates", f"{filename}.png"), num)
             global CHARACTERS
             CHARACTERS = load_characters()
@@ -88,12 +125,16 @@ def get_float(nums, num_width, num_count):
         value += str(digit)
     return float(value)
 
+
 user_story_num_width = {
     (540, 960, 3): 6,
     (1028, 1920, 3): 11,
 }
 
-def get_user_story_float(nums: cv2.typing.MatLike, original_shape: Tuple[int, int, int]):
+
+def get_user_story_float(
+    nums: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+):
     num_width = user_story_num_width[original_shape]
     return get_float(nums, num_width, 6)
 

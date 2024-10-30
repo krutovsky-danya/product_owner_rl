@@ -11,12 +11,12 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from single_color_storage import SingleColorStorage
+from .single_color_storage import SingleColorStorage
 from typing import List, Sequence, Tuple, FrozenSet
 
 import cv2
 import time
-import image_parser
+from . import image_parser
 
 
 def open_game() -> WebDriver:
