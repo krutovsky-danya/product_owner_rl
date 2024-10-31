@@ -6,7 +6,7 @@ import numpy as np
 
 from game import ProductOwnerGame
 
-from web_interaction import GameImageParser
+from web_interaction import GameImageParser, UserStoryImageInfo
 
 
 class TestInitialGameParsing:
@@ -24,6 +24,8 @@ class TestInitialGameParsing:
 
     expected_user_story_path = image_directory + "/initial_user_story.png"
     _expected_user_story = cv2.imread(expected_user_story_path)
+    expected_user_story_color = (115, 188, 30)
+    expected_user_story_position = (1557, 384)
 
     expected_user_story_loyalty_path = (
         image_directory + "/expected_user_story_loyalty.png"
@@ -132,7 +134,23 @@ class TestInitialGameParsing:
         )
 
         # assert
-        assert user_story_info == ((115, 188, 30), 0.045, 1.0)
+        assert user_story_info == (self.expected_user_story_color, 0.045, 1.0)
+
+    def test_read_initial_user_stories(self):
+        # arrange
+        game_state = self._initial_image.copy()
+        expected_user_story = UserStoryImageInfo(
+            self.expected_user_story_color,
+            0.045,
+            1.0,
+            self.expected_user_story_position,
+        )
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_state)
+
+        # assert
+        assert user_stories == [expected_user_story]
 
     # def test_user_stories_parsing(self):
     #     web_interaction.insert_user_stories_from_image(self.game, self.initial_image)
