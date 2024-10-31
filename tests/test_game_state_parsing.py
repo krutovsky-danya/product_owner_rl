@@ -103,7 +103,16 @@ class TestInitialGameParsing:
         assert actual_users.shape == expected_users_line.shape
         image_diff = cv2.absdiff(actual_users, expected_users_line)
         assert np.all(image_diff == 0)
+    
+    def test_read_user_story_customers(self):
+        # arrange
+        customers_line = self._expected_user_story_customers.copy()
 
+        # act
+        line = self.image_parser.read_line(customers_line, 11)
+
+        # assert
+        assert line == '+1000'
 
     # def test_user_stories_parsing(self):
     #     web_interaction.insert_user_stories_from_image(self.game, self.initial_image)
