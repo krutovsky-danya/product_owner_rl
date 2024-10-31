@@ -17,8 +17,6 @@ class TestInitialGameParsing:
     initial_image_path = image_directory + "/game_start.png"
     _initial_image = cv2.imread(initial_image_path)
 
-    game = ProductOwnerGame()
-
     expected_board_path = image_directory + "/expected_user_story_board.png"
     _expected_board = cv2.imread(expected_board_path)
 
@@ -39,8 +37,6 @@ class TestInitialGameParsing:
 
     def setup_method(self):
         self.original_shape = (1028, 1920, 3)
-
-        self.game = ProductOwnerGame()
 
     def test_image_parser_loads_images(self):
         assert len(self.image_parser.templates) > 0

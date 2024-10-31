@@ -8,8 +8,13 @@ from typing import List
 
 
 class UserStoryCardInfo:
-    def __init__(self, label_val: str, spawn_sprint: int, color_storage: ColorStorage,
-                 random_generator: Random):
+    def __init__(
+        self,
+        label_val: str,
+        spawn_sprint: int,
+        color_storage: ColorStorage,
+        random_generator: Random,
+    ):
         self.customers_to_bring = 0
         self.loyalty = 0
         self.time_to_complete = 0
@@ -20,14 +25,28 @@ class UserStoryCardInfo:
         self.spawn_sprint = spawn_sprint
         self.card_type = UserCardType.S
         self._set_card_type(label_val, random_generator)
-        if not (self.card_type == UserCardType.BUG or self.card_type == UserCardType.TECH_DEBT):
+        if not (
+            self.card_type == UserCardType.BUG
+            or self.card_type == UserCardType.TECH_DEBT
+        ):
             self._set_loyalty_and_customers_ordinary_us(random_generator)
         self.color = color_storage.get_unused_color(self.card_type, random_generator)
         self.related_cards: List[CardInfo] = []
         self.generate_related_cards(random_generator)
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, UserStoryCardInfo):
+            return False
+        if abs(self.loyalty - value.loyalty) > 1e-3:
+            return False
+        if abs(self.customers_to_bring - value.customers_to_bring) > 1e-3:
+            return False
+        return self.label == value.label
+
     def __repr__(self) -> str:
-        return f'{self.label} l:{self.loyalty} c:{self.customers_to_bring}'
+        return (
+            f"{self.label}, loyalty={self.loyalty}, customers={self.customers_to_bring}"
+        )
 
     def _set_card_type(self, label_val: str, random_generator: Random):
         if label_val == "S":
@@ -65,7 +84,12 @@ class UserStoryCardInfo:
             time_for_card = random_generator.randint(6, 19)
             if time_for_card + time > self.time_to_complete:
                 time_for_card = self.time_to_complete - time
-            card = CardInfo(hours_val=time_for_card, color_val=self.color, us_id_val=id(self),
-                            label_val=self.label, card_type_val=self.card_type)
+            card = CardInfo(
+                hours_val=time_for_card,
+                color_val=self.color,
+                us_id_val=id(self),
+                label_val=self.label,
+                card_type_val=self.card_type,
+            )
             self.related_cards.append(card)
             time += time_for_card
