@@ -19,6 +19,7 @@ class UserStoryImageInfo:
 class GameImageParser:
     def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
         self.templates_path = templates_path
+        self.black = np.array([0, 0, 0])
         self.templates = self._load_templates()
 
         self.board_positions = {
@@ -29,6 +30,11 @@ class GameImageParser:
         self.rows_params = {
             (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
             (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
+        }
+
+        self.loyalty_nums_positions = {
+            (540, 960, 3): {"x_0": 49, "y_0": 7, "y_1": 15},
+            (1028, 1920, 3): {"x_0": 95, "y_0": 14, "y_1": 27},
         }
 
     def _get_image_char(self, filename: str):
@@ -43,8 +49,41 @@ class GameImageParser:
         for template_filename in listdir(self.templates_path):
             image_char = self._get_image_char(template_filename)
             image = cv2.imread(path.join(self.templates_path, template_filename))
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             templates.append((image_char, image))
         return templates
+
+    def read_digit(self, image: cv2.typing.MatLike):
+        for character, template in self.templates:
+            if template.shape != image.shape:
+                continue
+            images_diff = cv2.absdiff(image, template)
+            if np.all(images_diff == 0):
+                return character
+
+        widht, height = image.shape
+        cv2.imwrite(self.templates_path + f"/error_{widht}_{height}.png", image)
+        raise Exception("Image not found in templates")
+
+    def read_line(
+        self,
+        image: cv2.typing.MatLike,
+        num_widht: int,
+        num_count: int,
+        space_widht: int,
+    ) -> str:
+        x_begin = 0
+        result = ""
+        image = cv2.inRange(image, self.black, self.black)
+        for i in range(num_count):
+            x_end = x_begin + num_widht
+            digit_image = image[:, x_begin:x_end]
+            character = self.read_digit(digit_image)
+            result += character
+
+            x_begin = x_end + space_widht
+
+        return result
 
     def get_board(self, image: cv2.typing.MatLike):
         position = self.board_positions[image.shape]
@@ -54,10 +93,12 @@ class GameImageParser:
         y_1 = position["y_1"]
         board = image[y_0:y_1, x_0:x_1]
         return board
-    
-    def get_rows(self, board_image: cv2.typing.MatLike, origingal_shape: Tuple[int, int, int]):
-        row_params = self.rows_params[origingal_shape]
-        position = board_positions[origingal_shape]
+
+    def get_rows(
+        self, board_image: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+    ):
+        row_params = self.rows_params[original_shape]
+        position = board_positions[original_shape]
         board_x0 = position["x_0"]
         board_y0 = position["y_0"]
         rows = []
@@ -71,12 +112,22 @@ class GameImageParser:
             color = row[0, 0]
             if (color == [255, 255, 255]).all():
                 break
-            
+
             center_x = board_x0 + x_0 + w // 2
             center_y = board_y0 + y_0 + h // 2
             rows.append((row, (center_x, center_y)))
 
         return rows
+
+    def get_user_story_loaylty_image(
+        self, user_story_image: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+    ):
+        position = self.loyalty_nums_positions[original_shape]
+        x_0 = position["x_0"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        loyalty_image = user_story_image[y_0:y_1, x_0:]
+        return loyalty_image
 
 
 def load_characters():
