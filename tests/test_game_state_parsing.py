@@ -84,7 +84,7 @@ class TestInitialGameParsing:
         loyalty_line_image = self._expected_user_story_loyalty.copy()
 
         # act
-        line = self.image_parser.read_line(loyalty_line_image, 11, 6, 0)
+        line = self.image_parser.read_line(loyalty_line_image, 11)
 
         # assert
         assert line == '+0.045'
