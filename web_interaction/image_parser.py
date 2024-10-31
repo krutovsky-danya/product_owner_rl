@@ -42,6 +42,11 @@ class GameImageParser:
             (1028, 1920, 3): {"x_0": 94, "y_0": 34, "y_1": 51},
         }
 
+        self.user_story_num_width = {
+            (540, 960, 3): 6,
+            (1028, 1920, 3): 11,
+        }
+
     def _get_image_char(self, filename: str):
         if filename.startswith("empty"):
             return ""
@@ -182,6 +187,22 @@ class GameImageParser:
         y_1 = position["y_1"]
         customers_nums = user_story_image[y_0:y_1, x_0:]
         return customers_nums
+
+    def read_user_story(
+        self, user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+    ):
+        color = tuple(user_story[0, 0])
+        loyalty = self.get_user_story_loaylty_image(user_story, original_shape)
+        customers = self.get_user_story_users_image(user_story, original_shape)
+
+        char_width = self.user_story_num_width[original_shape]
+        loyalty = self.read_line(loyalty, char_width)
+        customers = self.read_line(customers, char_width)
+
+        loyalty = float(loyalty)
+        customers = float(customers) / 1000
+
+        return color, loyalty, customers
 
 
 def load_characters():
