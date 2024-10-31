@@ -15,6 +15,16 @@ class UserStoryImageInfo:
         self.customers = customers
         self.position = position
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, UserStoryImageInfo):
+            return False
+        return (
+            self.color == value.color
+            and self.loyalty == value.loyalty
+            and self.customers == value.customers
+            and self.position == value.position
+        )
+
 
 class GameImageParser:
     def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
@@ -203,6 +213,18 @@ class GameImageParser:
         customers = float(customers) / 1000
 
         return color, loyalty, customers
+
+    def read_user_stories(self, game_image: cv2.typing.MatLike):
+        board = self.get_board(game_image)
+        rows = self.get_rows(board, game_image.shape)
+
+        user_stories = []
+        for row, position in rows:
+            color, loyalty, customers = self.read_user_story(row, game_image.shape)
+            user_story = UserStoryImageInfo(color, loyalty, customers, position)
+            user_stories.append(user_story)
+
+        return user_stories
 
 
 def load_characters():
