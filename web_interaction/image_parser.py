@@ -65,23 +65,66 @@ class GameImageParser:
         cv2.imwrite(self.templates_path + f"/error_{widht}_{height}.png", image)
         raise Exception("Image not found in templates")
 
+    def is_empty_vertical(self, image: cv2.typing.MatLike, x: int):
+        vertical_line = image[:, x]
+        unique = np.unique(vertical_line)
+        return len(unique) == 1
+
+    def is_empty_horizontal(self, image: cv2.typing.MatLike, y: int):
+        horizontal_line = image[y, :]
+        unique = np.unique(horizontal_line)
+        return len(unique) == 1
+
+    def find_start(self, image: cv2.typing.MatLike, x_start: int):
+        x_limit = image.shape[1] - 1
+        is_empty = self.is_empty_vertical(image, x_start)
+
+        while is_empty and x_start < x_limit:
+            x_start += 1
+            is_empty = self.is_empty_vertical(image, x_start)
+
+        return x_start
+
+    def crop_image(self, image: cv2.typing.MatLike):
+        y_start = 0
+        y_limit = image.shape[0] - 1
+
+        is_empty = self.is_empty_horizontal(image, y_start)
+        while is_empty and y_start < y_limit:
+            y_start += 1
+            is_empty = self.is_empty_horizontal(image, y_start)
+
+        y_end = y_start
+        while not is_empty and y_end < y_limit:
+            y_end += 1
+            is_empty = self.is_empty_horizontal(image, y_end)
+
+        return image[y_start:y_end]
+
+    def split_image(self, image: cv2.typing.MatLike, char_widht: int):
+        image = self.crop_image(image)
+        x_start = self.find_start(image, 0)
+        digits = []
+        while True:
+            x_end = x_start + char_widht
+            if x_end >= image.shape[1]:
+                break
+            digit = image[:, x_start:x_end]
+            digits.append(digit)
+            x_start = x_end
+        return digits
+
     def read_line(
         self,
         image: cv2.typing.MatLike,
-        num_widht: int,
-        num_count: int,
-        space_widht: int,
+        char_width: int
     ) -> str:
-        x_begin = 0
         result = ""
         image = cv2.inRange(image, self.black, self.black)
-        for i in range(num_count):
-            x_end = x_begin + num_widht
-            digit_image = image[:, x_begin:x_end]
-            character = self.read_digit(digit_image)
+        digits = self.split_image(image, char_width)
+        for digit in digits:
+            character = self.read_digit(digit)
             result += character
-
-            x_begin = x_end + space_widht
 
         return result
 
