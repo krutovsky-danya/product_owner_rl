@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir, path
-from typing import Tuple
+from typing import Tuple, List
 
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 
@@ -218,7 +218,7 @@ class GameImageParser:
         board = self.get_board(game_image)
         rows = self.get_rows(board, game_image.shape)
 
-        user_stories = []
+        user_stories: List[UserStoryImageInfo] = []
         for row, position in rows:
             color, loyalty, customers = self.read_user_story(row, game_image.shape)
             user_story = UserStoryImageInfo(color, loyalty, customers, position)

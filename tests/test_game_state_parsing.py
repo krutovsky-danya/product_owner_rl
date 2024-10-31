@@ -151,6 +151,3 @@ class TestInitialGameParsing:
 
         # assert
         assert user_stories == [expected_user_story]
-
-    # def test_user_stories_parsing(self):
-    #     web_interaction.insert_user_stories_from_image(self.game, self.initial_image)
