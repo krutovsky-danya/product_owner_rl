@@ -28,6 +28,9 @@ class TestInitialGameParsing:
     expected_user_story_loyalty_path = image_directory + '/expected_user_story_loyalty.png'
     _expected_user_story_loyalty = cv2.imread(expected_user_story_loyalty_path)
 
+    expecrted_user_story_customers_path = image_directory + '/expected_user_story_users.png'
+    _expected_user_story_customers = cv2.imread(expecrted_user_story_customers_path)
+
     def setup_method(self):
         self.original_shape = (1028, 1920, 3)
 
@@ -88,6 +91,19 @@ class TestInitialGameParsing:
 
         # assert
         assert line == '+0.045'
+    
+    def test_select_user_story_users(self):
+        # arrange
+        user_stroy_image = self._expected_row.copy()
+        expected_users_line = self._expected_user_story_customers.copy()
+
+        # act
+        actual_users = self.image_parser.get_user_story_users_image(user_stroy_image, self.original_shape)
+
+        assert actual_users.shape == expected_users_line.shape
+        image_diff = cv2.absdiff(actual_users, expected_users_line)
+        assert np.all(image_diff == 0)
+
 
     # def test_user_stories_parsing(self):
     #     web_interaction.insert_user_stories_from_image(self.game, self.initial_image)
