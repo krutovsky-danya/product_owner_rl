@@ -34,7 +34,7 @@ class GameImageParser:
 
         self.loyalty_nums_positions = {
             (540, 960, 3): {"x_0": 49, "y_0": 7, "y_1": 15},
-            (1028, 1920, 3): {"x_0": 95, "y_0": 14, "y_1": 27},
+            (1028, 1920, 3): {"x_0": 94, "y_0": 12, "y_1": 29},
         }
 
     def _get_image_char(self, filename: str):

@@ -84,7 +84,6 @@ class TestInitialGameParsing:
         loyalty_line_image = self._expected_user_story_loyalty.copy()
 
         # act
-        cv2.imwrite(self.image_directory + '/loyalty_line_image.png', loyalty_line_image)
         line = self.image_parser.read_line(loyalty_line_image, 11, 6, 0)
 
         # assert
