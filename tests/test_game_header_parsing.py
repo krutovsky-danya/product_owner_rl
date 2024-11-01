@@ -58,3 +58,13 @@ class TestHeaderParsing(ParsingPlatform):
 
         # assert
         assert actual_loyalty == '4'
+
+    def test_read_customers(self):
+        # arrange
+        header_image = self.expected_header.copy()
+
+        # act
+        actual_customers = self.image_parser.read_current_customers(header_image, self.original_shape)
+
+        # assert
+        assert actual_customers == '25000'

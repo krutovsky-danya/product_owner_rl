@@ -8,6 +8,7 @@ from typing import Tuple, List
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 Coordinates = Tuple[int, int]
 Shape = Tuple[int, int, int]
+Image = cv2.typing.MatLike
 
 
 class UserStoryImageInfo:
@@ -95,8 +96,19 @@ class GameImageParser:
             (1028, 1920, 3): {
                 "x_0": 250,
                 "y_0": 44,
-                "x_1": 500,
+                "x_1": 400,
                 "y_1": 75,
+                "width": 18,
+            },
+        }
+
+        self.customers_params = {
+            (540, 960, 3): {"y_0": 18, "y_1": 29, "x_0": 161, "x_1": 206, "width": 9},
+            (1028, 1920, 3): {
+                "x_0": 291,
+                "y_0": 9,
+                "x_1": 400,
+                "y_1": 40,
                 "width": 18,
             },
         }
@@ -329,7 +341,7 @@ class GameImageParser:
 
         money = self.read_line(money, width)
         return money
-    
+
     def convert_gray_numbers(self, image: cv2.typing.MatLike):
         image = cv2.inRange(image, self.black, self.white - 1)
         image = cv2.cvtColor(255 - image, cv2.COLOR_GRAY2BGR)
@@ -346,6 +358,18 @@ class GameImageParser:
 
         loyalty = self.read_line(loyalty, num_width)
         return loyalty
+
+    def read_current_customers(self, header: Image, original_shape: Shape):
+        position = self.customers_params[original_shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        num_width = position["width"]
+        customers_nums = self.convert_gray_numbers(header[y_0:y_1, x_0:x_1])
+
+        customers_value = self.read_line(customers_nums, num_width)
+        return customers_value
 
 
 def load_characters():
