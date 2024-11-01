@@ -6,6 +6,7 @@ from os import listdir, path, getcwd
 from typing import Tuple, List
 
 from game.userstory_card.userstory_card import UserStoryCard
+from .backlog_card_image_info import BacklogCardImageInfo
 
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 Coordinates = Tuple[int, int]
@@ -43,7 +44,6 @@ class UserStoryImageInfo:
     def __repr__(self) -> str:
         return f"UserStoryImageInfo({self.color}, {self.loyalty}, {self.customers}, {self.position})"
 
-
 class GameImageParser:
     def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
         self.templates_path = templates_path
@@ -58,7 +58,7 @@ class GameImageParser:
 
         self.rows_params = {
             (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
-            (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 88},
+            (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 87},
         }
 
         self.loyalty_nums_positions = {
@@ -123,6 +123,21 @@ class GameImageParser:
                 "y_1": 40,
                 "width": 18,
             },
+        }
+
+        self.cards_params = {
+            (540, 960, 3): {"l": 42, "r": 46},
+            (1028, 1920, 3): {"l": 81, "r": 87},
+        }
+
+        self.hours_positions = {
+            (540, 960, 3): {"x_0": 3, "x_1": 25, "y_0": 9, "y_1": 24},
+            (1028, 1920, 3): {"x_0": 7, "x_1": 55, "y_0": 17, "y_1": 44},
+        }
+
+        self.backlog_num_width = {
+            (540, 960, 3): 11,
+            (1028, 1920, 3): 21,
         }
 
     def _get_image_char(self, filename: str):
@@ -383,6 +398,72 @@ class GameImageParser:
 
         customers_value = self.read_line(customers_nums, num_width)
         return customers_value
+
+    def split_row(
+        self,
+        row: cv2.typing.MatLike,
+        position: Tuple[int, int],
+        original_shape: Tuple[int, int, int],
+    ):
+        card_params = self.cards_params[original_shape]
+        l = card_params["l"]
+        r = card_params["r"]
+        left: Image = row[:, :l]
+        right: Image = row[:, r:]
+        if (right[0, 0] == [255, 255, 255]).all():
+            return ([left, position],)
+        x, y = position
+        right_pos = (x + r, y)
+        return [left, position], [right, right_pos]
+
+    def get_backlog_card_images(self, image: cv2.typing.MatLike):
+        backlog_board, board_position = self.get_board(image)
+
+        backlog_rows = self.get_rows(backlog_board, image.shape, board_position)
+        cards = []
+        for row, position in backlog_rows:
+            row_cards = self.split_row(row, position, image.shape)
+            cards.extend(row_cards)
+
+        return cards
+
+    def read_backlog_card_descripton(
+        self,
+        card_image: cv2.typing.MatLike,
+        position: Tuple[int, int],
+        original_shape: Tuple[int, int, int],
+    ):
+        color = tuple(card_image[0, 0])
+
+        hours_position = self.hours_positions[original_shape]
+        x_0 = hours_position["x_0"]
+        x_1 = hours_position["x_1"]
+        y_0 = hours_position["y_0"]
+        y_1 = hours_position["y_1"]
+        num_width = self.backlog_num_width[original_shape]
+
+        hours = card_image[y_0:y_1, x_0:x_1]
+
+        hours_value = self.read_line(hours, num_width)
+        hours_value = int(hours_value)
+
+        x, y = position
+        height, width, *_ = card_image.shape
+        position = (x + width // 2, y + height // 2)
+
+        return BacklogCardImageInfo(color, hours_value, position)
+
+    def read_backlog(self, image: cv2.typing.MatLike):
+        backlog_cards = []
+        cards = self.get_backlog_card_images(image)
+
+        for card, position in cards:
+            card_descripton = self.read_backlog_card_descripton(
+                card, position, image.shape
+            )
+            backlog_cards.append(card_descripton)
+
+        return backlog_cards
 
 
 def load_characters():
