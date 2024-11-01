@@ -8,6 +8,8 @@ from web_interaction import GameImageParser, UserStoryImageInfo
 class TestInitialGameParsing:
     templates_directory = "web_interaction/templates"
     image_parser = GameImageParser(templates_directory)
+    yellow = (43, 194, 249)
+    purple = (243, 132, 168)
 
     image_directory = "tests/test_images"
     initial_image_path = image_directory + "/game_start_1.png"
@@ -21,6 +23,7 @@ class TestInitialGameParsing:
     _expected_user_story = cv2.imread(expected_user_story_path)
     expected_user_story_color = (115, 188, 30)
     expected_user_story_position = (1466, 384)
+    expected_user_story_position_shifted = (1557, 384)
 
     expected_user_story_loyalty_path = (
         image_directory + "/expected_user_story_loyalty.png"
@@ -39,6 +42,10 @@ class TestInitialGameParsing:
 
     def setup_method(self):
         self.original_shape = (1028, 1920, 3)
+    
+    def read_game_start(self, id):
+        image_path = self.image_directory + f'/game_start_{id}.png'
+        return cv2.imread(image_path)
 
     def test_image_parser_loads_images(self):
         assert len(self.image_parser.templates) > 0
@@ -170,7 +177,7 @@ class TestInitialGameParsing:
         # arrange
         game_start = self.game_start_2.copy()
         expected_user_story = UserStoryImageInfo(
-            (43, 194, 249), 0.025, 3.0, (1557, 384)
+            self.yellow, 0.025, 3.0, (1557, 384)
         )
 
         # act
@@ -183,8 +190,19 @@ class TestInitialGameParsing:
         # arrange
         game_start = self.game_start_3.copy()
         expected_user_story = UserStoryImageInfo(
-            (43, 194, 249), 0.045, 3.0, self.expected_user_story_position
+            self.yellow, 0.045, 3.0, self.expected_user_story_position
         )
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_start)
+
+        # assert
+        assert user_stories == [expected_user_story]
+    
+    def test_read_game_start_4(self):
+        # arrange
+        game_start = self.read_game_start(4)
+        expected_user_story = UserStoryImageInfo(self.purple, 0.075, 2.0, self.expected_user_story_position_shifted)
 
         # act
         user_stories = self.image_parser.read_user_stories(game_start)
