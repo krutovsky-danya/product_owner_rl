@@ -46,3 +46,15 @@ class TestHeaderParsing(ParsingPlatform):
 
         # assert
         assert actual_money == "33000$"
+
+    def test_read_loyalty(self):
+        # arrange
+        header_image = self.expected_header.copy()
+
+        # act
+        actual_loyalty = self.image_parser.read_current_loyalty(
+            header_image, self.original_shape
+        )
+
+        # assert
+        assert actual_loyalty == '4'
