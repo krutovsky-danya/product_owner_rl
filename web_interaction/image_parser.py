@@ -6,6 +6,7 @@ from os import listdir, path, getcwd
 from typing import Tuple, List
 
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
+Coordinates = Tuple[int, int]
 
 
 class UserStoryImageInfo:
@@ -25,11 +26,15 @@ class UserStoryImageInfo:
             and self.position == value.position
         )
 
+    def __repr__(self) -> str:
+        return f"UserStoryImageInfo({self.color}, {self.loyalty}, {self.customers}, {self.position})"
+
 
 class GameImageParser:
     def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
         self.templates_path = templates_path
         self.black = np.array([0, 0, 0])
+        self.white = np.array([255, 255, 255])
         self.templates = self._load_templates()
 
         self.board_positions = {
@@ -155,6 +160,16 @@ class GameImageParser:
 
         return result
 
+    def get_shifted_board(self, game_image: cv2.typing.MatLike):
+        if game_image.shape != (1028, 1920, 3):
+            return None
+        x_0 = 1463
+        y_0 = 268
+        x_1 = 1841
+        y_1 = 939
+        board = game_image[y_0:y_1, x_0:x_1]
+        return board, (x_0, y_0)
+
     def get_board(self, image: cv2.typing.MatLike):
         position = self.board_positions[image.shape]
         x_0 = position["x_0"]
@@ -162,16 +177,19 @@ class GameImageParser:
         y_0 = position["y_0"]
         y_1 = position["y_1"]
         board = image[y_0:y_1, x_0:x_1]
-        return board
+        if np.all(board[:, 0] == self.white):
+            return board, (x_0, y_0)
+        return self.get_shifted_board(image)
 
     def get_rows(
-        self, board_image: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+        self,
+        board_image: cv2.typing.MatLike,
+        original_shape: Tuple[int, int, int],
+        board_position: Coordinates,
     ):
         row_params = self.rows_params[original_shape]
-        position = board_positions[original_shape]
-        board_x0 = position["x_0"]
-        board_y0 = position["y_0"]
-        rows = []
+        board_x0, board_y0 = board_position
+        rows: List[Tuple[cv2.typing.MatLike, Coordinates]] = []
         w = row_params["w"]
         h = row_params["h"]
         for i in range(6):
@@ -226,8 +244,8 @@ class GameImageParser:
         return color, loyalty, customers
 
     def read_user_stories(self, game_image: cv2.typing.MatLike):
-        board = self.get_board(game_image)
-        rows = self.get_rows(board, game_image.shape)
+        board, board_position = self.get_board(game_image)
+        rows = self.get_rows(board, game_image.shape, board_position)
 
         user_stories: List[UserStoryImageInfo] = []
         for row, position in rows:
