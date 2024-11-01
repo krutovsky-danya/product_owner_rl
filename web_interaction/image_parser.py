@@ -181,12 +181,13 @@ class GameImageParser:
             y_start += 1
             is_empty = self.is_empty_horizontal(image, y_start)
 
-        y_end = y_start
-        while not is_empty and y_end < y_limit:
-            y_end += 1
+        y_end = image.shape[0] - 1
+        is_empty = self.is_empty_horizontal(image, y_end)
+        while is_empty and y_start < y_end:
+            y_end -= 1
             is_empty = self.is_empty_horizontal(image, y_end)
 
-        return image[y_start:y_end]
+        return image[y_start : y_end + 1]
 
     def split_image(self, image: cv2.typing.MatLike, char_widht: int):
         image = self.crop_image(image)
@@ -314,7 +315,7 @@ class GameImageParser:
         y_1 = position["y_1"]
         return game_image[y_0:y_1, x_0:x_1]
 
-    def get_sprint_number(
+    def read_sprint(
         self, header: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
     ):
         position = self.sprint_params[original_shape]

@@ -41,3 +41,19 @@ class GameCoordinator:
             game_user_story.loyalty = user_story.loyalty
             game_user_story.customers_to_bring = user_story.customers
             game.userstories.add_us(game_user_story)
+
+    def update_header_info(self, game: ProductOwnerGame, game_image: cv2.typing.MatLike):
+        shape = game_image.shape
+        header = self.image_parser.get_header_image(game_image)
+        
+        customers = self.image_parser.read_current_customers(header, shape)
+        loyalty = self.image_parser.read_current_loyalty(header, shape)
+
+        sprint = self.image_parser.read_sprint(header, shape)
+        money = self.image_parser.read_current_money(header, shape)
+
+        game.context.customers = float(customers) / 1000
+        game.context.set_loyalty(float(loyalty))
+    
+        game.context.current_sprint = int(sprint)
+        game.context.set_money(float(money.removesuffix('$')))

@@ -28,7 +28,7 @@ class TestHeaderParsing(ParsingPlatform):
         header_image = self.expected_header.copy()
 
         # act
-        actual_sprint = self.image_parser.get_sprint_number(
+        actual_sprint = self.image_parser.read_sprint(
             header_image, self.original_shape
         )
 
