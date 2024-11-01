@@ -454,7 +454,7 @@ class GameImageParser:
         return BacklogCardImageInfo(color, hours_value, position)
 
     def read_backlog(self, image: cv2.typing.MatLike):
-        backlog_cards = []
+        backlog_cards: List[BacklogCardImageInfo] = []
         cards = self.get_backlog_card_images(image)
 
         for card, position in cards:
