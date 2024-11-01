@@ -10,6 +10,7 @@ from .parsing_platform import ParsingPlatform
 class TestInitialGameParsing(ParsingPlatform):
     yellow = (43, 194, 249)
     purple = (243, 132, 168)
+    green = (115, 188, 30)
 
     image_directory = "tests/test_images"
     initial_image_path = image_directory + "/game_start_1.png"
@@ -198,6 +199,19 @@ class TestInitialGameParsing(ParsingPlatform):
         game_start = self.read_game_start(4)
         expected_user_story = UserStoryImageInfo(
             self.purple, 0.075, 2.0, self.expected_user_story_position_shifted
+        )
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_start)
+
+        # assert
+        assert user_stories == [expected_user_story]
+
+    def test_read_game_start_5(self):
+        # arrange
+        game_start = self.read_game_start(5)
+        expected_user_story = UserStoryImageInfo(
+            self.green, 0.08, 3.0, self.expected_user_story_position_shifted
         )
 
         # act
