@@ -44,7 +44,9 @@ class WebController:
             iframe, x_offset, y_offset
         ).click().perform()
 
-    def click_board_button(self, driver, iframe: WebElement, width: int, height: int):
+    def click_board_button(self, driver, iframe: WebElement):
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
         position = self.board_action_positions[(height, width)]
         x = position["x"]
         y = position["y"]
@@ -86,12 +88,10 @@ class WebController:
 
         self.logger.info(f"Reward: {reward}")
 
-    def apply_decompose_action(
-        self, driver, iframe: WebElement, width: int, height: int, env: ProductOwnerEnv
-    ):
+    def apply_decompose_action(self, driver, iframe: WebElement, env: ProductOwnerEnv):
         self.logger.info("Start decomposition")
-        self.select_user_story_board(driver, iframe, width, height)
-        self.click_board_button(driver, iframe, width, height)
+        self.select_user_story_board(driver, iframe)
+        self.click_board_button(driver, iframe)
         time.sleep(1)
 
         filename = "game_state.png"
