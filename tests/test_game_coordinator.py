@@ -15,7 +15,7 @@ class TestGameCoordination:
     random = Random(0)
 
     image_directory = "tests/test_images"
-    initial_image_path = image_directory + "/game_start.png"
+    initial_image_path = image_directory + "/game_start_1.png"
 
     def setup_method(self):
         game = self.game = ProductOwnerGame()
