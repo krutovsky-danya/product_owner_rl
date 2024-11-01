@@ -15,6 +15,16 @@ class GameCoordinator:
         self.random = Random(0)
         self.user_stories = []
 
+    def skip_tutorial(self, game: ProductOwnerGame):
+        context = game.context
+
+        context.is_new_game = False
+        game.is_first_release = False
+        game.userstories.disable_restrictions()
+        game.office.toggle_purchases(True)
+
+        game.context.color_storage = SingleColorStorage(None)
+
     def insert_user_stories_from_image(
         self, game: ProductOwnerGame, image: cv2.typing.MatLike
     ):

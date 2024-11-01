@@ -2,7 +2,7 @@ import cv2
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir, path
+from os import listdir, path, getcwd
 from typing import Tuple, List
 
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
@@ -240,7 +240,7 @@ class GameImageParser:
 
 def load_characters():
     characters = []
-    template_dir = path.curdir
+    template_dir = getcwd()
     if "web_interaction" not in template_dir:
         template_dir = path.join(template_dir, "web_interaction")
     template_dir = path.join(template_dir, "templates")
