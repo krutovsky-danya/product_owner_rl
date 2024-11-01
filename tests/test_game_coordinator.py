@@ -1,4 +1,5 @@
 import cv2
+import pytest
 
 from game import ProductOwnerGame
 from game.userstories.userstories import UserStoryCardInfo, UserStoryCard
@@ -16,6 +17,11 @@ class TestGameCoordination:
 
     image_directory = "tests/test_images"
     initial_image_path = image_directory + "/game_start_1.png"
+    initial_image = None
+
+    @classmethod
+    def setup_class(cls):
+        cls.initial_image = cv2.imread(cls.initial_image_path)
 
     def setup_method(self):
         game = self.game = ProductOwnerGame()
@@ -28,7 +34,7 @@ class TestGameCoordination:
 
     def test_insert_user_stories(self):
         # arrange
-        initial_image = cv2.imread(self.initial_image_path)
+        initial_image = self.initial_image.copy()
         color_storage = SingleColorStorage((115, 188, 30))
         user_story = UserStoryCardInfo("S", 4, color_storage, self.random)
         user_story.loyalty = 0.045
@@ -40,3 +46,16 @@ class TestGameCoordination:
 
         # assert
         assert self.game.userstories.stories_list == expected_user_stories
+
+    def test_update_(self):
+        # arrange
+        initial_image = self.initial_image.copy()
+
+        # act
+        self.game_coordinator.update_header_info(self.game, initial_image)
+
+        # assert
+        assert self.game.context.current_sprint == 4
+        assert self.game.context.get_money() == 33000
+        assert self.game.context.get_loyalty() == 4.0
+        assert self.game.context.customers == 25.0
