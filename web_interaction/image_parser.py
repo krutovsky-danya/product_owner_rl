@@ -65,7 +65,7 @@ class GameImageParser:
         return filename[0]
 
     def _load_templates(self):
-        templates = []
+        templates: List[Tuple[str, cv2.typing.MatLike]] = []
         for template_filename in listdir(self.templates_path):
             image_char = self._get_image_char(template_filename)
             image = cv2.imread(path.join(self.templates_path, template_filename))
@@ -73,13 +73,24 @@ class GameImageParser:
             templates.append((image_char, image))
         return templates
 
-    def read_digit(self, image: cv2.typing.MatLike):
+    def read_digit(self, image: cv2.typing.MatLike, tolerance: float = 0.05):
+        best_diff = image.size
+        best_chararcter = ""
         for character, template in self.templates:
             if template.shape != image.shape:
                 continue
             images_diff = cv2.absdiff(image, template)
-            if np.all(images_diff == 0):
+            unmatched_count = (images_diff != 0).sum()
+
+            if unmatched_count == 0:
                 return character
+
+            if unmatched_count < best_diff:
+                best_diff = unmatched_count
+                best_chararcter = character
+
+        if best_diff < tolerance * image.size:
+            return best_chararcter
 
         widht, height = image.shape
         cv2.imwrite(self.templates_path + f"/error_{widht}_{height}.png", image)
