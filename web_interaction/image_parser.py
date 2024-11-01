@@ -78,6 +78,17 @@ class GameImageParser:
             },
         }
 
+        self.money_params = {
+            (540, 960, 3): {"y_0": 33, "y_1": 49, "x_0": 421, "x_1": 480, "width": 11},
+            (1028, 1920, 3): {
+                "x_0": 750,
+                "y_0": 44,
+                "x_1": 900,
+                "y_1": 69,
+                "width": 21,
+            },
+        }
+
     def _get_image_char(self, filename: str):
         if filename.startswith("empty"):
             return ""
@@ -292,6 +303,20 @@ class GameImageParser:
         sprint = header[y_0:y_1, x_0:x_1]
         sprint_n = self.read_line(sprint, width)
         return sprint_n
+
+    def read_current_money(
+        self, header: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+    ):
+        position = self.money_params[original_shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        width = position["width"]
+        money = header[y_0:y_1, x_0:x_1]
+
+        money = self.read_line(money, width)
+        return money
 
 
 def load_characters():

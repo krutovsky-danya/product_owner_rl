@@ -22,13 +22,27 @@ class TestHeaderParsing(ParsingPlatform):
         # assert
         image_diff = cv2.absdiff(expected_header, actual_header)
         assert np.all(image_diff == 0)
-    
+
     def test_read_sprint(self):
         # arrange
         header_image = self.expected_header.copy()
 
         # act
-        actual_sprint = self.image_parser.get_sprint_number(header_image, self.original_shape)
+        actual_sprint = self.image_parser.get_sprint_number(
+            header_image, self.original_shape
+        )
 
         # assert
-        assert actual_sprint == '4'
+        assert actual_sprint == "4"
+
+    def test_read_money(self):
+        # arrange
+        header_image = self.expected_header.copy()
+
+        # act
+        actual_money = self.image_parser.read_current_money(
+            header_image, self.original_shape
+        )
+
+        # assert
+        assert actual_money == "33000$"
