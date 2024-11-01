@@ -28,6 +28,11 @@ class WebController:
             },
         }
 
+        self.board_action_positions = {
+            (540, 960): {"x": 817, "y": 480},
+            (1028, 1920): {"x": 1654, "y": 911},
+        }
+
     def click_on_element(self, driver, iframe: WebElement, x: int, y: int):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
@@ -38,6 +43,12 @@ class WebController:
         ActionChains(driver).move_to_element_with_offset(
             iframe, x_offset, y_offset
         ).click().perform()
+
+    def click_board_button(self, driver, iframe: WebElement, width: int, height: int):
+        position = self.board_action_positions[(height, width)]
+        x = position["x"]
+        y = position["y"]
+        self.click_on_element(driver, iframe, x, y)
 
     def select_user_story_board(self, driver, iframe: WebElement):
         height = iframe.rect["height"]
@@ -74,3 +85,20 @@ class WebController:
         self.game_coordinator.insert_user_stories_from_image(env.game, image)
 
         self.logger.info(f"Reward: {reward}")
+
+    def apply_decompose_action(
+        self, driver, iframe: WebElement, width: int, height: int, env: ProductOwnerEnv
+    ):
+        self.logger.info("Start decomposition")
+        self.select_user_story_board(driver, iframe, width, height)
+        self.click_board_button(driver, iframe, width, height)
+        time.sleep(1)
+
+        filename = "game_state.png"
+        iframe.screenshot(filename)
+        image = cv2.imread(filename)
+        # os.remove(filename)
+
+        self.game_coordinator.insert_backlog_cards_from_image(env.game, image)
+
+        env._perform_decomposition()
