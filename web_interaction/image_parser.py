@@ -7,6 +7,7 @@ from typing import Tuple, List
 
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 Coordinates = Tuple[int, int]
+Shape = Tuple[int, int, int]
 
 
 class UserStoryImageInfo:
@@ -86,6 +87,17 @@ class GameImageParser:
                 "x_1": 900,
                 "y_1": 69,
                 "width": 21,
+            },
+        }
+
+        self.loyalty_params = {
+            (540, 960, 3): {"y_0": 38, "y_1": 49, "x_0": 143, "x_1": 206, "width": 9},
+            (1028, 1920, 3): {
+                "x_0": 250,
+                "y_0": 44,
+                "x_1": 500,
+                "y_1": 75,
+                "width": 18,
             },
         }
 
@@ -317,6 +329,23 @@ class GameImageParser:
 
         money = self.read_line(money, width)
         return money
+    
+    def convert_gray_numbers(self, image: cv2.typing.MatLike):
+        image = cv2.inRange(image, self.black, self.white - 1)
+        image = cv2.cvtColor(255 - image, cv2.COLOR_GRAY2BGR)
+        return image
+
+    def read_current_loyalty(self, header: cv2.typing.MatLike, original_shape: Shape):
+        position = self.loyalty_params[original_shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        num_width = position["width"]
+        loyalty = self.convert_gray_numbers(header[y_0:y_1, x_0:x_1])
+
+        loyalty = self.read_line(loyalty, num_width)
+        return loyalty
 
 
 def load_characters():
