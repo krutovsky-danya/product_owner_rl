@@ -28,7 +28,7 @@ class WebController:
             },
         }
 
-    def click_on_element(driver, iframe: WebElement, x: int, y: int):
+    def click_on_element(self, driver, iframe: WebElement, x: int, y: int):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
 
@@ -55,12 +55,12 @@ class WebController:
     def apply_user_story_action(
         self, action: int, driver, iframe: WebElement, env: ProductOwnerEnv
     ):
-        self.logger.info("Start user story action: {0}", action)
+        self.logger.info(f"Start user story action: {action}")
         user_story = env.userstory_env.get_encoded_card(action)
-        self.logger.info("User story: {0}", user_story)
+        self.logger.info(f"User story: {user_story}")
 
         position = self.game_coordinator.find_user_story_position(user_story)
-        self.logger.info("Found at position: {0}", position)
+        self.logger.info(f"Found at position: {position}")
 
         self.click_user_story(driver, iframe, *position)
 
@@ -73,4 +73,4 @@ class WebController:
 
         self.game_coordinator.insert_user_stories_from_image(env.game, image)
 
-        print(reward)
+        self.logger.info(f"Reward: {reward}")
