@@ -10,6 +10,7 @@ from web_interaction import GameImageParser, GameCoordinator, SingleColorStorage
 
 
 class TestGameCoordination:
+    green = (115, 188, 30)
     templates_directory = "web_interaction/templates"
     image_parser = GameImageParser(templates_directory)
     game_coordinator = GameCoordinator(image_parser)
@@ -47,7 +48,7 @@ class TestGameCoordination:
         # assert
         assert self.game.userstories.stories_list == expected_user_stories
 
-    def test_update_(self):
+    def test_update_header_info(self):
         # arrange
         initial_image = self.initial_image.copy()
 
@@ -59,3 +60,19 @@ class TestGameCoordination:
         assert self.game.context.get_money() == 33000
         assert self.game.context.get_loyalty() == 4.0
         assert self.game.context.customers == 25.0
+
+    def test_find_user_story(self):
+        # arrange
+        initial_image = self.initial_image.copy()
+        color_storage = SingleColorStorage(self.green)
+        card_info = UserStoryCardInfo("S", 4, color_storage, self.random)
+        card_info.loyalty = 0.045
+        card_info.customers_to_bring = 1.0
+        user_story = UserStoryCard(card_info)
+
+        # act
+        self.game_coordinator.insert_user_stories_from_image(self.game, initial_image)
+        position = self.game_coordinator.find_user_story_position(user_story)
+
+        # assert
+        assert position == (1466, 384)

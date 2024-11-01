@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from os import listdir, path, getcwd
 from typing import Tuple, List
 
+from game.userstory_card.userstory_card import UserStoryCard
+
 _DEFAULT_TEMPLATES_PATH = "web_interation/templates"
 Coordinates = Tuple[int, int]
 Shape = Tuple[int, int, int]
@@ -18,7 +20,17 @@ class UserStoryImageInfo:
         self.customers = customers
         self.position = position
 
+    def _equals_to_game_user_story(self, user_story: UserStoryCard):
+        card_info = user_story.info
+        if abs(self.loyalty - card_info.loyalty) > 1e-4:
+            return False
+        if abs(self.customers - card_info.customers_to_bring) > 1e-4:
+            return False
+        return True
+
     def __eq__(self, value: object) -> bool:
+        if isinstance(value, UserStoryCard):
+            return self._equals_to_game_user_story(value)
         if not isinstance(value, UserStoryImageInfo):
             return False
         return (
