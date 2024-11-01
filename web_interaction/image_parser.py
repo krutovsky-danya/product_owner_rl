@@ -62,6 +62,22 @@ class GameImageParser:
             (1028, 1920, 3): 11,
         }
 
+        self.header_positions = {
+            (540, 960, 3): {"x_0": 57, "y_0": 7, "x_1": 932, "y_1": 83},
+            (1028, 1920, 3): {"x_0": 184, "y_0": 36, "x_1": 1794, "y_1": 136},
+        }
+
+        self.sprint_params = {
+            (540, 960, 3): {"y_0": 14, "y_1": 30, "x_0": 487, "x_1": 630, "width": 11},
+            (1028, 1920, 3): {
+                "x_0": 902,
+                "y_0": 7,
+                "x_1": 1100,
+                "y_1": 32,
+                "width": 21,
+            },
+        }
+
     def _get_image_char(self, filename: str):
         if filename.startswith("empty"):
             return ""
@@ -254,6 +270,28 @@ class GameImageParser:
             user_stories.append(user_story)
 
         return user_stories
+
+    def get_header_image(self, game_image: cv2.typing.MatLike):
+        position = self.header_positions[game_image.shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        return game_image[y_0:y_1, x_0:x_1]
+
+    def get_sprint_number(
+        self, header: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+    ):
+        position = self.sprint_params[original_shape]
+        x_0 = position["x_0"]
+        x_1 = position["x_1"]
+        y_0 = position["y_0"]
+        y_1 = position["y_1"]
+        width = position["width"]
+
+        sprint = header[y_0:y_1, x_0:x_1]
+        sprint_n = self.read_line(sprint, width)
+        return sprint_n
 
 
 def load_characters():

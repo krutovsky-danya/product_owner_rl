@@ -2,12 +2,12 @@ import cv2
 
 import numpy as np
 
-from web_interaction import GameImageParser, UserStoryImageInfo
+from web_interaction import UserStoryImageInfo
+
+from .parsing_platform import ParsingPlatform
 
 
-class TestInitialGameParsing:
-    templates_directory = "web_interaction/templates"
-    image_parser = GameImageParser(templates_directory)
+class TestInitialGameParsing(ParsingPlatform):
     yellow = (43, 194, 249)
     purple = (243, 132, 168)
 
@@ -42,10 +42,6 @@ class TestInitialGameParsing:
 
     def setup_method(self):
         self.original_shape = (1028, 1920, 3)
-    
-    def read_game_start(self, id):
-        image_path = self.image_directory + f'/game_start_{id}.png'
-        return cv2.imread(image_path)
 
     def test_image_parser_loads_images(self):
         assert len(self.image_parser.templates) > 0
@@ -176,9 +172,7 @@ class TestInitialGameParsing:
     def test_read_game_start_2(self):
         # arrange
         game_start = self.game_start_2.copy()
-        expected_user_story = UserStoryImageInfo(
-            self.yellow, 0.025, 3.0, (1557, 384)
-        )
+        expected_user_story = UserStoryImageInfo(self.yellow, 0.025, 3.0, (1557, 384))
 
         # act
         user_stories = self.image_parser.read_user_stories(game_start)
@@ -198,11 +192,13 @@ class TestInitialGameParsing:
 
         # assert
         assert user_stories == [expected_user_story]
-    
+
     def test_read_game_start_4(self):
         # arrange
         game_start = self.read_game_start(4)
-        expected_user_story = UserStoryImageInfo(self.purple, 0.075, 2.0, self.expected_user_story_position_shifted)
+        expected_user_story = UserStoryImageInfo(
+            self.purple, 0.075, 2.0, self.expected_user_story_position_shifted
+        )
 
         # act
         user_stories = self.image_parser.read_user_stories(game_start)
