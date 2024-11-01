@@ -2,6 +2,7 @@ import cv2
 import pytest
 
 from game import ProductOwnerGame
+from game.backlog_card.card_info import CardInfo, UserCardType
 from game.userstories.userstories import UserStoryCardInfo, UserStoryCard
 
 from random import Random
@@ -11,6 +12,7 @@ from web_interaction import GameImageParser, GameCoordinator, SingleColorStorage
 
 class TestGameCoordination:
     green = (115, 188, 30)
+    orange = (43, 194, 249)
     templates_directory = "web_interaction/templates"
     image_parser = GameImageParser(templates_directory)
     game_coordinator = GameCoordinator(image_parser)
@@ -76,3 +78,45 @@ class TestGameCoordination:
 
         # assert
         assert position == (1466, 384)
+
+    def test_insert_backlog_cards(self):
+        # arrange
+        backlog_image = cv2.imread(
+            self.image_directory + "/backlog_images/game_decomposed_1.png"
+        )
+        color_storage = SingleColorStorage(self.orange)
+        user_story_info = UserStoryCardInfo("S", 4, color_storage, self.random)
+        user_story_info.related_cards.clear()
+        self.game.userstories.add_us(user_story_info)
+        user_story = self.game.userstories.stories_list[0]
+        self.game.move_userstory_card(user_story)
+
+        # act
+        self.game_coordinator.insert_backlog_cards_from_image(self.game, backlog_image)
+
+        # assert
+        related_cards = user_story_info.related_cards
+        assert len(related_cards) == 3
+        assert related_cards == [
+            CardInfo(
+                12,
+                self.orange,
+                id(user_story),
+                user_story_info.label,
+                user_story_info.card_type,
+            ),
+            CardInfo(
+                14,
+                self.orange,
+                id(user_story),
+                user_story_info.label,
+                user_story_info.card_type,
+            ),
+            CardInfo(
+                12,
+                self.orange,
+                id(user_story),
+                user_story_info.label,
+                user_story_info.card_type,
+            ),
+        ]

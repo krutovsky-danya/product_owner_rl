@@ -1,13 +1,18 @@
 import cv2
 
+from itertools import groupby
+from operator import attrgetter
 from random import Random
+from typing import Dict, List, Tuple
 
 from game import ProductOwnerGame
+from game.backlog_card.card_info import CardInfo
 from game.userstory_card.userstory_card import UserStoryCard
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 
 from .image_parser import GameImageParser
 from .single_color_storage import SingleColorStorage
+from .backlog_card_image_info import BacklogCardImageInfo
 
 
 class GameCoordinator:
@@ -15,6 +20,7 @@ class GameCoordinator:
         self.image_parser = image_parser
         self.random = Random(0)
         self.user_stories = []
+        self.backlog_cards = []
 
     def skip_tutorial(self, game: ProductOwnerGame):
         context = game.context
@@ -66,3 +72,29 @@ class GameCoordinator:
             if element == user_story:
                 return element.position
         raise Exception(f"Not found user stroy {user_story}")
+
+    def insert_backlog_cards_from_image(
+        self, game: ProductOwnerGame, game_image: cv2.typing.MatLike
+    ):
+        self.backlog_cards = self.image_parser.read_backlog(game_image)
+
+        backlog_cards_by_color: Dict[Tuple, List[BacklogCardImageInfo]] = {}
+        for key, group in groupby(self.backlog_cards, attrgetter("color")):
+            backlog_cards_by_color[key] = list(group)
+
+        for user_story in game.userstories.release:
+            info = user_story.info
+            us_id_val = id(info)
+            info.related_cards.clear()
+            color = info.color
+            backlog_cards = backlog_cards_by_color[color]
+
+            for backlog_card in backlog_cards:
+                card_info = CardInfo(
+                    hours_val=backlog_card.hours,
+                    color_val=color,
+                    us_id_val=us_id_val,
+                    label_val=info.label,
+                    card_type_val=info.card_type,
+                )
+                info.related_cards.append(card_info)
