@@ -1,10 +1,6 @@
 import cv2
 
-import web_interaction
-
 import numpy as np
-
-from game import ProductOwnerGame
 
 from web_interaction import GameImageParser, UserStoryImageInfo
 
@@ -19,11 +15,12 @@ class TestInitialGameParsing:
 
     expected_board_path = image_directory + "/expected_user_story_board.png"
     _expected_board = cv2.imread(expected_board_path)
+    expected_board_1_position = (1372, 268)
 
     expected_user_story_path = image_directory + "/initial_user_story.png"
     _expected_user_story = cv2.imread(expected_user_story_path)
     expected_user_story_color = (115, 188, 30)
-    expected_user_story_position = (1557, 384)
+    expected_user_story_position = (1466, 384)
 
     expected_user_story_loyalty_path = (
         image_directory + "/expected_user_story_loyalty.png"
@@ -34,6 +31,11 @@ class TestInitialGameParsing:
         image_directory + "/expected_user_story_users.png"
     )
     _expected_user_story_customers = cv2.imread(expecrted_user_story_customers_path)
+
+    game_start_2 = cv2.imread(image_directory + "/game_start_2.png")
+    game_start_3 = cv2.imread(image_directory + "/game_start_3.png")
+
+    expected_board_2 = cv2.imread(image_directory + "/expected_board_game_start_2.png")
 
     def setup_method(self):
         self.original_shape = (1028, 1920, 3)
@@ -47,9 +49,10 @@ class TestInitialGameParsing:
         expected_board = self._expected_board.copy()
 
         # act
-        actual_board = self.image_parser.get_board(initial_image)
+        actual_board, actual_position = self.image_parser.get_board(initial_image)
 
         # assert
+        assert actual_position == self.expected_board_1_position
         assert actual_board.size == expected_board.size
         images_diff = cv2.absdiff(actual_board, expected_board)
         assert np.all(images_diff == 0)
@@ -61,13 +64,15 @@ class TestInitialGameParsing:
         expected_row = self._expected_user_story.copy()
 
         # act
-        rows = self.image_parser.get_rows(board, original_shape)
+        rows = self.image_parser.get_rows(
+            board, original_shape, self.expected_board_1_position
+        )
 
         # assert
         assert len(rows) == 1
         row, position = rows[0]
         assert row.shape == (70, 170, 3)
-        assert position == (1557, 384)
+        assert position == self.expected_user_story_position
         images_diff = cv2.absdiff(row, expected_row)
         assert np.all(images_diff == 0)
 
@@ -144,6 +149,45 @@ class TestInitialGameParsing:
 
         # act
         user_stories = self.image_parser.read_user_stories(game_state)
+
+        # assert
+        assert user_stories == [expected_user_story]
+
+    def test_select_game_board_on_game_start_2(self):
+        # arrange
+        game_start = self.game_start_2.copy()
+        expected_board = self.expected_board_2.copy()
+
+        # act
+        actual_board, actual_position = self.image_parser.get_board(game_start)
+
+        # assert
+        image_diff = cv2.absdiff(expected_board, actual_board)
+        assert np.all(image_diff == 0)
+        assert actual_position == (1463, 268)
+
+    def test_read_game_start_2(self):
+        # arrange
+        game_start = self.game_start_2.copy()
+        expected_user_story = UserStoryImageInfo(
+            (43, 194, 249), 0.025, 3.0, (1557, 384)
+        )
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_start)
+
+        # assert
+        assert user_stories == [expected_user_story]
+
+    def test_read_game_start_3(self):
+        # arrange
+        game_start = self.game_start_3.copy()
+        expected_user_story = UserStoryImageInfo(
+            (43, 194, 249), 0.045, 3.0, self.expected_user_story_position
+        )
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_start)
 
         # assert
         assert user_stories == [expected_user_story]
