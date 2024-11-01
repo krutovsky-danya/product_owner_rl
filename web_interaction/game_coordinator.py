@@ -3,6 +3,7 @@ import cv2
 from random import Random
 
 from game import ProductOwnerGame
+from game.userstory_card.userstory_card import UserStoryCard
 from game.userstory_card.userstory_card_info import UserStoryCardInfo
 
 from .image_parser import GameImageParser
@@ -42,10 +43,12 @@ class GameCoordinator:
             game_user_story.customers_to_bring = user_story.customers
             game.userstories.add_us(game_user_story)
 
-    def update_header_info(self, game: ProductOwnerGame, game_image: cv2.typing.MatLike):
+    def update_header_info(
+        self, game: ProductOwnerGame, game_image: cv2.typing.MatLike
+    ):
         shape = game_image.shape
         header = self.image_parser.get_header_image(game_image)
-        
+
         customers = self.image_parser.read_current_customers(header, shape)
         loyalty = self.image_parser.read_current_loyalty(header, shape)
 
@@ -54,6 +57,12 @@ class GameCoordinator:
 
         game.context.customers = float(customers) / 1000
         game.context.set_loyalty(float(loyalty))
-    
+
         game.context.current_sprint = int(sprint)
-        game.context.set_money(float(money.removesuffix('$')))
+        game.context.set_money(float(money.removesuffix("$")))
+
+    def find_user_story_position(self, user_story: UserStoryCard):
+        for element in self.user_stories:
+            if element == user_story:
+                return element.position
+        raise Exception(f"Not found user stroy {user_story}")
