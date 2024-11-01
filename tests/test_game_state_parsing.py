@@ -14,7 +14,7 @@ class TestInitialGameParsing:
     image_parser = GameImageParser(templates_directory)
 
     image_directory = "tests/test_images"
-    initial_image_path = image_directory + "/game_start.png"
+    initial_image_path = image_directory + "/game_start_1.png"
     _initial_image = cv2.imread(initial_image_path)
 
     expected_board_path = image_directory + "/expected_user_story_board.png"
