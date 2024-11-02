@@ -165,3 +165,20 @@ class TestBacklogParsing(ParsingPlatform):
         # assert
         assert len(actual_cards) == 3
         assert actual_cards == expected_backlog_cards
+    
+    def test_two_color_backlog(self):
+        # arrange
+        backlog_image = cv2.imread(self.image_directory + '/backlog_two_colors.png')
+
+        # act
+        backlog_cards = self.image_parser.get_backlog_card_images(backlog_image)
+
+        import matplotlib.pyplot as plt
+
+        for card, position in backlog_cards:
+            plt.imshow(card)
+            plt.show()
+
+        #
+        pass
+
