@@ -52,6 +52,24 @@ class GameImageParser:
         self.white = np.array([255, 255, 255])
         self.templates = self._load_templates()
 
+        self.pink = (120, 79, 240)
+        self.red = (54, 79, 234)
+        self.orange = (23, 150, 247)
+        self.yellow = (43, 194, 249)
+        self.green = (115, 188, 30)
+        self.blue = (255, 211, 143)
+        self.purple = (243, 132, 168)
+
+        self.colors = [
+            self.pink,
+            self.red,
+            self.orange,
+            self.yellow,
+            self.green,
+            self.blue,
+            self.white,
+        ]
+
         self.board_positions = {
             (540, 960, 3): {"y_0": 135, "y_1": 495, "x_0": 715, "x_1": 925},
             (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
@@ -60,6 +78,10 @@ class GameImageParser:
         self.rows_params = {
             (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
             (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 87},
+        }
+
+        self.board_queue_params = {
+            (1028, 1920, 3): {"x_left": 5, "x_right": 180, "y_upper": 65, "y_lower": 610}
         }
 
         self.loyalty_nums_positions = {
