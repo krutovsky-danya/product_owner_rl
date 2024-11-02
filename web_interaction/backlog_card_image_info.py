@@ -24,3 +24,9 @@ class BacklogCardImageInfo:
         if self.position != value.position:
             return False
         return True
+
+    def __str__(self) -> str:
+        return {self.color}, {self.hours}, {self.position}
+
+    def __repr__(self) -> str:
+        return f"BacklogCardImageInfo({self})"
