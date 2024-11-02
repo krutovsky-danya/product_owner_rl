@@ -25,6 +25,9 @@ class TestGameCoordination:
     @classmethod
     def setup_class(cls):
         cls.initial_image = cv2.imread(cls.initial_image_path)
+        cls.backlog_image = cv2.imread(
+            cls.image_directory + "/backlog_images/game_decomposed_1.png"
+        )
 
     def setup_method(self):
         game = self.game = ProductOwnerGame()
@@ -120,3 +123,22 @@ class TestGameCoordination:
                 user_story_info.card_type,
             ),
         ]
+    
+    def test_find_backlog_card_position(self):
+        # arrange
+        backlog_image = self.backlog_image.copy()
+        color_storage = SingleColorStorage(self.orange)
+        user_story_info = UserStoryCardInfo("S", 4, color_storage, self.random)
+        user_story_info.related_cards.clear()
+        self.game.userstories.add_us(user_story_info)
+        user_story = self.game.userstories.stories_list[0]
+        self.game.move_userstory_card(user_story)
+        self.game_coordinator.insert_backlog_cards_from_image(self.game, backlog_image)
+        backlog_card = CardInfo(14, self.orange, id(user_story), user_story_info.label, user_story_info.card_type)
+
+        # act
+        actual_position = self.game_coordinator.find_backlog_card_position(backlog_card)
+
+        # assert
+        assert actual_position == (1685, 419)
+

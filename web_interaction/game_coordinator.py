@@ -98,3 +98,9 @@ class GameCoordinator:
                     card_type_val=info.card_type,
                 )
                 info.related_cards.append(card_info)
+
+    def find_backlog_card_position(self, backlog_card: CardInfo):
+        for saved_card in self.backlog_cards:
+            if saved_card == backlog_card:
+                return saved_card.position
+        raise Exception(f"Not found backlog card: {backlog_card}")
