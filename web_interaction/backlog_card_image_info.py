@@ -26,7 +26,7 @@ class BacklogCardImageInfo:
         return True
 
     def __str__(self) -> str:
-        return {self.color}, {self.hours}, {self.position}
+        return f"{self.color}, {self.hours}, {self.position}"
 
     def __repr__(self) -> str:
         return f"BacklogCardImageInfo({self})"

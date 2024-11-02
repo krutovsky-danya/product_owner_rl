@@ -121,7 +121,7 @@ class WebController:
         card = env.backlog_env.get_card(action)
         self.logger.info(f"Selected card {card}")
 
-        position = self.game_coordinator.find_backlog_card_position(card)
+        position = self.game_coordinator.find_backlog_card_position(card.info)
         self.logger.info(f"Found at position {position}")
 
         self.click_on_element(driver, iframe, *position)

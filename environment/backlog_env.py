@@ -49,13 +49,13 @@ class BacklogEnv:
         self.backlog: Optional[Backlog] = None
         self.context: Optional[GlobalContext] = None
 
-        self.backlog_commons: List[CardInfo] = []
-        self.backlog_bugs: List[CardInfo] = []
-        self.backlog_tech_debt: List[CardInfo] = []
+        self.backlog_commons: List[Card] = []
+        self.backlog_bugs: List[Card] = []
+        self.backlog_tech_debt: List[Card] = []
 
-        self.sprint_commons: List[CardInfo] = []
-        self.sprint_bugs: List[CardInfo] = []
-        self.sprint_tech_debt: List[CardInfo] = []
+        self.sprint_commons: List[Card] = []
+        self.sprint_bugs: List[Card] = []
+        self.sprint_tech_debt: List[Card] = []
 
     def _set_backlog_cards(self, commons, bugs, tech_debt):
         self.backlog_commons = commons
