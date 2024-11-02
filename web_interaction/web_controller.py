@@ -33,6 +33,11 @@ class WebController:
             (1028, 1920): {"x": 1654, "y": 911},
         }
 
+        self.release_button_positions = {
+            (540, 960): {"x": 115, "y": 455},
+            (1028, 1920): {"x": 211, "y": 865},
+        }
+
     def click_on_element(self, driver, iframe: WebElement, x: int, y: int):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
@@ -131,9 +136,7 @@ class WebController:
 
         env._perform_action_backlog_card(action)
 
-    def start_sprint(
-        self, driver, iframe: WebElement, env: ProductOwnerEnv
-    ):
+    def start_sprint(self, driver, iframe: WebElement, env: ProductOwnerEnv):
         self.logger.info("Start new sprint")
 
         self.select_backlog_board(driver, iframe)
@@ -154,3 +157,43 @@ class WebController:
         # os.remove(filename)
 
         self.game_coordinator.update_header_info(env.game, game_image)
+
+    def release_tasks(self, driver, iframe: WebElement, env: ProductOwnerEnv):
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
+        self.logger.info("Release tasks")
+        position = self.release_button_positions[(height, width)]
+        x = position["x"]
+        y = position["y"]
+        self.click_on_element(driver, iframe, x, y)
+        time.sleep(1)
+
+        filename = "game_state.png"
+        iframe.screenshot(filename)
+        game_image = cv2.imread(filename)
+        # os.remove(filename)
+
+        env._perform_release()
+        self.game_coordinator.update_header_info(env.game, game_image)
+
+    def buy_research(self, driver, iframe: WebElement):
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
+        self.select_user_story_board(driver, iframe)
+        ActionChains(driver).move_to_element_with_offset(
+            iframe, int(0.3 * width), -int(0.3 * height)
+        ).click().perform()
+
+    def buy_statistical_research(
+        self, driver, iframe: WebElement, env: ProductOwnerEnv
+    ):
+        self.buy_research(driver, iframe)
+
+        env._perform_statistical_research()
+
+        filename = "game_state.png"
+        iframe.screenshot(filename)
+        userstory_image = cv2.imread(filename)
+        # os.remove(filename)
+
+        self.game_coordinator.insert_user_stories_from_image(env.game, userstory_image)
