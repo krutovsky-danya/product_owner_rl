@@ -32,6 +32,9 @@ class TestGameCoordination:
             cls.image_directory + "/backlog_images/game_decomposed_1.png"
         )
 
+        cls.upper_left_backlog_card_center = (1557, 419)
+        cls.upper_right_backlog_card_center = (1639, 419)
+
     def setup_method(self):
         game = self.game = ProductOwnerGame()
         context = game.context
@@ -138,7 +141,7 @@ class TestGameCoordination:
         actual_position = self.game_coordinator.find_backlog_card_position(backlog_card)
 
         # assert
-        assert actual_position == (1685, 419)
+        assert actual_position == self.upper_right_backlog_card_center
 
     def test_remove_backlog_card(self):
         # arrange
@@ -154,6 +157,6 @@ class TestGameCoordination:
         backlog_cards = self.game_coordinator.backlog_cards
         assert len(backlog_cards) == 2
         assert backlog_cards == [
-            BacklogCardImageInfo(self.orange, 14, (1597, 419)),
-            BacklogCardImageInfo(self.orange, 12, (1685, 419)),
+            BacklogCardImageInfo(self.orange, 14, self.upper_left_backlog_card_center),
+            BacklogCardImageInfo(self.orange, 12, self.upper_right_backlog_card_center),
         ]

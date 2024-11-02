@@ -127,6 +127,30 @@ class WebController:
         self.click_on_element(driver, iframe, *position)
         self.logger.info("Clicked on card")
 
-        self.game_coordinator.remove_backlog_card_from_backlog(card)
+        self.game_coordinator.remove_backlog_card_from_backlog(card.info)
 
         env._perform_action_backlog_card(action)
+
+    def start_sprint(
+        self, driver, iframe: WebElement, env: ProductOwnerEnv
+    ):
+        self.logger.info("Start new sprint")
+
+        self.select_backlog_board(driver, iframe)
+        time.sleep(1)
+
+        self.click_board_button(driver, iframe)
+        time.sleep(1)
+
+        if env.game.context.current_sprint == 34:
+            ActionChains(driver).move_to_element(iframe).click().perform()
+            time.sleep(1)
+
+        env._perform_start_sprint_action()
+
+        filename = "game_state.png"
+        iframe.screenshot(filename)
+        game_image = cv2.imread(filename)
+        # os.remove(filename)
+
+        self.game_coordinator.update_header_info(env.game, game_image)
