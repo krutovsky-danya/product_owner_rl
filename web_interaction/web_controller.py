@@ -61,6 +61,15 @@ class WebController:
         self.click_on_element(driver, iframe, x, y)
         time.sleep(1)
 
+    def select_backlog_board(self, driver, iframe: WebElement):
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
+        position = self.board_icons_positions[(height, width)]
+        x = position["x_off"]
+        y = position["backlog_y"]
+        self.click_on_element(driver, iframe, x, y)
+        time.sleep(1)
+
     def click_user_story(self, driver, iframe: WebElement, x: int, y: int):
         self.select_user_story_board(driver, iframe)
         self.click_on_element(driver, iframe, x, y)
@@ -102,3 +111,22 @@ class WebController:
         self.game_coordinator.insert_backlog_cards_from_image(env.game, image)
 
         env._perform_decomposition()
+
+    def apply_backlog_card_action(
+        self, action: int, driver, iframe: WebElement, env: ProductOwnerEnv
+    ):
+        self.logger.info("Start moving backlog card")
+        self.select_backlog_board(driver, iframe)
+
+        card = env.backlog_env.get_card(action)
+        self.logger.info(f"Selected card {card}")
+
+        position = self.game_coordinator.find_backlog_card_position(card)
+        self.logger.info(f"Found at position {position}")
+
+        self.click_on_element(driver, iframe, *position)
+        self.logger.info("Clicked on card")
+
+        self.game_coordinator.remove_backlog_card_from_backlog(card)
+
+        env._perform_action_backlog_card(action)
