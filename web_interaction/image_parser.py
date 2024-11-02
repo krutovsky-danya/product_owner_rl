@@ -44,6 +44,7 @@ class UserStoryImageInfo:
     def __repr__(self) -> str:
         return f"UserStoryImageInfo({self.color}, {self.loyalty}, {self.customers}, {self.position})"
 
+
 class GameImageParser:
     def __init__(self, templates_path=_DEFAULT_TEMPLATES_PATH) -> None:
         self.templates_path = templates_path
@@ -402,7 +403,7 @@ class GameImageParser:
     def split_row(
         self,
         row: cv2.typing.MatLike,
-        position: Tuple[int, int],
+        row_center: Tuple[int, int],
         original_shape: Tuple[int, int, int],
     ):
         card_params = self.cards_params[original_shape]
@@ -410,11 +411,12 @@ class GameImageParser:
         r = card_params["r"]
         left: Image = row[:, :l]
         right: Image = row[:, r:]
+        x, y = row_center
+        left_center = (x - left.shape[1] // 2, y)
         if (right[0, 0] == [255, 255, 255]).all():
-            return ([left, position],)
-        x, y = position
-        right_pos = (x + r, y)
-        return [left, position], [right, right_pos]
+            return ([left, left_center],)
+        right_center = (x + right.shape[1] // 2, y)
+        return [left, left_center], [right, right_center]
 
     def get_backlog_card_images(self, image: cv2.typing.MatLike):
         backlog_board, board_position = self.get_board(image)
@@ -430,7 +432,7 @@ class GameImageParser:
     def read_backlog_card_descripton(
         self,
         card_image: cv2.typing.MatLike,
-        position: Tuple[int, int],
+        center: Tuple[int, int],
         original_shape: Tuple[int, int, int],
     ):
         color = tuple(card_image[0, 0])
@@ -447,11 +449,7 @@ class GameImageParser:
         hours_value = self.read_line(hours, num_width)
         hours_value = int(hours_value)
 
-        x, y = position
-        height, width, *_ = card_image.shape
-        position = (x + width // 2, y + height // 2)
-
-        return BacklogCardImageInfo(color, hours_value, position)
+        return BacklogCardImageInfo(color, hours_value, center)
 
     def read_backlog(self, image: cv2.typing.MatLike):
         backlog_cards: List[BacklogCardImageInfo] = []
