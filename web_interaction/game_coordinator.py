@@ -104,3 +104,18 @@ class GameCoordinator:
             if saved_card == backlog_card:
                 return saved_card.position
         raise Exception(f"Not found backlog card: {backlog_card}")
+
+    def remove_backlog_card_from_backlog(self, backlog_card: CardInfo):
+        index = 0
+        position = None
+        for i, image_card in enumerate(self.backlog_cards):
+            if image_card != backlog_card:
+                continue
+            index = i
+            position = image_card.position
+            break
+
+        for image_card in self.backlog_cards[index + 1 :]:
+            image_card.position, position = position, image_card.position
+
+        self.backlog_cards.pop(index)
