@@ -27,4 +27,4 @@ class CardInfo:
         return True
 
     def __repr__(self) -> str:
-        return f"Hours: {self.hours}, Color: {self.color}, Label: {self.label}, Type: {self.card_type}"
+        return f'CardInfo({self.hours}, {self.color}, {self.us_id}, {self.label}, {self.card_type})'
