@@ -78,22 +78,35 @@ class TestBacklogParsing(ParsingPlatform):
         # assert
         assert len(actual_cards) == 3
         assert actual_cards == expected_backlog_cards
-    
+
     def test_two_color_backlog(self):
         # arrange
-        backlog_image = cv2.imread(self.image_directory + '/backlog_two_colors.png')
+        backlog_image = cv2.imread(self.image_directory + "/backlog_two_colors.png")
 
         # act
-        board = self.image_parser.get_board(backlog_image)
-        rows = self.image_parser.get_rows(*board, backlog_image.shape)
-        # backlog_cards = self.image_parser.get_backlog_card_images(backlog_image)
+        backlog_cards = self.image_parser.read_backlog(backlog_image)
 
-        # import matplotlib.pyplot as plt
+        # assert
+        assert backlog_cards == [
+            BacklogCardImageInfo(self.image_parser.red, 17, (1516, 384)),
+            BacklogCardImageInfo(self.image_parser.red, 9, (1597, 384)),
+            BacklogCardImageInfo(self.image_parser.red, 7, (1516, 471)),
+            BacklogCardImageInfo(self.image_parser.red, 5, (1597, 471)),
 
-        # for card, position in backlog_cards:
-        #     plt.imshow(card)
-        #     plt.show()
+            BacklogCardImageInfo(self.image_parser.pink, 15, (1516, 559)),
+            BacklogCardImageInfo(self.image_parser.pink, 11, (1597, 559)),
+            BacklogCardImageInfo(self.image_parser.pink, 8, (1516, 646)),
+            BacklogCardImageInfo(self.image_parser.pink, 4, (1597, 646))
+        ]
 
-        #
-        pass
+    def test_single_card_parsing(self):
+        # arrange
+        backlog_image = cv2.imread(self.image_directory + "/single_card_backlog.png")
 
+        # act
+        backlog = self.image_parser.read_backlog(backlog_image)
+
+        # assert
+        assert backlog == [
+            BacklogCardImageInfo(self.image_parser.purple, 10, (1513, 384))
+        ]
