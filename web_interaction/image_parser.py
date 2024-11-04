@@ -67,7 +67,6 @@ class GameImageParser:
             self.yellow,
             self.green,
             self.blue,
-            self.white,
         ]
 
         self.board_positions = {
@@ -81,7 +80,12 @@ class GameImageParser:
         }
 
         self.board_queue_params = {
-            (1028, 1920, 3): {"x_left": 5, "x_right": 180, "y_upper": 65, "y_lower": 610}
+            (1028, 1920, 3): {
+                "x_left": 5,
+                "x_right": 180,
+                "y_upper": 65,
+                "y_lower": 610,
+            }
         }
 
         self.loyalty_nums_positions = {
@@ -283,29 +287,78 @@ class GameImageParser:
             return board, (x_0, y_0)
         return self.get_shifted_board(image)
 
+    def get_board_queue(self, board: Image, original_shape: Shape):
+        queue_params = self.board_queue_params[original_shape]
+        queue_x_left = queue_params["x_left"]
+        queue_x_right = queue_params["x_right"]
+        queue_y_upper = queue_params["y_upper"]
+        queue_y_lower = queue_params["y_lower"]
+
+        queue_image = board[queue_y_upper:queue_y_lower, queue_x_left:queue_x_right]
+
+        is_empty_verticaly = self.is_empty_vertical(queue_image, 0)
+        while is_empty_verticaly:
+            queue_x_left += 1
+            queue_image = queue_image[:, 1:]
+            is_empty_verticaly = self.is_empty_vertical(queue_image, 0)
+
+        is_empty_verticaly = self.is_empty_vertical(queue_image, -1)
+        while is_empty_verticaly:
+            queue_image = queue_image[:, :-1]
+            is_empty_verticaly = self.is_empty_vertical(queue_image, -1)
+
+        is_empty_horizontal = self.is_empty_horizontal(queue_image, 0)
+        while is_empty_horizontal and np.all(queue_image[0, 0] == self.white):
+            queue_y_upper += 1
+            queue_image = queue_image[1:, :]
+            is_empty_horizontal = self.is_empty_horizontal(queue_image, 0)
+
+        return queue_image, queue_x_left, queue_y_upper
+
+    def get_row(self, queue: Image, start_y: int):
+        white = tuple(self.white)
+        row_y = start_y
+        while row_y < queue.shape[0] and tuple(queue[row_y, 0]) == white:
+            row_y += 1
+
+        if row_y == queue.shape[0]:
+            return None, -1, -1
+
+        row_height = 1
+        while (
+            row_y + row_height < queue.shape[0]
+            and tuple(queue[row_y + row_height, 0]) != white
+        ):
+            row_height += 1
+
+        while tuple(queue[row_y, 0]) != tuple(queue[row_y + row_height - 1, 0]):
+            row_y += 1
+            row_height -= 1
+
+        row = queue[row_y : row_y + row_height]
+
+        return row, row_y, row_height
+
     def get_rows(
-        self,
-        board_image: cv2.typing.MatLike,
-        original_shape: Tuple[int, int, int],
-        board_position: Coordinates,
+        self, board: Image, board_position: Coordinates, original_shape: Shape
     ):
-        row_params = self.rows_params[original_shape]
-        board_x0, board_y0 = board_position
-        rows: List[Tuple[cv2.typing.MatLike, Coordinates]] = []
-        w = row_params["w"]
-        h = row_params["h"]
-        for i in range(6):
-            x_0 = row_params["x_0"]
-            y_0 = row_params["y_0"] + row_params["height"] * i
-            row = board_image[y_0 : y_0 + h, x_0 : x_0 + w]
+        board_x, board_y = board_position
+        queue, queue_x, queue_y = self.get_board_queue(board, original_shape)
 
-            color = row[0, 0]
-            if (color == [255, 255, 255]).all():
+        row_y = 0
+        row_center_x = board_x + queue_x + queue.shape[1] // 2
+
+        rows = []
+
+        while True:
+            row, row_y, row_height = self.get_row(queue, row_y)
+            if row is None:
                 break
+            row_center_y = board_y + queue_y + row_y + row_height // 2
 
-            center_x = board_x0 + x_0 + w // 2
-            center_y = board_y0 + y_0 + h // 2
-            rows.append((row, (center_x, center_y)))
+            rows.append((row, (row_center_x, row_center_y)))
+
+            row_y += row_height + 1
 
         return rows
 
@@ -347,7 +400,7 @@ class GameImageParser:
 
     def read_user_stories(self, game_image: cv2.typing.MatLike):
         board, board_position = self.get_board(game_image)
-        rows = self.get_rows(board, game_image.shape, board_position)
+        rows = self.get_rows(board, board_position, game_image.shape)
 
         user_stories: List[UserStoryImageInfo] = []
         for row, position in rows:
@@ -443,7 +496,7 @@ class GameImageParser:
     def get_backlog_card_images(self, image: cv2.typing.MatLike):
         backlog_board, board_position = self.get_board(image)
 
-        backlog_rows = self.get_rows(backlog_board, image.shape, board_position)
+        backlog_rows = self.get_rows(backlog_board, board_position, image.shape)
         cards = []
         for row, position in backlog_rows:
             row_cards = self.split_row(row, position, image.shape)

@@ -24,7 +24,8 @@ class TestInitialGameParsing(ParsingPlatform):
     _expected_user_story = cv2.imread(expected_user_story_path)
     expected_user_story_color = (115, 188, 30)
     expected_user_story_position = (1466, 384)
-    expected_user_story_position_shifted = (1557, 384)
+    expected_user_story_position_slim = (1465, 384)
+    expected_user_story_position_shifted = (1556, 384)
 
     expected_user_story_loyalty_path = (
         image_directory + "/expected_user_story_loyalty.png"
@@ -63,13 +64,12 @@ class TestInitialGameParsing(ParsingPlatform):
 
     def test_image_parser_selects_row(self):
         # arrange
-        original_shape = (1028, 1920, 3)
         board = self._expected_board.copy()
         expected_row = self._expected_user_story.copy()
 
         # act
         rows = self.image_parser.get_rows(
-            board, original_shape, self.expected_board_1_position
+            board, self.expected_board_1_position, self.original_shape
         )
 
         # assert
@@ -173,7 +173,9 @@ class TestInitialGameParsing(ParsingPlatform):
     def test_read_game_start_2(self):
         # arrange
         game_start = self.game_start_2.copy()
-        expected_user_story = UserStoryImageInfo(self.yellow, 0.025, 3.0, (1557, 384))
+        expected_user_story = UserStoryImageInfo(
+            self.yellow, 0.025, 3.0, self.expected_user_story_position_shifted
+        )
 
         # act
         user_stories = self.image_parser.read_user_stories(game_start)
@@ -185,7 +187,7 @@ class TestInitialGameParsing(ParsingPlatform):
         # arrange
         game_start = self.game_start_3.copy()
         expected_user_story = UserStoryImageInfo(
-            self.yellow, 0.045, 3.0, self.expected_user_story_position
+            self.yellow, 0.045, 3.0, self.expected_user_story_position_slim
         )
 
         # act
