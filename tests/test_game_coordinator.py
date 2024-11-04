@@ -32,8 +32,9 @@ class TestGameCoordination:
             cls.image_directory + "/backlog_images/game_decomposed_1.png"
         )
 
-        cls.upper_left_backlog_card_center = (1557, 419)
-        cls.upper_right_backlog_card_center = (1639, 419)
+        cls.expected_user_story_position = (1466, 384)
+        cls.upper_left_backlog_card_center = (1516, 384)
+        cls.upper_right_backlog_card_center = (1597, 384)
 
     def setup_method(self):
         game = self.game = ProductOwnerGame()
@@ -107,7 +108,7 @@ class TestGameCoordination:
         position = self.game_coordinator.find_user_story_position(user_story)
 
         # assert
-        assert position == (1466, 384)
+        assert position == self.expected_user_story_position
 
     def test_insert_backlog_cards(self):
         # arrange
