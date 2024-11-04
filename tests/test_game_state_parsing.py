@@ -127,7 +127,7 @@ class TestInitialGameParsing(ParsingPlatform):
         line = self.image_parser.read_line(customers_line, 11)
 
         # assert
-        assert line == "+1000"
+        assert line == "+1k"
 
     def test_read_user_story(self):
         # arrange
