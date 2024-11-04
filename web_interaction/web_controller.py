@@ -187,6 +187,7 @@ class WebController:
     def buy_statistical_research(
         self, driver, iframe: WebElement, env: ProductOwnerEnv
     ):
+        self.logger.info("Buy statistical research")
         self.buy_research(driver, iframe)
 
         env._perform_statistical_research()
@@ -197,3 +198,5 @@ class WebController:
         # os.remove(filename)
 
         self.game_coordinator.insert_user_stories_from_image(env.game, userstory_image)
+
+        self.logger.info(f"User stories appeared: {self.game_coordinator.user_stories}")
