@@ -61,11 +61,13 @@ class GameCoordinator:
         sprint = self.image_parser.read_sprint(header, shape)
         money = self.image_parser.read_current_money(header, shape)
 
-        game.context.customers = float(customers) / 1000
+        game.context.customers = self.image_parser.get_float(customers) / 1000
         game.context.set_loyalty(float(loyalty))
 
         game.context.current_sprint = int(sprint)
-        game.context.set_money(float(money.removesuffix("$")))
+        money = money.removesuffix("$")
+        money = self.image_parser.get_float(money)
+        game.context.set_money(money)
 
     def find_user_story_position(self, user_story: UserStoryCard):
         for element in self.user_stories:

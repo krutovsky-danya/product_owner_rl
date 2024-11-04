@@ -170,8 +170,6 @@ class GameImageParser:
     def _get_image_char(self, filename: str):
         if filename.startswith("empty"):
             return ""
-        if filename[0] == "k":
-            return "000"
         return filename[0]
 
     def _load_templates(self):
@@ -183,7 +181,7 @@ class GameImageParser:
             templates.append((image_char, image))
         return templates
 
-    def read_digit(self, image: cv2.typing.MatLike, tolerance: float = 0.05):
+    def read_digit(self, image: cv2.typing.MatLike, tolerance: float = 0.02):
         best_diff = image.size
         best_chararcter = ""
         for character, template in self.templates:
@@ -199,7 +197,7 @@ class GameImageParser:
                 best_diff = unmatched_count
                 best_chararcter = character
 
-        if best_diff < tolerance * image.size:
+        if best_diff <= tolerance * image.size:
             return best_chararcter
 
         widht, height = image.shape
@@ -265,6 +263,10 @@ class GameImageParser:
             result += character
 
         return result
+    
+    def get_float(self, line: str):
+        if line.endswith('k'):
+            return float(line[:-1]) * 1000
 
     def get_shifted_board(self, game_image: cv2.typing.MatLike):
         if game_image.shape != (1028, 1920, 3):
@@ -399,7 +401,7 @@ class GameImageParser:
         customers = self.read_line(customers, char_width)
 
         loyalty = float(loyalty)
-        customers = float(customers) / 1000
+        customers = self.get_float(customers) / 1000
 
         return color, loyalty, customers
 

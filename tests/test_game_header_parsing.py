@@ -28,9 +28,7 @@ class TestHeaderParsing(ParsingPlatform):
         header_image = self.expected_header.copy()
 
         # act
-        actual_sprint = self.image_parser.read_sprint(
-            header_image, self.original_shape
-        )
+        actual_sprint = self.image_parser.read_sprint(header_image, self.original_shape)
 
         # assert
         assert actual_sprint == "4"
@@ -45,7 +43,7 @@ class TestHeaderParsing(ParsingPlatform):
         )
 
         # assert
-        assert actual_money == "33000$"
+        assert actual_money == "33k$"
 
     def test_read_loyalty(self):
         # arrange
@@ -57,14 +55,29 @@ class TestHeaderParsing(ParsingPlatform):
         )
 
         # assert
-        assert actual_loyalty == '4'
+        assert actual_loyalty == "4"
 
     def test_read_customers(self):
         # arrange
         header_image = self.expected_header.copy()
 
         # act
-        actual_customers = self.image_parser.read_current_customers(header_image, self.original_shape)
+        actual_customers = self.image_parser.read_current_customers(
+            header_image, self.original_shape
+        )
 
         # assert
-        assert actual_customers == '25000'
+        assert actual_customers == "25k"
+
+    def test_read_customers(self):
+        # arrange
+        game_image = cv2.imread(self.image_directory + "/customers_six_digits.png")
+        header_image = self.image_parser.get_header_image(game_image)
+
+        # act
+        actual_customers = self.image_parser.read_current_customers(
+            header_image, self.original_shape
+        )
+
+        # assert
+        assert actual_customers == '25.82k'

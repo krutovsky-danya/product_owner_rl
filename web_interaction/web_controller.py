@@ -38,6 +38,14 @@ class WebController:
             (1028, 1920): {"x": 211, "y": 865},
         }
 
+    def take_screenshot(self, iframe: WebElement):
+        filename = "game_state.png"
+        iframe.screenshot(filename)
+        image = cv2.imread(filename)
+        # os.remove(filename)
+
+        return image
+
     def click_on_element(self, driver, iframe: WebElement, x: int, y: int):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
@@ -93,27 +101,21 @@ class WebController:
 
         reward = env._perform_action_userstory(action)
 
-        filename = "game_state.png"
-        iframe.screenshot(filename)
-        image = cv2.imread(filename)
-        # os.remove(filename)
+        game_image = self.take_screenshot(iframe)
 
-        self.game_coordinator.insert_user_stories_from_image(env.game, image)
+        self.game_coordinator.insert_user_stories_from_image(env.game, game_image)
 
         self.logger.info(f"Reward: {reward}")
 
-    def apply_decompose_action(self, driver, iframe: WebElement, env: ProductOwnerEnv):
+    def decompose(self, driver, iframe: WebElement, env: ProductOwnerEnv):
         self.logger.info("Start decomposition")
         self.select_user_story_board(driver, iframe)
         self.click_board_button(driver, iframe)
         time.sleep(1)
 
-        filename = "game_state.png"
-        iframe.screenshot(filename)
-        image = cv2.imread(filename)
-        # os.remove(filename)
+        game_image = self.take_screenshot(iframe)
 
-        self.game_coordinator.insert_backlog_cards_from_image(env.game, image)
+        self.game_coordinator.insert_backlog_cards_from_image(env.game, game_image)
 
         env._perform_decomposition()
 
@@ -151,10 +153,7 @@ class WebController:
 
         env._perform_start_sprint_action()
 
-        filename = "game_state.png"
-        iframe.screenshot(filename)
-        game_image = cv2.imread(filename)
-        # os.remove(filename)
+        game_image = self.take_screenshot(iframe)
 
         self.game_coordinator.update_header_info(env.game, game_image)
 
@@ -168,10 +167,7 @@ class WebController:
         self.click_on_element(driver, iframe, x, y)
         time.sleep(1)
 
-        filename = "game_state.png"
-        iframe.screenshot(filename)
-        game_image = cv2.imread(filename)
-        # os.remove(filename)
+        game_image = self.take_screenshot(iframe)
 
         env._perform_release()
         self.game_coordinator.update_header_info(env.game, game_image)
@@ -192,10 +188,7 @@ class WebController:
 
         env._perform_statistical_research()
 
-        filename = "game_state.png"
-        iframe.screenshot(filename)
-        userstory_image = cv2.imread(filename)
-        # os.remove(filename)
+        userstory_image = self.take_screenshot(iframe)
 
         self.game_coordinator.insert_user_stories_from_image(env.game, userstory_image)
 
