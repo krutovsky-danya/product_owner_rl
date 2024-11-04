@@ -300,6 +300,8 @@ class GameImageParser:
         while is_empty_verticaly:
             queue_x_left += 1
             queue_image = queue_image[:, 1:]
+            if queue_image.shape[1] == 0:
+                return None, -1, -1
             is_empty_verticaly = self.is_empty_vertical(queue_image, 0)
 
         is_empty_verticaly = self.is_empty_vertical(queue_image, -1)
@@ -345,10 +347,13 @@ class GameImageParser:
         board_x, board_y = board_position
         queue, queue_x, queue_y = self.get_board_queue(board, original_shape)
 
+        rows = []
+
+        if queue is None:
+            return rows
+
         row_y = 0
         row_center_x = board_x + queue_x + queue.shape[1] // 2
-
-        rows = []
 
         while True:
             row, row_y, row_height = self.get_row(queue, row_y)
