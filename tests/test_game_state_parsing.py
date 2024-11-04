@@ -221,3 +221,13 @@ class TestInitialGameParsing(ParsingPlatform):
 
         # assert
         assert user_stories == [expected_user_story]
+
+    def test_read_empty_queue(self):
+        # arrange
+        game_image = cv2.imread(self.image_directory + "/game_queue_empty.png")
+
+        # act
+        user_stories = self.image_parser.read_user_stories(game_image)
+
+        # assert
+        assert user_stories == []
