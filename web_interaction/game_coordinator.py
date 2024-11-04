@@ -121,3 +121,8 @@ class GameCoordinator:
             image_card.position, position = position, image_card.position
 
         self.backlog_cards.pop(index)
+
+    def clear_backlog_sprint(self, game: ProductOwnerGame):
+        backlog = game.backlog
+        backlog.backlog.extend(backlog.sprint)
+        backlog.sprint.clear()

@@ -263,9 +263,9 @@ class GameImageParser:
             result += character
 
         return result
-    
+
     def get_float(self, line: str):
-        if line.endswith('k'):
+        if line.endswith("k"):
             return float(line[:-1]) * 1000
 
     def get_shifted_board(self, game_image: cv2.typing.MatLike):
@@ -493,9 +493,11 @@ class GameImageParser:
         r = card_params["r"]
         left: Image = row[:, :l]
         right: Image = row[:, r:]
+        if right.shape[1] == 0:
+            return [[left, row_center]]
         x, y = row_center
         left_center = (x - left.shape[1] // 2, y)
-        if (right[0, 0] == [255, 255, 255]).all():
+        if (right[0, 0] == self.white).all():
             return ([left, left_center],)
         right_center = (x + right.shape[1] // 2, y)
         return [left, left_center], [right, right_center]
@@ -544,6 +546,10 @@ class GameImageParser:
             backlog_cards.append(card_descripton)
 
         return backlog_cards
+
+    def is_loading(self, image: cv2.typing.MatLike):
+        uniform_area = image[5:155, 5:155]
+        return (uniform_area == self.black).all()
 
 
 def load_characters():

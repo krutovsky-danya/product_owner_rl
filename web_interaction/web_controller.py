@@ -2,15 +2,24 @@ import cv2
 import logging
 import time
 
+from selenium import webdriver
 from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from environment.environment import ProductOwnerEnv
+from environment.environment import ProductOwnerEnv, ProductOwnerGame
 from web_interaction import GameCoordinator
 
 
 class WebController:
-    def __init__(self, game_coordinator: GameCoordinator, logger: logging.Logger):
+    def __init__(
+        self,
+        game: ProductOwnerGame,
+        game_coordinator: GameCoordinator,
+        logger: logging.Logger,
+    ):
+        self.game = game
         self.game_coordinator = game_coordinator
         self.logger = logger
         self.board_icons_positions = {
@@ -38,9 +47,12 @@ class WebController:
             (1028, 1920): {"x": 211, "y": 865},
         }
 
+        self.screenshot_count = 0
+
     def take_screenshot(self, iframe: WebElement):
-        filename = "game_state.png"
+        filename = f"game_state_{self.screenshot_count:03d}.png"
         iframe.screenshot(filename)
+        self.screenshot_count += 1
         image = cv2.imread(filename)
         # os.remove(filename)
 
@@ -72,6 +84,8 @@ class WebController:
         x = position["x_off"]
         y = position["user_stories_y"]
         self.click_on_element(driver, iframe, x, y)
+
+        self.game_coordinator.clear_backlog_sprint(self.game)
         time.sleep(1)
 
     def select_backlog_board(self, driver, iframe: WebElement):
@@ -127,6 +141,11 @@ class WebController:
 
         card = env.backlog_env.get_card(action)
         self.logger.info(f"Selected card {card}")
+
+        screenshot = self.take_screenshot(iframe)
+        self.game_coordinator.backlog_cards = (
+            self.game_coordinator.image_parser.read_backlog(screenshot)
+        )
 
         position = self.game_coordinator.find_backlog_card_position(card.info)
         self.logger.info(f"Found at position {position}")
@@ -193,3 +212,102 @@ class WebController:
         self.game_coordinator.insert_user_stories_from_image(env.game, userstory_image)
 
         self.logger.info(f"User stories appeared: {self.game_coordinator.user_stories}")
+
+    def open_game(
+        self,
+        url: str = "https://npg-team.itch.io/product-owner-simulator",
+    ) -> WebDriver:
+        driver = webdriver.Chrome()
+
+        driver.get(url)
+
+        load_iframe_btn = driver.find_element(by=By.CLASS_NAME, value="load_iframe_btn")
+        load_iframe_btn.click()
+
+        return driver
+
+    def find_game(self, driver: WebDriver):
+        iframe = driver.find_element(by=By.ID, value="game_drop")
+        return iframe
+
+    def wait_loading(self, iframe: WebElement):
+        while True:
+            loading_image = self.take_screenshot(iframe)
+            is_loading = self.game_coordinator.image_parser.is_loading(loading_image)
+            if not is_loading:
+                break
+            time.sleep(1)
+
+    def open_full_sceen(self, driver: WebDriver):
+        fullscreen_button = driver.find_element(
+            by=By.CLASS_NAME, value="fullscreen_btn"
+        )
+        fullscreen_button.click()
+
+    def start_game(self, driver: WebDriver, iframe: WebElement):
+        # skip intro
+        iframe.click()
+        iframe.click()
+
+        height = iframe.rect["height"]  # 540
+        width = iframe.rect["width"]  # 960
+
+        # type name
+        ActionChains(driver).move_to_element_with_offset(
+            iframe, 0, int(0.1 * height)
+        ).click().send_keys("DDQN").perform()
+
+        # start game
+        ActionChains(driver).move_to_element_with_offset(
+            iframe, 0, int(0.2 * height)
+        ).click().perform()
+
+        # skip tutorial
+        ActionChains(driver).move_to_element_with_offset(
+            iframe, -int(0.35 * width), int(0.4 * height)
+        ).click().perform()
+
+        time.sleep(1)
+
+        # turn off sprint animation
+        ActionChains(driver).move_to_element_with_offset(
+            iframe, -int(0.45 * width), -int(0.42 * height)  # move to settings icon
+        ).click().move_to_element_with_offset(
+            iframe, int(0.1 * width), int(0.07 * height)  # move to animation checkbox
+        ).click().move_to_element_with_offset(
+            iframe, -int(0.45 * width), -int(0.42 * height)  # move to settings icon
+        ).click().perform()
+
+    def apply_web_action(
+        self, action: int, driver, iframe: WebElement, env: ProductOwnerEnv
+    ):
+        if action == 0:  # start sprint
+            self.start_sprint(driver, iframe, env)
+            return
+
+        if action == 1:  # decompose
+            self.decompose(driver, iframe, env)
+            return
+
+        if action == 2:  # release
+            self.release_tasks(driver, iframe, env)
+            return
+
+        if action == 5:  # buy statistical research
+            self.buy_statistical_research(driver, iframe, env)
+            return
+
+        if action >= env.meta_action_dim:
+            action -= env.meta_action_dim
+
+        if action < env.userstory_env.max_action_num:
+            self.apply_user_story_action(action, driver, iframe, env)
+            return
+
+        action -= env.userstory_env.max_action_num
+
+        if action < env.backlog_env.backlog_max_action_num:
+            self.apply_backlog_card_action(action, driver, iframe, env)
+            return
+
+        raise Exception(f"Unknown action: {action}")
