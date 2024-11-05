@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def show_rewards_fitting(sub_name):
-    rewards_df = pd.read_csv(f"train_rewards_{sub_name}.csv")
+    rewards_df = pd.read_csv(f"compare.csv")
     reward_groups = rewards_df.groupby(["Trajectory", "ExperimentName"])["Reward"]
     mean_rewards = reward_groups.mean().reset_index()
 
@@ -16,7 +16,7 @@ def show_rewards_fitting(sub_name):
     plt.title("Rewards")
     plt.xlabel("trajectory")
     plt.ylabel("rewards")
-    plt.savefig(f"rewards_{sub_name}.png")
+    plt.savefig(f"compare.png")
     plt.show()
 
 
