@@ -16,4 +16,4 @@ class UserStoryCard:
         return self.info == value.info
 
     def __repr__(self) -> str:
-        return f"UserStoryCard({repr(self.info)}"
+        return f"UserStoryCard({repr(self.info)})"

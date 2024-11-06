@@ -44,9 +44,7 @@ class UserStoryCardInfo:
         return self.label == value.label
 
     def __repr__(self) -> str:
-        return (
-            f"{self.label}, loyalty={self.loyalty}, customers={self.customers_to_bring}"
-        )
+        return f"{self.label}, loyalty={self.loyalty}, customers={self.customers_to_bring}, color={self.color}, spawn_sprint={self.spawn_sprint}"
 
     def _set_card_type(self, label_val: str, random_generator: Random):
         if label_val == "S":

@@ -32,11 +32,6 @@ class GameImageParser:
             (1028, 1920, 3): {"x_0": 1372, "y_0": 268, "x_1": 1750, "y_1": 939},
         }
 
-        self.rows_params = {
-            (540, 960, 3): {"w": 88, "h": 37, "x_0": 10, "y_0": 48, "height": 46},
-            (1028, 1920, 3): {"w": 170, "h": 70, "x_0": 9, "y_0": 81, "height": 87},
-        }
-
         self.board_queue_params = {
             (1028, 1920, 3): {
                 "x_left": 5,
@@ -69,7 +64,7 @@ class GameImageParser:
         self.sprint_params = {
             (540, 960, 3): {"y_0": 14, "y_1": 30, "x_0": 487, "x_1": 630, "width": 11},
             (1028, 1920, 3): {
-                "x_0": 902,
+                "x_0": 901,
                 "y_0": 7,
                 "x_1": 1100,
                 "y_1": 32,
@@ -140,7 +135,7 @@ class GameImageParser:
         return templates
 
     def read_digit(self, image: cv2.typing.MatLike, tolerance: float = 0.02):
-        best_diff = image.size
+        best_diff = float('inf')
         best_chararcter = ""
         for character, template in self.templates:
             if template.shape != image.shape:

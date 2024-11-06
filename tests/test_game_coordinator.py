@@ -5,13 +5,10 @@ from game.backlog_card.card_info import CardInfo
 from game.userstories.userstories import UserStoryCardInfo, UserStoryCard
 
 from random import Random
-
-from web_interaction import (
-    GameImageParser,
-    GameCoordinator,
-    SingleColorStorage,
-    BacklogCardImageInfo,
-)
+from web_interaction.game_coordinator import GameCoordinator
+from web_interaction.backlog_card_image_info import BacklogCardImageInfo
+from web_interaction.image_parser import GameImageParser
+from web_interaction.single_color_storage import SingleColorStorage
 
 
 class TestGameCoordination:

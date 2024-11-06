@@ -2,7 +2,7 @@ import cv2
 
 import numpy as np
 
-from web_interaction import UserStoryImageInfo
+from web_interaction.user_story_image_info import UserStoryImageInfo
 
 from .parsing_platform import ParsingPlatform
 

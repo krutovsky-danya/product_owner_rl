@@ -1,5 +1,5 @@
 import cv2
-from web_interaction import GameImageParser
+from web_interaction.image_parser import GameImageParser
 
 
 class ParsingPlatform:

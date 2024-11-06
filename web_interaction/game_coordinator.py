@@ -1,6 +1,7 @@
 import cv2
 
 from itertools import groupby
+from logging import Logger
 from operator import attrgetter
 from random import Random
 from typing import Dict, List, Tuple
@@ -126,3 +127,20 @@ class GameCoordinator:
         backlog = game.backlog
         backlog.backlog.extend(backlog.sprint)
         backlog.sprint.clear()
+
+    def log_game_state(self, game: ProductOwnerGame, logger: Logger):
+        logger.info(f"Sprint {game.context.current_sprint}")
+        logger.info(f"Money {game.context.get_money()}")
+        logger.info(f"Loyalty {game.context.get_loyalty()}")
+        logger.info(f"Customers {game.context.customers}")
+        logger.info(f"Credit {game.context.credit}")
+
+        logger.info("Current sprint hours: %d", game.context.current_sprint_hours)
+
+        logger.info(f"Available user stories: {game.userstories.stories_list}")
+        logger.info(f"User stroies to release: {game.userstories.release}")
+
+        logger.info(f"Backlog cards: {game.backlog.backlog}")
+        logger.info(f"Sprint cards: {game.backlog.sprint}")
+
+        logger.info("Sprints without releases: %d", game.context.blank_sprint_counter)

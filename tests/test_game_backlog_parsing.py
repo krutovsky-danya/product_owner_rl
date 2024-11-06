@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .parsing_platform import ParsingPlatform
-from web_interaction import BacklogCardImageInfo
+from web_interaction.backlog_card_image_info import BacklogCardImageInfo
 
 
 class TestBacklogParsing(ParsingPlatform):
