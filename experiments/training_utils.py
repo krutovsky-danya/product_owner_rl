@@ -12,6 +12,7 @@ sys.path.append("..")
 
 from environment import CreditPayerEnv
 from pipeline import LoggingStudy
+from pipeline.episodic_study import EpisodicPpoStudy
 
 
 def play_forward_with_empty_sprints(env: CreditPayerEnv):
@@ -39,6 +40,16 @@ def eval_agent(study: LoggingStudy):
     return reward, is_win, sprint
 
 
+def eval_ppo_agent(study: EpisodicPpoStudy):
+    study.agent.eval()
+    reward, *_ = study.play_trajectory()
+    play_forward_with_empty_sprints(study.env)
+    game_context = study.env.game.context
+    is_win = game_context.is_victory
+    sprint = game_context.current_sprint
+    return reward, is_win, sprint
+
+
 def update_data_frame(path: str, df: pd.DataFrame):
     if os.path.exists(path):
         data = pd.read_csv(path)
@@ -49,7 +60,7 @@ def update_data_frame(path: str, df: pd.DataFrame):
     data.to_csv(path, index=False, float_format="%.5f")
 
 
-def save_rewards(sub_name: str, rewards_log: List[float], now: str, flag: bool):
+def save_rewards(sub_name: str, rewards_log: List[float], now: str, experiment_name):
     df = pd.DataFrame(
         {
             "Trajectory": list(range(len(rewards_log))),
@@ -57,15 +68,15 @@ def save_rewards(sub_name: str, rewards_log: List[float], now: str, flag: bool):
         }
     )
     df["DateTime"] = now
-    df["Flag"] = flag
+    df["ExperimentName"] = experiment_name
     rewards_path = f"train_rewards_{sub_name}.csv"
     update_data_frame(rewards_path, df)
 
 
-def save_evaluation(sub_name: str, evaluations: List, now: str, flag: bool):
+def save_evaluation(sub_name: str, evaluations: List, now: str, experiment_name):
     df = pd.DataFrame(evaluations, columns=["Reward", "Win", "Sprint"])
     df["DateTime"] = now
-    df["Flag"] = flag
+    df["ExperimentName"] = experiment_name
     evaluations_path = f"evaluations_{sub_name}.csv"
     update_data_frame(evaluations_path, df)
 
