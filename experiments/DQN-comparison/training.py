@@ -43,4 +43,7 @@ def train(agent_factory, env_factory):
 if __name__ == "__main__":
     agents_factory = DqnAgentsFactory()
     environment_factory = EnvironmentFactory()
-    train(agents_factory.create_dqn_agent, environment_factory.create_credit_env)
+    train(agents_factory.create_dqn, environment_factory.create_credit_env)
+    train(agents_factory.create_hard_target_dqn, environment_factory.create_credit_env)
+    train(agents_factory.create_soft_target_dqn, environment_factory.create_credit_env)
+    train(agents_factory.create_ddqn, environment_factory.create_credit_env)
