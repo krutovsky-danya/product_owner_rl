@@ -11,7 +11,7 @@ class DqnAgentsFactory:
         self.target_update = 100
         self.tau = 1e-3
 
-    def create_dqn_agent(self, state_dim, action_n):
+    def create_dqn(self, state_dim, action_n):
         agent = DQN(
             state_dim,
             action_n,
@@ -50,7 +50,7 @@ class DqnAgentsFactory:
         )
         return agent
 
-    def create_ddqn_agent(self, state_dim, action_n):
+    def create_ddqn(self, state_dim, action_n):
         agent = DoubleDQN(
             state_dim,
             action_n,
