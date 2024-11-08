@@ -33,7 +33,7 @@ def train(agent_factory, env_factory):
     save_rewards(episode_n, study.rewards_log, now, experiment_name)
 
     evaluations = []
-    for i in range(100):
+    for i in range(1000):
         evaluation = eval_agent(study)
         evaluations.append(evaluation)
 
