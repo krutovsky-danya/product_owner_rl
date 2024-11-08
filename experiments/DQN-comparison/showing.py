@@ -1,6 +1,5 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+import sys
+sys.path.append("..")
 
 from show_utils import show_rewards_fitting, show_win_rate
 
