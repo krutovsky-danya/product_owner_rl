@@ -49,7 +49,7 @@ class LoggingStudy(MetricsStudy):
     def _get_logger(self, name, log_level):
         logger = logging.getLogger(name)
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        handler.setFormatter(logging.Formatter("%(name)s %(asctime)s %(message)s"))
         logger.addHandler(handler)
         logger.setLevel(log_level)
 
@@ -155,6 +155,8 @@ class LoggingStudy(MetricsStudy):
             self.save_model(path, agent_name, env_name, epoch, is_after_study=False)
         path = f"{agent_name}/model_{epoch_n}_{env_name}.pt"
         self.save_model(path, agent_name, env_name, epoch_n, is_after_study=True)
+
+        return self
 
     def define_epoch_count_and_save_rate(self, episode_n) -> int:
         if self.save_rate is None:
