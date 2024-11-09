@@ -9,7 +9,7 @@ from algorithms.agents_factory import DqnAgentsFactory
 from environment import ProductOwnerEnv
 from environment.environments_factory import EnvironmentFactory
 from pipeline import LoggingStudy
-from training_utils import eval_agent, save_rewards, save_evaluation, save_data
+from training_utils import eval_agent, save_evaluation, save_data
 
 
 def train(agent_factory, env_factory):
@@ -36,15 +36,17 @@ def train(agent_factory, env_factory):
         study.q_value_log,
         study.discounted_rewards_log,
     )
+
+    sub_name = experiment_name + f'_{episode_n}'
     columns = ["Trajectory", "Reward", "Estimate", "DiscountedReward"]
-    save_data(episode_n, data, columns, experiment_name)
+    save_data(sub_name, data, columns, experiment_name)
 
     evaluations = []
     for i in range(1000):
         evaluation = eval_agent(study)
         evaluations.append(evaluation)
 
-    save_evaluation(episode_n, evaluations, now, experiment_name)
+    save_evaluation(sub_name, evaluations, now, experiment_name)
 
 
 if __name__ == "__main__":
