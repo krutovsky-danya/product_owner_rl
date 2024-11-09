@@ -80,6 +80,13 @@ def save_evaluation(sub_name: str, evaluations: List, now: str, experiment_name)
     evaluations_path = f"evaluations_{sub_name}.csv"
     update_data_frame(evaluations_path, df)
 
+def save_data(sub_name: str, data: List, columns: List[str], experiment_name):
+    df = pd.DataFrame(data, columns=columns)
+    df["DateTime"] = datetime.datetime.now()
+    df["ExperimentName"] = experiment_name
+    evaluations_path = f"data_{sub_name}.csv"
+    update_data_frame(evaluations_path, df)
+
 
 def get_wins_stat(a_wins: np.ndarray, b_wins: np.ndarray):
     wins = np.array([a_wins.sum(), b_wins.sum()])

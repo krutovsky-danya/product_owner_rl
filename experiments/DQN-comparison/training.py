@@ -9,7 +9,7 @@ from algorithms.agents_factory import DqnAgentsFactory
 from environment import ProductOwnerEnv
 from environment.environments_factory import EnvironmentFactory
 from pipeline import LoggingStudy
-from training_utils import eval_agent, save_rewards, save_evaluation
+from training_utils import eval_agent, save_rewards, save_evaluation, save_data
 
 
 def train(agent_factory, env_factory):
@@ -30,7 +30,14 @@ def train(agent_factory, env_factory):
     now = datetime.datetime.now()
     experiment_name = agent.__class__.__name__
 
-    save_rewards(episode_n, study.rewards_log, now, experiment_name)
+    data = zip(
+        range(episode_n),
+        study.rewards_log,
+        study.q_value_log,
+        study.discounted_rewards_log,
+    )
+    columns = ["Trajectory", "Reward", "Estimate", "DiscountedReward"]
+    save_data(episode_n, data, columns, experiment_name)
 
     evaluations = []
     for i in range(1000):
