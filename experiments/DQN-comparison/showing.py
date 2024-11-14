@@ -19,9 +19,8 @@ def main():
     data = pd.concat(data_postions)
 
     show_rewards_fitting(data, ["Reward"])
-    for experiment_name in experiments_names:
-        experiment_data = data[data["ExperimentName"] == experiment_name]
-        show_rewards_fitting(experiment_data, ["Estimate", "DiscountedReward"])
+    for experiment in data_postions:
+        show_rewards_fitting(experiment, ["Estimate", "DiscountedReward"])
 
     evaluation_data_portions = []
     for experiment_name in experiments_names:
