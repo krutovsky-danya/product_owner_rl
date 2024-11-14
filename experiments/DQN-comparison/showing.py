@@ -7,9 +7,26 @@ import pandas as pd
 from show_utils import show_rewards_fitting, show_win_rate
 
 
+def show_win_sprint_hist(data: pd.DataFrame):
+    win_data = data[data["Win"]].drop(columns=["Win"])
+
+    hist = (
+        win_data.groupby(["Sprint", "ExperimentName"])
+        .size()
+        .unstack()
+        .plot(kind="bar", stacked=False)
+    )
+    hist.set_ylabel("Number of wins")
+    hist.set_xlabel("Sprint")
+    hist.set_title("Number of wins per sprint")
+    hist.legend(title="Experiment")
+    hist.get_figure().savefig("wins.png")
+    hist.get_figure().show()
+
+
 def main():
     sub_name = f"1500"
-    experiments_names = ["DQN", "HardTargetDQN", "SoftTargetDQN", "DoubleDQN"]
+    experiments_names = ["DQN", "DoubleDQN"]
 
     data_postions = []
     for experiment_name in experiments_names:
@@ -19,9 +36,8 @@ def main():
     data = pd.concat(data_postions)
 
     show_rewards_fitting(data, ["Reward"])
-    for experiment_name in experiments_names:
-        experiment_data = data[data["ExperimentName"] == experiment_name]
-        show_rewards_fitting(experiment_data, ["Estimate", "DiscountedReward"])
+    for experiment in data_postions:
+        show_rewards_fitting(experiment, ["Estimate", "DiscountedReward"])
 
     evaluation_data_portions = []
     for experiment_name in experiments_names:
@@ -31,6 +47,7 @@ def main():
     evaluation_data = pd.concat(evaluation_data_portions)
 
     show_win_rate(evaluation_data)
+    show_win_sprint_hist(evaluation_data)
 
 
 if __name__ == "__main__":
