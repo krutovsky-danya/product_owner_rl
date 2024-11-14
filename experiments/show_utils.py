@@ -5,6 +5,10 @@ import pandas as pd
 from typing import List
 
 
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), "full")[: -w + 1] / w
+
+
 def show_rewards_fitting(df: pd.DataFrame, columns: List):
     reward_groups = df.groupby(["Trajectory", "ExperimentName"])[columns]
     mean_rewards = reward_groups.mean().reset_index()
@@ -12,7 +16,11 @@ def show_rewards_fitting(df: pd.DataFrame, columns: List):
     for experiment_name in set(df["ExperimentName"]):
         for column in columns:
             rewards = mean_rewards[mean_rewards["ExperimentName"] == experiment_name]
-            plt.plot(rewards["Trajectory"], rewards[column], ".", label=experiment_name + '_' + column)
+            plt.plot(
+                rewards["Trajectory"],
+                moving_average(rewards[column], 5),
+                label=experiment_name,
+            )
     plt.legend()
     plt.grid()
     plt.title("Rewards")
@@ -37,5 +45,5 @@ def show_win_rate(data: pd.DataFrame):
 
 def show_win_sprints(evals_df: pd.DataFrame):
     wins = evals_df[evals_df["Win"]]
-    wins = wins.groupby(['ExperimentName']).min()
+    wins = wins.groupby(["ExperimentName"]).min()
     print(wins.reset_index())
