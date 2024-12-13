@@ -21,6 +21,7 @@ from environment.reward_sytem import (
 )
 from pipeline.aggregator_study import update_reward_system_config
 from pipeline import LoggingStudy
+from experiments.training_utils import eval_agent
 
 
 def make_credit_study(trajectory_max_len, episode_n, potential):
@@ -62,7 +63,22 @@ def make_credit_study(trajectory_max_len, episode_n, potential):
 def main(potential):
     episode_n = 1501
     study = make_credit_study(200, episode_n, potential)
-    save_dqn_agent(study.agent, 'models/credit_start_model.pt')
+    save_dqn_agent(study.agent, 'models/cool_model.pt')
+
+    evaluations = []
+    min_sprint = 1000
+    win_count = 0
+    for i in range(100):
+        evaluation = eval_agent(study)
+        evaluations.append(evaluation)
+
+        reward, is_win, sprint = evaluation
+        if is_win:
+            win_count += 1
+            min_sprint = min(min_sprint, win_count)
+    
+    print('Win count:', win_count)
+    print('Min sprint:', min_sprint)
 
 
 if __name__ == "__main__":
