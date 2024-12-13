@@ -62,7 +62,7 @@ def make_credit_study(trajectory_max_len, episode_n, potential):
 def main(potential):
     episode_n = 1501
     study = make_credit_study(200, episode_n, potential)
-    save_dqn_agent(study.agent, 'models/credit_start_model.pt')
+    save_dqn_agent(study.agent, "models/credit_start_model.pt")
 
 
 if __name__ == "__main__":

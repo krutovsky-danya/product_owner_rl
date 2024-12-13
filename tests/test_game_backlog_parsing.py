@@ -14,13 +14,13 @@ class TestBacklogParsing(ParsingPlatform):
         cls.backlog_1 = cv2.imread(cls.image_directory + "/game_decomposed_1.png")
 
         cls.center_1_1 = (1516, 384)
-        cls.card_info_1 = BacklogCardImageInfo(cls.orange, 12, cls.center_1_1)
+        cls.card_info_1 = BacklogCardImageInfo(cls.image_parser.yellow, 12, cls.center_1_1)
 
         cls.center_1_2 = (1597, 384)
-        cls.card_info_2 = BacklogCardImageInfo(cls.orange, 14, cls.center_1_2)
+        cls.card_info_2 = BacklogCardImageInfo(cls.image_parser.yellow, 14, cls.center_1_2)
 
         cls.center_2_1 = (1516, 471)
-        cls.card_info_3 = BacklogCardImageInfo(cls.orange, 12, cls.center_2_1)
+        cls.card_info_3 = BacklogCardImageInfo(cls.image_parser.yellow, 12, cls.center_2_1)
 
     def test_read_backlock_1(self):
         # arrange

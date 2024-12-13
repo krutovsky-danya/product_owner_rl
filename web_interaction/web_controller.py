@@ -48,6 +48,8 @@ class WebController:
             (1028, 1920): {"x": 211, "y": 865},
         }
 
+        self.robot_positions = {(1028, 1920): {"x": 1100, "y": 930}}
+
         self.screenshot_count = 0
 
     def take_screenshot(self, iframe: WebElement):
@@ -202,6 +204,16 @@ class WebController:
         env._perform_release()
         self.game_coordinator.update_header_info(env.game, game_image)
 
+    def buy_robot(self, driver, iframe: WebElement, env: ProductOwnerEnv):
+        self.logger.info("Buy robot")
+
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
+        buy_robot_position = self.robot_positions[(height, width)]
+        self.click_on_element(driver, iframe, **buy_robot_position)
+
+        env._perform_buy_robot()
+
     def buy_research(self, driver, iframe: WebElement):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
@@ -304,12 +316,18 @@ class WebController:
             self.release_tasks(driver, iframe, env)
             return
 
+        if action == 3:
+            self.buy_robot(driver, iframe, env)
+            return
+
         if action == 5:  # buy statistical research
             self.buy_statistical_research(driver, iframe, env)
             return
 
         if action >= env.meta_action_dim:
             action -= env.meta_action_dim
+        else:
+            raise Exception(f"Acton not handled: {action}")
 
         if action < env.userstory_env.max_action_num:
             self.apply_user_story_action(action, driver, iframe, env)
