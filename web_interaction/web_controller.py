@@ -255,7 +255,7 @@ class WebController:
         )
         fullscreen_button.click()
 
-    def start_game(self, driver: WebDriver, iframe: WebElement):
+    def start_game(self, driver: WebDriver, iframe: WebElement, player_name: str):
         # skip intro
         iframe.click()
         iframe.click()
@@ -266,7 +266,7 @@ class WebController:
         # type name
         ActionChains(driver).move_to_element_with_offset(
             iframe, 0, int(0.1 * height)
-        ).click().send_keys("DDQN").perform()
+        ).click().send_keys(player_name).perform()
 
         # start game
         ActionChains(driver).move_to_element_with_offset(
@@ -333,7 +333,7 @@ class WebController:
         iframe = self.find_game(driver)
         self.open_full_sceen(driver)
         self.wait_loading(iframe)
-        self.start_game(driver, iframe)
+        self.start_game(driver, iframe, agent.__class__.__name__)
         image = self.take_screenshot(iframe)
 
         self.game_coordinator.skip_tutorial(env.game)

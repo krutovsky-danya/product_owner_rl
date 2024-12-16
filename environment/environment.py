@@ -34,7 +34,7 @@ class ProductOwnerEnv:
         self.userstory_env = UserstoryEnv() if userstory_env is None else userstory_env
         self.card_picker_random_generator = np.random.default_rng(seed=card_picker_seed)
 
-        self.meta_space_dim = 19
+        self.meta_space_dim = 13
 
         self.state_dim = self.meta_space_dim + \
             self.userstory_env.userstory_space_dim + \
@@ -81,12 +81,12 @@ class ProductOwnerEnv:
             context.current_sprint_hours,
             self.game.backlog.calculate_hours_sum(),
             context.blank_sprint_counter,
-            self.game.backlog.can_start_sprint(),
-            self.game.hud.release_available,
-            self.game.userstories.release_available,
-            self.game.userstories.statistical_research_available,
-            self.game.userstories.user_survey_available,
-            int(context.done),
+            # self.game.backlog.can_start_sprint(),
+            # self.game.hud.release_available,
+            # self.game.userstories.release_available,
+            # self.game.userstories.statistical_research_available,
+            # self.game.userstories.user_survey_available,
+            # int(context.done),
             *self._get_completed_cards_count(),
             *self.userstory_env.encode(self.game.userstories, self.card_picker_random_generator),
             *self.backlog_env.encode(self.game.backlog, self.card_picker_random_generator)
