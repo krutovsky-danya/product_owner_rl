@@ -4,6 +4,9 @@ import numpy as np
 from typing import List
 
 
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
+
 def get_experiment_files(filenames: List[str], guidance: bool):
     experiment_files = []
     prefix = f"guidance_{guidance}"
@@ -56,13 +59,15 @@ def main():
 
     guidance_rewards_files = get_experiment_files(reward_files, True)
     guidance_rewards = read_files_data(guidance_rewards_files)
-    guidance_rewards = np.array(guidance_rewards)
+    guidance_rewards = np.array(guidance_rewards).mean(axis=0)
 
     default_rewards_files = get_experiment_files(reward_files, False)
     default_rewards = read_files_data(default_rewards_files)
+    default_rewards = np.array(default_rewards).mean(axis=0)
 
-    plt.plot(np.mean(guidance_rewards, axis=0), ".", label="guidance")
-    plt.plot(np.mean(default_rewards, axis=0), ".", label="default")
+    plt.plot(moving_average(guidance_rewards, 5), ".", label="Guidance")
+    plt.plot(moving_average(default_rewards, 5), ".", label="Default")
+    plt.grid()
     plt.legend()
     plt.title('Rewards')
     plt.xlabel('trajectory')
