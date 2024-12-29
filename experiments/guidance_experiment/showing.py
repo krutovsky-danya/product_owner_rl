@@ -1,11 +1,13 @@
 import os
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import List
 
+sys.path.insert(0, '..')
 
-def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'valid') / w
+from showing_utils import moving_average
+
 
 def get_experiment_files(filenames: List[str], guidance: bool):
     experiment_files = []
@@ -45,7 +47,7 @@ def get_experements_wins(evaluation_filenames: List[str], guidance: bool):
 
 def main():
     current_dir = os.getcwd()
-    files_dir = os.path.join(current_dir, 'episodes_1000')
+    files_dir = os.path.join(current_dir, "episodes_1000")
 
     data_files = get_all_data_files(files_dir)
 
@@ -65,14 +67,14 @@ def main():
     default_rewards = read_files_data(default_rewards_files)
     default_rewards = np.array(default_rewards).mean(axis=0)
 
-    plt.plot(moving_average(guidance_rewards, 5), ".", label="Guidance")
-    plt.plot(moving_average(default_rewards, 5), ".", label="Default")
+    plt.plot(moving_average(guidance_rewards, 5), label="Guidance")
+    plt.plot(moving_average(default_rewards, 5), label="Default")
     plt.grid()
     plt.legend()
-    plt.title('Rewards')
-    plt.xlabel('trajectory')
-    plt.ylabel('rewards')
-    plt.savefig('guidance_rewards.png')
+    plt.title("Rewards")
+    plt.xlabel("trajectory")
+    plt.ylabel("rewards")
+    plt.savefig("guidance_rewards.png")
     plt.show()
 
     default_wins = get_experements_wins(evaluation_files, False)
