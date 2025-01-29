@@ -138,7 +138,7 @@ class WebController:
         self.game_coordinator.insert_backlog_cards_from_image(env.game, game_image)
 
         self.logger.info(
-            f"Backlog cards appered: {self.game_coordinator.backlog_cards}"
+            f"Backlog cards appeared: {self.game_coordinator.backlog_cards}"
         )
 
         env._perform_decomposition()
@@ -214,7 +214,7 @@ class WebController:
 
         env._perform_buy_robot()
 
-    def buy_research(self, driver, iframe: WebElement):
+    def press_research_button(self, driver, iframe: WebElement):
         height = iframe.rect["height"]
         width = iframe.rect["width"]
         self.select_user_story_board(driver, iframe)
@@ -226,7 +226,7 @@ class WebController:
         self, driver, iframe: WebElement, env: ProductOwnerEnv
     ):
         self.logger.info("Buy statistical research")
-        self.buy_research(driver, iframe)
+        self.press_research_button(driver, iframe)
 
         env._perform_statistical_research()
 
@@ -267,18 +267,19 @@ class WebController:
         )
         fullscreen_button.click()
 
-    def start_game(self, driver: WebDriver, iframe: WebElement):
+    def start_game(self, driver: WebDriver, iframe: WebElement, agent):
         # skip intro
         iframe.click()
         iframe.click()
 
-        height = iframe.rect["height"]  # 540
-        width = iframe.rect["width"]  # 960
+        height = iframe.rect["height"]
+        width = iframe.rect["width"]
 
         # type name
+        agent_name = agent.__class__.__name__
         ActionChains(driver).move_to_element_with_offset(
             iframe, 0, int(0.1 * height)
-        ).click().send_keys("DDQN").perform()
+        ).click().send_keys(agent_name).perform()
 
         # start game
         ActionChains(driver).move_to_element_with_offset(
@@ -351,7 +352,7 @@ class WebController:
         iframe = self.find_game(driver)
         self.open_full_sceen(driver)
         self.wait_loading(iframe)
-        self.start_game(driver, iframe)
+        self.start_game(driver, iframe, agent)
         image = self.take_screenshot(iframe)
 
         self.game_coordinator.skip_tutorial(env.game)

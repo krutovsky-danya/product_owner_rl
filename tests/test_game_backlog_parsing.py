@@ -22,7 +22,7 @@ class TestBacklogParsing(ParsingPlatform):
         cls.center_2_1 = (1516, 471)
         cls.card_info_3 = BacklogCardImageInfo(cls.image_parser.yellow, 12, cls.center_2_1)
 
-    def test_read_backlock_1(self):
+    def test_read_backlog_1(self):
         # arrange
         position = self.center_1_1
         card_image = cv2.imread(self.image_directory + "/backlog_card_upper_left_1.png")

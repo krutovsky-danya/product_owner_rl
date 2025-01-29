@@ -8,10 +8,6 @@ from .parsing_platform import ParsingPlatform
 
 
 class TestInitialGameParsing(ParsingPlatform):
-    yellow = (43, 194, 249)
-    purple = (243, 132, 168)
-    green = (115, 188, 30)
-
     image_directory = "tests/test_images"
     initial_image_path = image_directory + "/game_start_1.png"
     _initial_image = cv2.imread(initial_image_path)
@@ -22,7 +18,6 @@ class TestInitialGameParsing(ParsingPlatform):
 
     expected_user_story_path = image_directory + "/initial_user_story.png"
     _expected_user_story = cv2.imread(expected_user_story_path)
-    expected_user_story_color = (115, 188, 30)
     expected_user_story_position = (1466, 384)
     expected_user_story_position_slim = (1465, 384)
     expected_user_story_position_shifted = (1556, 384)
@@ -139,13 +134,13 @@ class TestInitialGameParsing(ParsingPlatform):
         )
 
         # assert
-        assert user_story_info == (self.expected_user_story_color, 0.045, 1.0)
+        assert user_story_info == (self.image_parser.green, 0.045, 1.0)
 
     def test_read_initial_user_stories(self):
         # arrange
         game_state = self._initial_image.copy()
         expected_user_story = UserStoryImageInfo(
-            self.expected_user_story_color,
+            self.image_parser.green,
             0.045,
             1.0,
             self.expected_user_story_position,
@@ -174,7 +169,10 @@ class TestInitialGameParsing(ParsingPlatform):
         # arrange
         game_start = self.game_start_2.copy()
         expected_user_story = UserStoryImageInfo(
-            self.yellow, 0.025, 3.0, self.expected_user_story_position_shifted
+            self.image_parser.yellow,
+            0.025,
+            3.0,
+            self.expected_user_story_position_shifted,
         )
 
         # act
@@ -187,7 +185,7 @@ class TestInitialGameParsing(ParsingPlatform):
         # arrange
         game_start = self.game_start_3.copy()
         expected_user_story = UserStoryImageInfo(
-            self.yellow, 0.045, 3.0, self.expected_user_story_position_slim
+            self.image_parser.yellow, 0.045, 3.0, self.expected_user_story_position_slim
         )
 
         # act
@@ -200,7 +198,10 @@ class TestInitialGameParsing(ParsingPlatform):
         # arrange
         game_start = self.read_game_start(4)
         expected_user_story = UserStoryImageInfo(
-            self.purple, 0.075, 2.0, self.expected_user_story_position_shifted
+            self.image_parser.purple,
+            0.075,
+            2.0,
+            self.expected_user_story_position_shifted,
         )
 
         # act
@@ -213,7 +214,10 @@ class TestInitialGameParsing(ParsingPlatform):
         # arrange
         game_start = self.read_game_start(5)
         expected_user_story = UserStoryImageInfo(
-            self.green, 0.08, 3.0, self.expected_user_story_position_shifted
+            self.image_parser.green,
+            0.08,
+            3.0,
+            self.expected_user_story_position_shifted,
         )
 
         # act
@@ -231,3 +235,28 @@ class TestInitialGameParsing(ParsingPlatform):
 
         # assert
         assert user_stories == []
+
+    def test_find_start_in_empty_image(self):
+        # arrange
+        image_size = 50
+        image = np.zeros((image_size, image_size))
+
+        # act
+        start_x = self.image_parser.find_start(image, 0)
+
+        # assert
+        assert start_x == image_size
+
+    def test_find_start(self):
+        # arrange
+        image_size = 50
+        point_x = 10
+        point_y = 5
+        image = np.zeros((image_size, image_size))
+        image[point_y, point_x] = 1
+
+        # act
+        start_x = self.image_parser.find_start(image, 0)
+
+        # assert
+        assert start_x == point_x
