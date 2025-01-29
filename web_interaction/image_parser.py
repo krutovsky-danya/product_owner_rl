@@ -126,7 +126,7 @@ class GameImageParser:
         return filename[0]
 
     def _load_templates(self):
-        templates: List[Tuple[str, cv2.typing.MatLike]] = []
+        templates: List[Tuple[str, Image]] = []
         for template_filename in listdir(self.templates_path):
             image_char = self._get_image_char(template_filename)
             image = cv2.imread(path.join(self.templates_path, template_filename))
@@ -134,8 +134,8 @@ class GameImageParser:
             templates.append((image_char, image))
         return templates
 
-    def read_digit(self, image: cv2.typing.MatLike, tolerance: float = 0.02):
-        best_diff = float('inf')
+    def read_digit(self, image: Image, tolerance: float = 0.02):
+        best_diff = float("inf")
         best_chararcter = ""
         for character, template in self.templates:
             if template.shape != image.shape:
@@ -157,27 +157,25 @@ class GameImageParser:
         cv2.imwrite(self.templates_path + f"/error_{widht}_{height}.png", image)
         raise Exception("Image not found in templates")
 
-    def is_empty_vertical(self, image: cv2.typing.MatLike, x: int):
+    def is_empty_vertical(self, image: Image, x: int):
         vertical_line = image[:, x]
         unique = np.unique(vertical_line)
         return len(unique) == 1
 
-    def is_empty_horizontal(self, image: cv2.typing.MatLike, y: int):
+    def is_empty_horizontal(self, image: Image, y: int):
         horizontal_line = image[y, :]
         unique = np.unique(horizontal_line)
         return len(unique) == 1
 
-    def find_start(self, image: cv2.typing.MatLike, x_start: int):
-        x_limit = image.shape[1] - 1
-        is_empty = self.is_empty_vertical(image, x_start)
+    def find_start(self, image: Image, x_start: int):
+        for x in range(x_start, image.shape[1]):
+            is_empty = self.is_empty_vertical(image, x)
+            if not is_empty:
+                return x
 
-        while is_empty and x_start < x_limit:
-            x_start += 1
-            is_empty = self.is_empty_vertical(image, x_start)
+        return image.shape[1]
 
-        return x_start
-
-    def crop_image(self, image: cv2.typing.MatLike):
+    def crop_image(self, image: Image):
         y_start = 0
         y_limit = image.shape[0] - 1
 
@@ -194,12 +192,12 @@ class GameImageParser:
 
         return image[y_start : y_end + 1]
 
-    def split_image(self, image: cv2.typing.MatLike, char_widht: int):
+    def split_image(self, image: Image, char_width: int):
         image = self.crop_image(image)
         x_start = self.find_start(image, 0)
         digits = []
         while True:
-            x_end = x_start + char_widht
+            x_end = x_start + char_width
             if x_end >= image.shape[1]:
                 break
             digit = image[:, x_start:x_end]
@@ -207,7 +205,7 @@ class GameImageParser:
             x_start = x_end
         return digits
 
-    def read_line(self, image: cv2.typing.MatLike, char_width: int) -> str:
+    def read_line(self, image: Image, char_width: int) -> str:
         result = ""
         image = cv2.inRange(image, self.black, self.black)
         digits = self.split_image(image, char_width)
@@ -221,7 +219,7 @@ class GameImageParser:
         if line.endswith("k"):
             return float(line[:-1]) * 1000
 
-    def get_shifted_board(self, game_image: cv2.typing.MatLike):
+    def get_shifted_board(self, game_image: Image):
         if game_image.shape != (1028, 1920, 3):
             return None
         x_0 = 1463
@@ -231,7 +229,7 @@ class GameImageParser:
         board = game_image[y_0:y_1, x_0:x_1]
         return board, (x_0, y_0)
 
-    def get_board(self, image: cv2.typing.MatLike):
+    def get_board(self, image: Image):
         position = self.board_positions[image.shape]
         x_0 = position["x_0"]
         x_1 = position["x_1"]
@@ -251,13 +249,13 @@ class GameImageParser:
 
         queue_image = board[queue_y_upper:queue_y_lower, queue_x_left:queue_x_right]
 
-        is_empty_verticaly = self.is_empty_vertical(queue_image, 0)
-        while is_empty_verticaly:
-            queue_x_left += 1
-            queue_image = queue_image[:, 1:]
-            if queue_image.shape[1] == 0:
-                return None, -1, -1
-            is_empty_verticaly = self.is_empty_vertical(queue_image, 0)
+        queue_x_start = self.find_start(queue_image, 0)
+
+        queue_image = queue_image[:, queue_x_start:]
+        queue_x_left += queue_x_start
+
+        if queue_image.shape[1] == 0:
+            return None, -1, -1
 
         is_empty_verticaly = self.is_empty_vertical(queue_image, -1)
         while is_empty_verticaly:
@@ -323,7 +321,7 @@ class GameImageParser:
         return rows
 
     def get_user_story_loaylty_image(
-        self, user_story_image: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+        self, user_story_image: Image, original_shape: Shape
     ):
         position = self.loyalty_nums_positions[original_shape]
         x_0 = position["x_0"]
@@ -333,7 +331,7 @@ class GameImageParser:
         return loyalty_image
 
     def get_user_story_users_image(
-        self, user_story_image: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
+        self, user_story_image: Image, original_shape: Shape
     ):
         position = self.customers_nums_positions[original_shape]
         x_0 = position["x_0"]
@@ -342,9 +340,7 @@ class GameImageParser:
         customers_nums = user_story_image[y_0:y_1, x_0:]
         return customers_nums
 
-    def read_user_story(
-        self, user_story: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
-    ):
+    def read_user_story(self, user_story: Image, original_shape: Shape):
         color = tuple(user_story[0, 0])
         loyalty = self.get_user_story_loaylty_image(user_story, original_shape)
         customers = self.get_user_story_users_image(user_story, original_shape)
@@ -358,7 +354,7 @@ class GameImageParser:
 
         return color, loyalty, customers
 
-    def read_user_stories(self, game_image: cv2.typing.MatLike):
+    def read_user_stories(self, game_image: Image):
         board, board_position = self.get_board(game_image)
         rows = self.get_rows(board, board_position, game_image.shape)
 
@@ -370,7 +366,7 @@ class GameImageParser:
 
         return user_stories
 
-    def get_header_image(self, game_image: cv2.typing.MatLike):
+    def get_header_image(self, game_image: Image):
         position = self.header_positions[game_image.shape]
         x_0 = position["x_0"]
         x_1 = position["x_1"]
@@ -378,9 +374,7 @@ class GameImageParser:
         y_1 = position["y_1"]
         return game_image[y_0:y_1, x_0:x_1]
 
-    def read_sprint(
-        self, header: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
-    ):
+    def read_sprint(self, header: Image, original_shape: Shape):
         position = self.sprint_params[original_shape]
         x_0 = position["x_0"]
         x_1 = position["x_1"]
@@ -392,9 +386,7 @@ class GameImageParser:
         sprint_n = self.read_line(sprint, width)
         return sprint_n
 
-    def read_current_money(
-        self, header: cv2.typing.MatLike, original_shape: Tuple[int, int, int]
-    ):
+    def read_current_money(self, header: Image, original_shape: Shape):
         position = self.money_params[original_shape]
         x_0 = position["x_0"]
         x_1 = position["x_1"]
@@ -406,12 +398,12 @@ class GameImageParser:
         money = self.read_line(money, width)
         return money
 
-    def convert_gray_numbers(self, image: cv2.typing.MatLike):
+    def convert_gray_numbers(self, image: Image):
         image = cv2.inRange(image, self.black, self.white - 1)
         image = cv2.cvtColor(255 - image, cv2.COLOR_GRAY2BGR)
         return image
 
-    def read_current_loyalty(self, header: cv2.typing.MatLike, original_shape: Shape):
+    def read_current_loyalty(self, header: Image, original_shape: Shape):
         position = self.loyalty_params[original_shape]
         x_0 = position["x_0"]
         x_1 = position["x_1"]
@@ -437,9 +429,9 @@ class GameImageParser:
 
     def split_row(
         self,
-        row: cv2.typing.MatLike,
-        row_center: Tuple[int, int],
-        original_shape: Tuple[int, int, int],
+        row: Image,
+        row_center: Coordinates,
+        original_shape: Shape,
     ):
         card_params = self.cards_params[original_shape]
         l = card_params["l"]
@@ -455,7 +447,7 @@ class GameImageParser:
         right_center = (x + right.shape[1] // 2, y)
         return [left, left_center], [right, right_center]
 
-    def get_backlog_card_images(self, image: cv2.typing.MatLike):
+    def get_backlog_card_images(self, image: Image):
         backlog_board, board_position = self.get_board(image)
 
         backlog_rows = self.get_rows(backlog_board, board_position, image.shape)
@@ -468,9 +460,9 @@ class GameImageParser:
 
     def read_backlog_card_descripton(
         self,
-        card_image: cv2.typing.MatLike,
-        center: Tuple[int, int],
-        original_shape: Tuple[int, int, int],
+        card_image: Image,
+        center: Coordinates,
+        original_shape: Shape,
     ):
         color = tuple(card_image[0, 0])
 
@@ -488,7 +480,7 @@ class GameImageParser:
 
         return BacklogCardImageInfo(color, hours_value, center)
 
-    def read_backlog(self, image: cv2.typing.MatLike):
+    def read_backlog(self, image: Image):
         backlog_cards: List[BacklogCardImageInfo] = []
         cards = self.get_backlog_card_images(image)
 
@@ -500,6 +492,6 @@ class GameImageParser:
 
         return backlog_cards
 
-    def is_loading(self, image: cv2.typing.MatLike):
+    def is_loading(self, image: Image):
         uniform_area = image[5:155, 5:155]
         return (uniform_area == self.black).all()
