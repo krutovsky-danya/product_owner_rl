@@ -7,12 +7,12 @@
 
 # Лидерборд
 
-Доступ к лидерборду в коде на Godot задается в файле global.gd в функции _ready()
+Доступ к лидерборду в коде на Godot задается в файле `global.gd` в функции `_ready()`.
 
 Чтобы создать свой лидерборд, нужно создать профиль на [silentwolf.com](silentwolf.com).
 Полученные данные вставить в поля `api_key`, `game_id`, и выбрать `game_version`.
 
-Для фиксации версии игры, она была выложена на [отдельно](https://krutovsky-danya.itch.io/productownersimulator).
+Для фиксации версии игры, она была выложена [отдельно](https://krutovsky-danya.itch.io/productownersimulator).
 
 Чтобы получить доступ к лидерборду в этой версии игры, свяжитесь с krutovsky.danya@gmail.com
 
