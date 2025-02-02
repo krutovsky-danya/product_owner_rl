@@ -4,7 +4,11 @@ sys.path.append("..")
 
 import pandas as pd
 
-from show_utils import show_rewards_fitting, show_win_rate
+from show_utils import (
+    show_rewards_fitting,
+    show_win_rate,
+    show_estimate_reward_comparison,
+)
 
 
 def show_win_sprint_hist(data: pd.DataFrame):
@@ -35,9 +39,9 @@ def main():
 
     data = pd.concat(data_postions)
 
-    show_rewards_fitting(data, ["Reward"])
-    for experiment in data_postions:
-        show_rewards_fitting(experiment, ["Estimate", "DiscountedReward"])
+    show_rewards_fitting(data)
+    for agent_name in experiments_names:
+        show_estimate_reward_comparison(data, agent_name)
 
     evaluation_data_portions = []
     for experiment_name in experiments_names:
