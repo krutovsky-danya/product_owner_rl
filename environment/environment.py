@@ -68,7 +68,7 @@ class ProductOwnerEnv:
         self.current_state = self._get_state()
         return self.current_state
 
-    def _get_state(self, in_tensor=False):
+    def _get_state(self):
         context = self.game.context
         state = [
             context.current_sprint,
@@ -92,10 +92,7 @@ class ProductOwnerEnv:
             *self.backlog_env.encode(self.game.backlog, self.card_picker_random_generator)
         ]
         assert len(state) == self.state_dim
-        if in_tensor:
-            return torch.tensor(state)
-        else:
-            return np.array(state, dtype=np.float32)
+        return np.array(state, dtype=np.float32)
 
     def _get_completed_cards_count(self):
         completed_cards = self.game.completed_us
