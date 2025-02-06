@@ -1,9 +1,10 @@
+from typing import Optional
 from game.backlog_card.card_info import CardInfo
 
 
 class Card:
     def __init__(self):
-        self.info = None
+        self.info: Optional[CardInfo] = None
         self.is_movable = True
         self.is_in_sprint = False
 

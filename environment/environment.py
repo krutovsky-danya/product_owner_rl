@@ -1,12 +1,13 @@
+import numpy as np
+
+from algorithms.knapsack import solve_knapsack
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
-from .reward_sytem import BaseRewardSystem
 from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import UserCardType
-import torch
-import numpy as np
 from game.game_generators import get_buggy_game_1
+from .reward_sytem import BaseRewardSystem
 
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT
@@ -18,14 +19,21 @@ BUY_ROBOT = 3
 BUY_ROOM = 4
 STATISTICAL_RESEARCH = 5
 USER_SURVEY = 6
+SOLVE_KNAPSACK = 7
 
 
 class ProductOwnerEnv:
     IS_SILENT = False
 
-    def __init__(self, userstory_env=None, backlog_env: BacklogEnv = None, with_info=True,
-                 reward_system: BaseRewardSystem = None,
-                 seed=None, card_picker_seed=None):
+    def __init__(
+        self,
+        userstory_env=None,
+        backlog_env: BacklogEnv = None,
+        with_info=True,
+        reward_system: BaseRewardSystem = None,
+        seed=None,
+        card_picker_seed=None,
+    ):
         self.game = ProductOwnerGame(seed=seed)
         if backlog_env is None:
             self.backlog_env = BacklogEnv()
@@ -36,19 +44,23 @@ class ProductOwnerEnv:
 
         self.meta_space_dim = 19
 
-        self.state_dim = self.meta_space_dim + \
-            self.userstory_env.userstory_space_dim + \
-            self.backlog_env.backlog_space_dim + \
-            self.backlog_env.sprint_space_dim
-        
+        self.state_dim = (
+            self.meta_space_dim
+            + self.userstory_env.userstory_space_dim
+            + self.backlog_env.backlog_space_dim
+            + self.backlog_env.sprint_space_dim
+        )
+
         self.current_state = self._get_state()
 
-        self.meta_action_dim = 7
+        self.meta_action_dim = 8
 
-        self.action_n = self.meta_action_dim + \
-            self.userstory_env.max_action_num + \
-            self.backlog_env.backlog_max_action_num + \
-            self.backlog_env.sprint_max_action_num
+        self.action_n = (
+            self.meta_action_dim
+            + self.userstory_env.max_action_num
+            + self.backlog_env.backlog_max_action_num
+            + self.backlog_env.sprint_max_action_num
+        )
 
         self.with_info = with_info
         if reward_system is None:
@@ -72,10 +84,10 @@ class ProductOwnerEnv:
         context = self.game.context
         state = [
             context.current_sprint,
-            context.get_money() / 10 ** 5,
+            context.get_money() / 10**5,
             context.customers,
             context.get_loyalty(),
-            context.credit / 10 ** 5,
+            context.credit / 10**5,
             context.available_developers_count,
             context.current_rooms_counter,
             context.current_sprint_hours,
@@ -88,8 +100,12 @@ class ProductOwnerEnv:
             self.game.userstories.user_survey_available,
             int(context.done),
             *self._get_completed_cards_count(),
-            *self.userstory_env.encode(self.game.userstories, self.card_picker_random_generator),
-            *self.backlog_env.encode(self.game.backlog, self.card_picker_random_generator)
+            *self.userstory_env.encode(
+                self.game.userstories, self.card_picker_random_generator
+            ),
+            *self.backlog_env.encode(
+                self.game.backlog, self.card_picker_random_generator
+            ),
         ]
         assert len(state) == self.state_dim
         return np.array(state, dtype=np.float32)
@@ -130,7 +146,24 @@ class ProductOwnerEnv:
             result.append(STATISTICAL_RESEARCH)
         if self.game.is_press_user_survey_available():
             result.append(USER_SURVEY)
+        if self._is_knapsack_action_available():
+            result.append(SOLVE_KNAPSACK)
         return result
+
+    def _is_knapsack_action_available(self):
+        backlog = self.game.backlog
+        active_us = set()
+
+        for card in backlog.backlog:
+            active_us.add(card.info.us_id)
+        if len(active_us) != 1:
+            return False
+
+        available_hours = backlog.get_available_hours()
+        for card in backlog.backlog:
+            if card.info.hours <= available_hours:
+                return True
+        return False
 
     def _get_info_cards(self):
         result = self._get_info_userstory_cards()
@@ -142,33 +175,49 @@ class ProductOwnerEnv:
         result = []
         predicate = self.game.is_move_userstory_card_available
         offset = self.meta_action_dim
-        self._set_info_cards(self.userstory_env.userstories_common, offset, predicate, result)
+        self._set_info_cards(
+            self.userstory_env.userstories_common, offset, predicate, result
+        )
         offset += self.userstory_env.us_common_count
-        self._set_info_cards(self.userstory_env.userstories_bugs, offset, predicate, result)
+        self._set_info_cards(
+            self.userstory_env.userstories_bugs, offset, predicate, result
+        )
         offset += self.userstory_env.us_bug_count
-        self._set_info_cards(self.userstory_env.userstories_td, offset, predicate, result)
+        self._set_info_cards(
+            self.userstory_env.userstories_td, offset, predicate, result
+        )
         return result
 
     def _get_info_backlog_cards(self):
         result = []
         predicate = self.game.is_move_backlog_card_available
         offset = self.meta_action_dim + self.userstory_env.max_action_num
-        self._set_info_cards(self.backlog_env.backlog_commons, offset, predicate, result)
+        self._set_info_cards(
+            self.backlog_env.backlog_commons, offset, predicate, result
+        )
         offset += self.backlog_env.backlog_commons_count
         self._set_info_cards(self.backlog_env.backlog_bugs, offset, predicate, result)
         offset += self.backlog_env.backlog_bugs_count
-        self._set_info_cards(self.backlog_env.backlog_tech_debt, offset, predicate, result)
+        self._set_info_cards(
+            self.backlog_env.backlog_tech_debt, offset, predicate, result
+        )
         return result
 
     def _get_info_sprint_cards(self):
         result = []
         predicate = self.game.is_move_sprint_card_available
-        offset = self.meta_action_dim + self.userstory_env.max_action_num + self.backlog_env.backlog_max_action_num
+        offset = (
+            self.meta_action_dim
+            + self.userstory_env.max_action_num
+            + self.backlog_env.backlog_max_action_num
+        )
         self._set_info_cards(self.backlog_env.sprint_commons, offset, predicate, result)
         offset += self.backlog_env.sprint_commons_count
         self._set_info_cards(self.backlog_env.sprint_bugs, offset, predicate, result)
         offset += self.backlog_env.sprint_bugs_count
-        self._set_info_cards(self.backlog_env.sprint_tech_debt, offset, predicate, result)
+        self._set_info_cards(
+            self.backlog_env.sprint_tech_debt, offset, predicate, result
+        )
         return result
 
     def _set_info_cards(self, cards, offset: int, predicate, result):
@@ -191,7 +240,9 @@ class ProductOwnerEnv:
     def get_done(self, info):
         game_done = self.game.context.done
         no_available_actions = len(info) == 0
-        lost_customers = (self.game.context.customers <= 0 and not self.game.context.is_new_game)
+        lost_customers = (
+            self.game.context.customers <= 0 and not self.game.context.is_new_game
+        )
         return game_done or no_available_actions or lost_customers
 
     def _perform_start_sprint_action(self) -> bool:
@@ -205,7 +256,7 @@ class ProductOwnerEnv:
         if is_release_available:
             self.game.userstories_start_release()
         return is_release_available
-    
+
     def _perform_release(self) -> bool:
         is_release_available = self.game.hud.release_available
         if is_release_available:
@@ -220,7 +271,7 @@ class ProductOwnerEnv:
         self.game.buy_robot(room_num)
         worker_count = self.game.context.available_developers_count
         return worker_count_before != worker_count
-    
+
     def _perform_buy_room(self) -> bool:
         room_num = self.game.get_min_available_to_buy_room_number()
         if room_num == -1:
@@ -229,7 +280,7 @@ class ProductOwnerEnv:
         self.game.buy_room(room_num)
         worker_count = self.game.context.available_developers_count
         return worker_count_before != worker_count
-    
+
     def _perform_statistical_research(self) -> bool:
         if not self.game.userstories.statistical_research_available:
             return False
@@ -237,7 +288,7 @@ class ProductOwnerEnv:
         self.game.press_statistical_research()
         stories_after = len(self.game.userstories.stories_list)
         return stories_before != stories_after
-    
+
     def _perform_user_survey(self) -> bool:
         if not self.game.userstories.user_survey_available:
             return False
@@ -245,7 +296,26 @@ class ProductOwnerEnv:
         self.game.press_user_survey()
         stories_after = len(self.game.userstories.stories_list)
         return stories_before != stories_after
-    
+
+    def _perform_knapsack(self) -> bool:
+        if not self._is_knapsack_action_available():
+            return False
+
+        backlog = self.game.backlog
+
+        tasks = [card.info.hours for card in backlog.backlog]
+        capacity = backlog.get_available_hours()
+
+        knapsack = solve_knapsack(tasks, capacity)
+
+        for task in knapsack:
+            for card in backlog.backlog:
+                if card.info.hours == task:
+                    self.game.move_backlog_card(card)
+                    break
+
+        return True
+
     def _perform_action(self, action: int) -> bool:
         # we'll assume that action in range(0, max_action_num)
         if action == START_SPRINT:
@@ -262,26 +332,28 @@ class ProductOwnerEnv:
             return self._perform_statistical_research()
         if action == USER_SURVEY:
             return self._perform_user_survey()
-        
+        if action == SOLVE_KNAPSACK:
+            return self._perform_knapsack()
+
         return self._perform_action_card(action - self.meta_action_dim)
 
     def _perform_action_card(self, action: int) -> bool:
         if action < self.userstory_env.max_action_num:
             return self._perform_action_userstory(action)
-        
+
         card_id = action - self.userstory_env.max_action_num
         if card_id < self.backlog_env.backlog_max_action_num:
             return self._perform_action_backlog_card(card_id)
-        
+
         card_id = card_id - self.backlog_env.backlog_max_action_num
         return self._perform_remove_sprint_card(card_id)
 
     def _perform_action_backlog_card(self, action: int) -> bool:
         card: Card = self.backlog_env.get_card(action)
-        
+
         if card is None:
             return False
-        
+
         hours_after_move = self.game.backlog.calculate_hours_sum() + card.info.hours
         if hours_after_move > self.game.backlog.get_max_hours():
             return False
@@ -333,14 +405,26 @@ class LoggingEnv(ProductOwnerEnv):
         print(action, reward)
         return new_state, reward, done, info
 
+
 class BuggyProductOwnerEnv(ProductOwnerEnv):
-    def __init__(self, userstory_env=None, backlog_env=None, with_info=True,
-                 seed=None, card_picker_seed=None):
-        super().__init__(userstory_env, backlog_env, with_info,
-                         seed=seed, card_picker_seed=card_picker_seed)
+    def __init__(
+        self,
+        userstory_env=None,
+        backlog_env=None,
+        with_info=True,
+        seed=None,
+        card_picker_seed=None,
+    ):
+        super().__init__(
+            userstory_env,
+            backlog_env,
+            with_info,
+            seed=seed,
+            card_picker_seed=card_picker_seed,
+        )
         self.game = get_buggy_game_1(seed=seed)
         self.current_state = self._get_state()
-    
+
     def reset(self, seed=None, card_picker_seed=None):
         self.game = get_buggy_game_1(seed=seed)
         super()._reset_card_picker_random_generator(card_picker_seed)
