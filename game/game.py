@@ -285,7 +285,7 @@ class ProductOwnerGame:
         return (self.userstories.available and len(stories) > 0 and
                 card.is_movable and not card.is_in_release)
 
-    def move_userstory_card(self, card):  # action!
+    def move_userstory_card(self, card: Card):  # action!
         if self.userstories.available:
             if isinstance(card, int):
                 stories = self.userstories.stories_list
@@ -303,7 +303,7 @@ class ProductOwnerGame:
         has_enough_hours = hours_after_move <= self.backlog.get_max_hours()
         return len(cards) > 0 and card.is_movable and not card.is_in_sprint and has_enough_hours
 
-    def move_backlog_card(self, card):  # action!
+    def move_backlog_card(self, card: Card):  # action!
         cards = self.backlog.backlog
         if len(cards) > 0:
             if isinstance(card, int):

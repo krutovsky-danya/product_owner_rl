@@ -5,12 +5,13 @@ from game.userstory_card.userstory_card_info import UserStoryCardInfo
 
 from typing import List
 
+
 class Backlog:
     def __init__(self, context: GlobalContext):
         self.context = context
         self.backlog: List[Card] = []
         self.sprint: List[Card] = []
-    
+
     def get_max_hours(self) -> int:
         return self.context.available_developers_count * GlobalConstants.developer_hours
 
@@ -47,6 +48,9 @@ class Backlog:
             need_hours_sum += card.info.hours
 
         return need_hours_sum
+
+    def get_available_hours(self) -> int:
+        return self.get_max_hours() - self.calculate_hours_sum()
 
     def get_cards(self):
         cards_info = []

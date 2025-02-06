@@ -4,6 +4,7 @@ from environment.userstory_env import UserstoryEnv
 from environment.reward_sytem import BaseRewardSystem
 from game.game_constants import GlobalConstants
 import numpy as np
+from environment.environment import USER_SURVEY
 from environment.backlog_env import BACKLOG_COMMON_FEATURE_COUNT
 
 
@@ -56,7 +57,7 @@ class TestEnvFunctions(unittest.TestCase):
         self.assertEqual(us_count + 2, len(game_sim.userstories.stories_list))
 
     def move_userstory_card(self, us_story_count, us_release_count):
-        state = self.env.step(7)  # move userstory card
+        state = self.env.step(self.env.meta_action_dim)  # move userstory card
         if not IS_SILENT:
             print(state)
         game_sim = self.env.game
