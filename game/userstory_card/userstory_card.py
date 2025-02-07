@@ -10,5 +10,10 @@ class UserStoryCard:
     def set_card_info(self, card_info: UserStoryCardInfo):
         self.info = card_info
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, UserStoryCard):
+            return False
+        return self.info == value.info
+
     def __repr__(self) -> str:
-        return repr(self.info)
+        return f"UserStoryCard({repr(self.info)})"

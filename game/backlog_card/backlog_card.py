@@ -8,7 +8,7 @@ class Card:
         self.is_in_sprint = False
 
     def __repr__(self) -> str:
-        return repr(self.info)
+        return f'Card({repr(self.info)})'
 
     def add_data(self, card_info: CardInfo):
         self.info = card_info

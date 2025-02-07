@@ -4,4 +4,4 @@ figures/**
 SAC/**
 models/**
 experiments/models/**
-web_interaction/game_state.png
+web_interaction/game_states/**.png

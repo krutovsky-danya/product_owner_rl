@@ -6,7 +6,7 @@ import random
 
 
 class QFunction(nn.Module):
-    def __init__(self, state_dim, action_n, inner_layer=256):
+    def __init__(self, state_dim, action_n, inner_layer=512):
         super().__init__()
         self.state_dim = state_dim
         self.action_n = action_n
