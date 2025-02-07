@@ -36,7 +36,7 @@ class LoggingStudy(MetricsStudy):
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
         self.save_memory = save_memory
-        self.logger = self._get_logger(log_level)
+        self.logger = self._get_logger(agent.__class__.__name__, log_level)
         create_log_entry = get_log_entry_creator(base_epoch_log_state, base_end_log_state)
         self._logs = {
             self.REWARDS_LOG_KEY: create_log_entry(self.rewards_log),
@@ -46,10 +46,10 @@ class LoggingStudy(MetricsStudy):
             self.LOSS_LOG_KEY: create_log_entry(self.loss_log),
         }
 
-    def _get_logger(self, log_level):
-        logger = logging.getLogger(f'{datetime.datetime.now()}')
+    def _get_logger(self, name, log_level):
+        logger = logging.getLogger(name)
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        handler.setFormatter(logging.Formatter("%(name)s %(asctime)s %(message)s"))
         logger.addHandler(handler)
         logger.setLevel(log_level)
 
@@ -155,6 +155,8 @@ class LoggingStudy(MetricsStudy):
             self.save_model(path, agent_name, env_name, epoch, is_after_study=False)
         path = f"{agent_name}/model_{epoch_n}_{env_name}.pt"
         self.save_model(path, agent_name, env_name, epoch_n, is_after_study=True)
+
+        return self
 
     def define_epoch_count_and_save_rate(self, episode_n) -> int:
         if self.save_rate is None:
