@@ -80,6 +80,7 @@ def save_evaluation(sub_name: str, evaluations: List, now: str, experiment_name)
     evaluations_path = f"evaluations_{sub_name}.csv"
     update_data_frame(evaluations_path, df)
 
+
 def save_data(sub_name: str, data: List, columns: List[str], experiment_name):
     df = pd.DataFrame(data, columns=columns)
     df["DateTime"] = datetime.datetime.now()
@@ -96,3 +97,27 @@ def get_wins_stat(a_wins: np.ndarray, b_wins: np.ndarray):
     print(wins, loses)
     res = chi2_contingency([wins, loses])
     return res
+
+
+def save_study_data(study: LoggingStudy, experiment_name: str):
+    episode_n = len(study.rewards_log)
+    columns = ["Trajectory", "Reward", "Estimate", "DiscountedReward"]
+    sub_name = experiment_name + f"_{episode_n}"
+
+    data = zip(
+        range(episode_n),
+        study.rewards_log,
+        study.q_value_log,
+        study.discounted_rewards_log,
+    )
+
+    save_data(sub_name, data, columns, experiment_name)
+
+
+def make_evaluations(study, evaluation_times):
+    evaluations = []
+    for i in range(evaluation_times):
+        evaluation = eval_agent(study)
+        evaluations.append(evaluation)
+
+    return evaluations

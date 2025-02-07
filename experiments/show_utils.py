@@ -70,3 +70,20 @@ def show_win_sprints(evals_df: pd.DataFrame):
     wins = evals_df[evals_df["Win"]]
     wins = wins.groupby(["ExperimentName"]).min()
     print(wins.reset_index())
+
+
+def show_win_sprint_hist(data: pd.DataFrame):
+    win_data = data[data["Win"]].drop(columns=["Win"])
+
+    hist = (
+        win_data.groupby(["Sprint", "ExperimentName"])
+        .size()
+        .unstack()
+        .plot(kind="bar", stacked=False)
+    )
+    hist.set_ylabel("Number of wins")
+    hist.set_xlabel("Sprint")
+    hist.set_title("Number of wins per sprint")
+    hist.legend(title="Experiment")
+    hist.get_figure().savefig("wins.png")
+    hist.get_figure().show()
