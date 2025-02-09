@@ -15,11 +15,12 @@ from training_utils import save_evaluation, save_study_data, make_evaluations
 def train(agent_factory, env_factory):
     episode_n = 1500
     trajectory_max_len = 1000
-    experiment_name = agent.__class__.__name__
 
     env: ProductOwnerEnv = env_factory()
     agent: DQN = agent_factory(env.state_dim, env.action_n)
     study = LoggingStudy(env, agent, trajectory_max_len)
+
+    experiment_name = agent.__class__.__name__
 
     study.study_agent(episode_n)
 
