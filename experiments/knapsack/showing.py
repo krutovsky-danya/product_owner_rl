@@ -14,7 +14,7 @@ from show_utils import (
 
 def main():
     sub_name = f"1500"
-    experiments_names = ["Knapsack_DoubleDQN"]
+    experiments_names = ["DoubleDQN", "Knapsack_DoubleDQN"]
 
     data_postions = []
     for experiment_name in experiments_names:
