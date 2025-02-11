@@ -9,7 +9,8 @@ from game.userstory_card.tech_debt_user_story_info import TechDebtInfo
 
 def save_to_leaderboard(current_sprint):
     # отличается от годота
-    print(f"score: {current_sprint}")
+    # print(f"score: {current_sprint}")
+    pass
 
 
 class GlobalContext:
@@ -53,7 +54,7 @@ class GlobalContext:
     def game_over(self, is_win):
         self.done = True
         if is_win:
-            print("win")
+            # print("win")
             save_to_leaderboard(self.current_sprint)
             self.is_victory = True
         else:
