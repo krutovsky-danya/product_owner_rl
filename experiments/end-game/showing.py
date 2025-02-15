@@ -14,7 +14,7 @@ from show_utils import (
 
 def main():
     sub_name = f"1500"
-    experiments_names = ["full_game_baseline"]
+    experiments_names = ["full_game_baseline", "full_game_heuristic"]
 
     data_postions = []
     for experiment_name in experiments_names:
