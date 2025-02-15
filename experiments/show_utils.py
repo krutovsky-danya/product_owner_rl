@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from typing import List
-from scipy.stats import chi2_contingency
+from scipy.stats import chi2_contingency, mannwhitneyu
 
 
 def moving_average(x, w):
@@ -68,8 +68,8 @@ def show_win_rate(data: pd.DataFrame):
 
     print(win_groups)
 
-    total_wins = win_groups.reset_index()
-    total_wins = total_wins.groupby(["ExperimentName"])["Win"].sum()
+    total_wins = data.groupby(["ExperimentName"]).agg({"Win": ["sum", "count"]})
+    total_wins["WinRate"] = total_wins["Win"]["sum"] / total_wins["Win"]["count"]
     print(total_wins)
 
     show_win_sprints(data)
@@ -98,7 +98,7 @@ def show_win_sprint_hist(data: pd.DataFrame):
     hist.get_figure().show()
 
 
-def show_statistical_significance(
+def show_win_rate_statistical_significance(
     data: pd.DataFrame, experiment_name_a: str, experiment_name_b: str
 ):
     a_wins = data[data["ExperimentName"] == experiment_name_a]["Win"].values
@@ -106,3 +106,27 @@ def show_statistical_significance(
     res = get_wins_stat(a_wins, b_wins)
     print("Win rate significance p-value:", res.pvalue)
     print("Win rate significance statistic:", res.statistic)
+
+
+def show_sprint_statistical_significance(
+    data: pd.DataFrame, experiment_name_a: str, experiment_name_b: str
+):
+    win_data = data[data["Win"]].drop(columns=["Win"])
+    a_data = win_data[win_data["ExperimentName"] == experiment_name_a]
+    b_data = win_data[win_data["ExperimentName"] == experiment_name_b]
+
+    a_win_sprints = a_data["Sprint"].values
+    b_win_sprints = b_data["Sprint"].values
+
+    mannwhitneyu_res = mannwhitneyu(a_win_sprints, b_win_sprints, alternative="two-sided")
+
+    print("Win sprint in A group is equal B group p-value:", mannwhitneyu_res.pvalue)
+    print("Win sprint in A group is equal B group statistic:", mannwhitneyu_res.statistic)
+
+    mannwhitneyu_res = mannwhitneyu(a_win_sprints, b_win_sprints, alternative="less")
+
+    print("Sprint in A group is less than in b group p-value:", mannwhitneyu_res.pvalue)
+    print(
+        "Sprint in A group is less than in b group statistic:",
+        mannwhitneyu_res.statistic,
+    )

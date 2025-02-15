@@ -9,12 +9,14 @@ from show_utils import (
     show_win_rate,
     show_estimate_reward_comparison,
     show_win_sprint_hist,
+    show_win_rate_statistical_significance,
+    show_sprint_statistical_significance,
 )
 
 
 def main():
     sub_name = f"1500"
-    experiments_names = ["full_game_baseline"]
+    experiments_names = ["full_game_baseline", "full_game_heuristic"]
 
     data_postions = []
     for experiment_name in experiments_names:
@@ -36,6 +38,8 @@ def main():
 
     show_win_rate(evaluation_data)
     show_win_sprint_hist(evaluation_data)
+    show_win_rate_statistical_significance(evaluation_data, *experiments_names)
+    show_sprint_statistical_significance(evaluation_data, *experiments_names)
 
 
 if __name__ == "__main__":
