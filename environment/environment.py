@@ -20,6 +20,7 @@ BUY_ROOM = 4
 STATISTICAL_RESEARCH = 5
 USER_SURVEY = 6
 SOLVE_KNAPSACK = 7
+PLAY_BLANK_SPRINTS = 8
 
 
 class ProductOwnerEnv:
@@ -53,7 +54,7 @@ class ProductOwnerEnv:
 
         self.current_state = self._get_state()
 
-        self.meta_action_dim = 8
+        self.meta_action_dim = 9
 
         self.action_n = (
             self.meta_action_dim
@@ -148,6 +149,8 @@ class ProductOwnerEnv:
             result.append(USER_SURVEY)
         if self._is_knapsack_action_available():
             result.append(SOLVE_KNAPSACK)
+        if self._is_play_blank_sprint_available():
+            result.append(PLAY_BLANK_SPRINTS)
         return result
 
     def _is_knapsack_action_available(self):
@@ -164,6 +167,11 @@ class ProductOwnerEnv:
             if card.info.hours <= available_hours:
                 return True
         return False
+
+    def _is_play_blank_sprint_available(self):
+        if self.game.context.current_sprint < 35:
+            return False
+        return self.game.is_backlog_start_sprint_available()
 
     def _get_info_cards(self):
         result = self._get_info_userstory_cards()
@@ -316,6 +324,17 @@ class ProductOwnerEnv:
 
         return True
 
+    def _play_blank_sprints_to_end(self):
+        if not self._is_play_blank_sprint_available():
+            return False
+        game = self.game
+        while not self.get_done([0]):
+            if game.backlog.can_start_sprint():
+                game.backlog_start_sprint()
+            else:
+                break
+        return True
+
     def _perform_action(self, action: int) -> bool:
         # we'll assume that action in range(0, max_action_num)
         if action == START_SPRINT:
@@ -334,6 +353,8 @@ class ProductOwnerEnv:
             return self._perform_user_survey()
         if action == SOLVE_KNAPSACK:
             return self._perform_knapsack()
+        if action == PLAY_BLANK_SPRINTS:
+            return self._play_blank_sprints_to_end()
 
         return self._perform_action_card(action - self.meta_action_dim)
 
