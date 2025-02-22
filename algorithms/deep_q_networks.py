@@ -78,6 +78,8 @@ class DQN(nn.Module):
                          dim=1).values
 
     def get_padded_to_action_n(self, guide: torch.Tensor):
+        if len(guide) == 0:
+            return torch.zeros(self.q_function.action_n)
         return torch.nn.functional.pad(guide,
                                        pad=(0, self.q_function.action_n - guide.numel()),
                                        mode="constant",

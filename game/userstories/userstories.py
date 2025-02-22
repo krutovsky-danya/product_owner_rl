@@ -81,7 +81,7 @@ class UserStories:
         for card in self.release:
             us_label: UserStoryCardInfo = card.info
             if us_label is not None and us_label.label == "Bug":
-                need_hours_sum += self.context.available_developers_count / 2
+                need_hours_sum += self.context.available_developers_count // 2
             else:
                 need_hours_sum += self.context.available_developers_count
 
