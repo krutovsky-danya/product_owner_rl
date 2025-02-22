@@ -3,10 +3,19 @@ import numpy as np
 import pandas as pd
 
 from typing import List
+from scipy.stats import chi2_contingency
 
 
 def moving_average(x, w):
     return np.convolve(x, np.ones(w), "full")[: -w + 1] / w
+
+
+def get_wins_stat(a_wins: np.ndarray, b_wins: np.ndarray):
+    wins = np.array([a_wins.sum(), b_wins.sum()])
+    sizes = np.array([a_wins.size, b_wins.size])
+    loses = sizes - wins
+    res = chi2_contingency([wins, loses])
+    return res
 
 
 def show_rewards_fitting(df: pd.DataFrame):
@@ -87,3 +96,13 @@ def show_win_sprint_hist(data: pd.DataFrame):
     hist.legend(title="Experiment")
     hist.get_figure().savefig("wins.png")
     hist.get_figure().show()
+
+
+def show_statistical_significance(
+    data: pd.DataFrame, experiment_name_a: str, experiment_name_b: str
+):
+    a_wins = data[data["ExperimentName"] == experiment_name_a]["Win"].values
+    b_wins = data[data["ExperimentName"] == experiment_name_b]["Win"].values
+    res = get_wins_stat(a_wins, b_wins)
+    print("Win rate significance p-value:", res.pvalue)
+    print("Win rate significance statistic:", res.statistic)

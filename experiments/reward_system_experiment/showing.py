@@ -8,7 +8,7 @@ from typing import List
 sys.path.append("..")
 sys.path.append("../..")
 
-from training_utils import get_wins_stat
+from show_utils import get_wins_stat
 
 def main():
     episodes_n = '1501'
