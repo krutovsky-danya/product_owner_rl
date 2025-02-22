@@ -9,6 +9,7 @@ from show_utils import (
     show_win_rate,
     show_estimate_reward_comparison,
     show_win_sprint_hist,
+    show_statistical_significance,
 )
 
 
@@ -36,6 +37,7 @@ def main():
 
     show_win_rate(evaluation_data)
     show_win_sprint_hist(evaluation_data)
+    show_statistical_significance(evaluation_data, *experiments_names)
 
 
 if __name__ == "__main__":
