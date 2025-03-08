@@ -149,7 +149,7 @@ class ProductOwnerEnv:
             result.append(USER_SURVEY)
         if self._is_knapsack_action_available():
             result.append(SOLVE_KNAPSACK)
-        if self._is_play_blank_sprint_available():
+        if False and self._is_play_blank_sprint_available():
             result.append(PLAY_BLANK_SPRINTS)
         return result
 
