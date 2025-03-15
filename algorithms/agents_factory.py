@@ -1,8 +1,9 @@
+from .q_function import QFunction
 from .deep_q_networks import DQN, HardTargetDQN, SoftTargetDQN, DoubleDQN
 
 
 class DqnAgentsFactory:
-    def __init__(self):
+    def __init__(self, q_function_embeding_size=512):
         self.gamma = 0.9
         self.learning_rate = 1e-3
         self.batch_size = 64
@@ -10,11 +11,12 @@ class DqnAgentsFactory:
         self.epsilon_min = 0.01
         self.target_update = 100
         self.tau = 1e-3
+        self.q_function_embeding_size = q_function_embeding_size
 
     def create_dqn(self, state_dim, action_n):
+        q_function = QFunction(state_dim, action_n, self.q_function_embeding_size)
         agent = DQN(
-            state_dim,
-            action_n,
+            q_function,
             gamma=self.gamma,
             lr=self.learning_rate,
             batch_size=self.batch_size,
@@ -25,9 +27,9 @@ class DqnAgentsFactory:
         return agent
 
     def create_hard_target_dqn(self, state_dim, action_n):
+        q_function = QFunction(state_dim, action_n, self.q_function_embeding_size)
         agent = HardTargetDQN(
-            state_dim,
-            action_n,
+            q_function,
             gamma=self.gamma,
             lr=self.learning_rate,
             batch_size=self.batch_size,
@@ -38,9 +40,9 @@ class DqnAgentsFactory:
         return agent
 
     def create_soft_target_dqn(self, state_dim, action_n):
+        q_function = QFunction(state_dim, action_n, self.q_function_embeding_size)
         agent = SoftTargetDQN(
-            state_dim,
-            action_n,
+            q_function,
             gamma=self.gamma,
             tau=self.tau,
             lr=self.learning_rate,
@@ -51,9 +53,9 @@ class DqnAgentsFactory:
         return agent
 
     def create_ddqn(self, state_dim, action_n):
+        q_function = QFunction(state_dim, action_n, self.q_function_embeding_size)
         agent = DoubleDQN(
-            state_dim,
-            action_n,
+            q_function,
             gamma=self.gamma,
             tau=self.tau,
             lr=self.learning_rate,
