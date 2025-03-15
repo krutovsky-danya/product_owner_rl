@@ -5,3 +5,5 @@ SAC/**
 models/**
 experiments/models/**
 web_interaction/game_states/**.png
+/experiments/neural_net_size/data_DoubleDQN_512_1500.csv
+/experiments/neural_net_size/evaluations_DoubleDQN_512.csv
