@@ -10,6 +10,7 @@ import logging
 from typing import List, Tuple, Optional
 from pipeline.logging_utils import KeyLogState, get_log_entry_creator
 
+loggers = {}
 
 class LoggingStudy(MetricsStudy):
     REWARDS_LOG_KEY = "rewards"
@@ -47,11 +48,16 @@ class LoggingStudy(MetricsStudy):
         }
 
     def _get_logger(self, name, log_level):
+        if name in loggers:
+            return loggers.get(name)
+        
         logger = logging.getLogger(name)
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(logging.Formatter("%(name)s %(asctime)s %(message)s"))
         logger.addHandler(handler)
         logger.setLevel(log_level)
+
+        loggers[name] = logger
 
         return logger
 
