@@ -86,7 +86,7 @@ class PolicyFunction(BaseNeuralFunction):
         return self.softmax(logits)
 
 
-def _take_optimization_step(optimizer, loss):
+def _take_optimization_step(optimizer: torch.optim.Optimizer, loss: torch.Tensor):
     loss.backward()
     optimizer.step()
     optimizer.zero_grad()
