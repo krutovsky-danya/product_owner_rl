@@ -10,8 +10,7 @@ from .q_function import QFunction
 class DQN(nn.Module):
     def __init__(
         self,
-        state_dim,
-        action_dim,
+        q_function: QFunction,
         gamma=0.99,
         lr=1e-3,
         batch_size=64,
@@ -19,10 +18,8 @@ class DQN(nn.Module):
         epsilon_min=0.01,
     ):
         super().__init__()
-        self.state_dim = state_dim
-        self.action_dim = action_dim
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.q_function = QFunction(state_dim, action_dim).to(device=self.device)
+        self.q_function = q_function.to(device=self.device)
         self.gamma = gamma
         self.batch_size = batch_size
         self.epsilon = 1
@@ -111,8 +108,7 @@ class DQN(nn.Module):
 class TargetDQN(DQN):
     def __init__(
         self,
-        state_dim,
-        action_dim,
+        q_function: QFunction,
         gamma=0.99,
         lr=1e-3,
         batch_size=64,
@@ -121,7 +117,7 @@ class TargetDQN(DQN):
         epsilon_min=0.01,
     ):
         super().__init__(
-            state_dim, action_dim, gamma, lr, batch_size, epsilon_decrease, epsilon_min
+            q_function, gamma, lr, batch_size, epsilon_decrease, epsilon_min
         )
         self.target_q_function = self.q_function.get_target_copy(self.device)
         self.target_update = target_update
@@ -157,8 +153,7 @@ class HardTargetDQN(TargetDQN):
 class SoftTargetDQN(TargetDQN):
     def __init__(
         self,
-        state_dim,
-        action_dim,
+        q_function: QFunction,
         gamma=0.99,
         lr=1e-3,
         tau=0.1,
@@ -167,8 +162,7 @@ class SoftTargetDQN(TargetDQN):
         epsilon_min=0.01,
     ):
         super().__init__(
-            state_dim,
-            action_dim,
+            q_function,
             gamma,
             lr,
             batch_size,
@@ -190,7 +184,7 @@ class SoftTargetDQN(TargetDQN):
 
 class DoubleDQN(SoftTargetDQN):
     def get_max_q_values(self, next_states, next_guides):
-        next_states_q = self.q_function(next_states).take_along_dim(next_guides, dim=1)
+        next_states_q = self.q_function.forward(next_states).take_along_dim(next_guides, dim=1)
         best_actions = torch.argmax(next_states_q, axis=1)
         best_actions = next_guides[torch.arange(self.batch_size), best_actions]
 
