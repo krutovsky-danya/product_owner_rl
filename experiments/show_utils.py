@@ -81,7 +81,7 @@ def show_win_sprints(evals_df: pd.DataFrame):
     print(wins.reset_index())
 
 
-def show_win_sprint_hist(data: pd.DataFrame):
+def show_win_sprint_hist(data: pd.DataFrame, sprints_count=None):
     win_data = data[data["Win"]].drop(columns=["Win"])
 
     hist = (
@@ -92,6 +92,7 @@ def show_win_sprint_hist(data: pd.DataFrame):
     )
     hist.set_ylabel("Number of wins")
     hist.set_xlabel("Sprint")
+    hist.set_xlim(-1, sprints_count)
     hist.set_title("Number of wins per sprint")
     hist.legend(title="Experiment")
     hist.get_figure().savefig("wins.png")
