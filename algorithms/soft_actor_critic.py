@@ -3,50 +3,8 @@ from torch import nn
 import numpy as np
 import random
 
-
-class BaseNeuralFunction(nn.Module):
-    def __init__(self, state_dim, action_n, inner_layer=128):
-        super().__init__()
-        self.state_dim = state_dim
-        self.action_n = action_n
-        self.inner_layer = inner_layer
-
-        self.network = nn.Sequential(
-            nn.Linear(state_dim, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, action_n)
-        )
-
-    def forward(self, states):
-        return self.network(states)
-
-    @torch.no_grad()
-    def predict(self, state):
-        self.network.eval()
-        result = self.network(state.unsqueeze(0))
-        self.network.train(True)
-        return result
-
-
-class QFunction(BaseNeuralFunction):
-    def __init__(self, state_dim, action_n, inner_layer=256):
-        super().__init__(state_dim, action_n, inner_layer)
-
-    def get_target_copy(self, device):
-        target_q_function: nn.Module = QFunction(self.state_dim, self.action_n, self.inner_layer)
-        target_q_function = target_q_function.to(device)
-
-        state_dict = self.state_dict()
-        target_q_function.load_state_dict(state_dict)
-
-        for param in target_q_function.parameters():
-            param.requires_grad = False
-
-        return target_q_function
+from .base_neural_function import BaseNeuralFunction
+from .q_function import QFunction
 
 
 class PolicyFunction(BaseNeuralFunction):
@@ -92,7 +50,7 @@ def _take_optimization_step(optimizer: torch.optim.Optimizer, loss: torch.Tensor
     optimizer.zero_grad()
 
 
-def _convert_loss(loss):
+def _convert_loss(loss: torch.Tensor):
     return loss.cpu().detach().numpy()
 
 
