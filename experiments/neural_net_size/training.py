@@ -34,7 +34,7 @@ def train(agents_factory: DqnAgentsFactory, env_factory):
 
 if __name__ == "__main__":
     environment_factory = EnvironmentFactory()
-    for embeding_size in [1024, 2048]:
+    for embeding_size in [256]:
         agents_factory = DqnAgentsFactory(q_function_embeding_size=embeding_size)
         for i in range(5):
-            train(agents_factory, environment_factory.create_credit_env)
+            train(agents_factory, environment_factory.create_full_env)
