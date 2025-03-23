@@ -3,7 +3,7 @@ from .deep_q_networks import DQN, HardTargetDQN, SoftTargetDQN, DoubleDQN
 
 
 class DqnAgentsFactory:
-    def __init__(self, q_function_embeding_size=512):
+    def __init__(self):
         self.gamma = 0.9
         self.learning_rate = 1e-3
         self.batch_size = 64
@@ -11,7 +11,7 @@ class DqnAgentsFactory:
         self.epsilon_min = 0.01
         self.target_update = 100
         self.tau = 1e-3
-        self.q_function_embeding_size = q_function_embeding_size
+        self.q_function_embeding_size = 256
 
     def create_dqn(self, state_dim, action_n):
         q_function = QFunction(state_dim, action_n, self.q_function_embeding_size)
