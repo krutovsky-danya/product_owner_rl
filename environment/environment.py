@@ -139,18 +139,18 @@ class ProductOwnerEnv:
             result.append(DECOMPOSE)
         if self.game.is_hud_release_product_available():
             result.append(RELEASE)
-        if self.game.is_buy_robot_available():
-            result.append(BUY_ROBOT)
-        if self.game.is_buy_room_available():
-            result.append(BUY_ROOM)
+        # if self.game.is_buy_robot_available():
+        #     result.append(BUY_ROBOT)
+        # if self.game.is_buy_room_available():
+        #     result.append(BUY_ROOM)
         if self.game.is_press_statistical_research_available():
             result.append(STATISTICAL_RESEARCH)
-        if self.game.is_press_user_survey_available():
-            result.append(USER_SURVEY)
+        # if self.game.is_press_user_survey_available():
+        #     result.append(USER_SURVEY)
         if self._is_knapsack_action_available():
             result.append(SOLVE_KNAPSACK)
-        if False and self._is_play_blank_sprint_available():
-            result.append(PLAY_BLANK_SPRINTS)
+        # if self._is_play_blank_sprint_available():
+        #     result.append(PLAY_BLANK_SPRINTS)
         return result
 
     def _is_knapsack_action_available(self):
