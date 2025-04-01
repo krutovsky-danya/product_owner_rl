@@ -64,7 +64,7 @@ def main():
         ],
         aspect="auto",
         origin="lower",
-        cmap="viridis_r",
+        # cmap="gray",
     )
     plt.colorbar()
     plt.ylabel("Customers")
