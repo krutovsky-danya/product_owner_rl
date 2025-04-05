@@ -1,19 +1,13 @@
-from .base_reward_system import BaseRewardSystem
-
-from environment.Action import Action
+from .full_potential_credit_reward_system import FullPotentialCreditRewardSystem
 
 
-class StaircaseRewardSystem(BaseRewardSystem):
-    def __init__(self, sprint_edge=100) -> None:
-        super().__init__({})
+class StaircaseRewardSystem(FullPotentialCreditRewardSystem):
+    def __init__(self, config, coefficient, gamma, sprint_edge=100) -> None:
+        super().__init__(config, coefficient, gamma)
         self.money_boundary = 1e6
         self.sprint_edge = sprint_edge
-        self.important_actions = [
-            Action.START_SPRINT,
-            Action.RELEASE,
-        ]
 
-    def get_done(self, state) -> bool:
+    def has_game_completed(self, state) -> bool:
         is_new_game = self.is_new_game(state)
         customers = self.get_customers(state)
         have_lost_customers = customers < 0 and not is_new_game
@@ -23,13 +17,10 @@ class StaircaseRewardSystem(BaseRewardSystem):
         if not success:
             return -1
 
-        if self.get_done(state_new):
+        if self.has_game_completed(state_new):
             return self.get_end_game_reward(state_new)
 
-        if action in self.important_actions:
-            return 0.01
-
-        return 0.001
+        return super().get_reward(state_old, action, state_new, success)
 
     def get_end_game_reward(self, state) -> float:
         sprint = self.get_sprint(state)

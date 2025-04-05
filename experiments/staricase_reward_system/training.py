@@ -35,5 +35,4 @@ def train(agents_factory: DqnAgentsFactory, env_factory):
 if __name__ == "__main__":
     environment_factory = EnvironmentFactory()
     agents_factory = DqnAgentsFactory()
-    for i in range(5):
-        train(agents_factory, environment_factory.create_staircase_env)
+    train(agents_factory, environment_factory.create_staircase_env)
