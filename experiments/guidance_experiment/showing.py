@@ -61,12 +61,13 @@ def main():
     default_rewards_files = get_experiment_files(reward_files, False)
     default_rewards = read_files_data(default_rewards_files)
 
-    plt.plot(np.mean(guidance_rewards, axis=0), ".", label="guidance")
-    plt.plot(np.mean(default_rewards, axis=0), ".", label="default")
+    plt.plot(np.mean(guidance_rewards, axis=0), ".", label="Guidance")
+    plt.plot(np.mean(default_rewards, axis=0), ".", label="Default")
     plt.legend()
     plt.title('Rewards')
-    plt.xlabel('trajectory')
-    plt.ylabel('rewards')
+    plt.xlabel('Trajectory')
+    plt.ylabel('Rewards')
+    plt.grid()
     plt.savefig('guidance_rewards.png')
     plt.show()
 
