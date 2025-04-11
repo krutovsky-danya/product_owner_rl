@@ -3,11 +3,15 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 
+from .PolicyFunction import PolicyFunction
+
+# from .ValueFunction import ValueFunction
+
 
 class PPO_Base(nn.Module):
     def __init__(
         self,
-        pi_model: nn.Module,
+        pi_model: PolicyFunction,
         v_model: nn.Module,
         gamma,
         batch_size,
@@ -17,7 +21,7 @@ class PPO_Base(nn.Module):
         v_lr,
     ):
         super().__init__()
-        self.pi_model = pi_model
+        self.pi_model: PolicyFunction = pi_model
         self.v_model = v_model
         self.gamma = gamma
         self.batch_size = batch_size
@@ -59,6 +63,8 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         self,
         state_dim,
         action_n,
+        pi_model: PolicyFunction = None,
+        v_model: nn.Module = None,
         gamma=0.99,
         batch_size=128,
         epsilon=0.2,
@@ -68,16 +74,6 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
     ):
         self.action_n = action_n
         self.inner_layer = 256
-
-        pi_model = nn.Sequential(
-            nn.Linear(state_dim, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, action_n),
-        )
 
         v_model = nn.Sequential(
             nn.Linear(state_dim, self.inner_layer),
@@ -93,40 +89,35 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
         )
 
-    def get_dist(self, pi_values, available_actions_mask):
-        unavailable_actions_mask = ~available_actions_mask
-        pi_values[unavailable_actions_mask] = -torch.inf
-        dist = Categorical(logits=pi_values)
-        return dist
-
     def _get_log_probs(
         self,
         states: torch.Tensor,
         actions: torch.Tensor,
         available_actions_mask: np.ndarray,
     ) -> torch.Tensor:
-        pi_values = self.pi_model(states)
-        dist = self.get_dist(pi_values, available_actions_mask)
+        pi_values = self.pi_model.forward_guided(states, available_actions_mask)
+        dist = Categorical(logits=pi_values)
         log_probs = dist.log_prob(actions)
         return log_probs
 
     def get_action(self, state, info):
         state = torch.FloatTensor(state)
-        pi_values = self.pi_model(state)
         available_actions_mask = self._convert_infos([info])
-        dist = self.get_dist(pi_values, available_actions_mask[0])
+        pi_values = self.pi_model.forward_guided(state, available_actions_mask)
+        dist = Categorical(logits=pi_values)
         action = dist.sample()
         action = action.numpy()
         return action
 
-    def _convert_infos(self, infos):
+    def _convert_infos(self, infos) -> torch.Tensor:
+        """Converts infos to a mask of available actions."""
         infos_count = len(infos)
         mask = np.full((infos_count, self.action_n), False)
         for i, info in enumerate(infos):
             available_actions = info["actions"]
             mask[i, available_actions] = True
 
-        return mask
+        return torch.FloatTensor(mask)
 
     def _get_advantage(self, returns: torch.Tensor, states: torch.Tensor):
         advantage = returns.detach() - self.v_model(states)
@@ -150,7 +141,9 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
         return states, actions, returns, old_log_probs, available_actions_mask
 
-    def _make_policy_step(self, states, actions, advantage, old_log_probs, available_actions_mask):
+    def _make_policy_step(
+        self, states, actions, advantage, old_log_probs, available_actions_mask
+    ):
         new_log_probs = self._get_log_probs(states, actions, available_actions_mask)
 
         ratio = torch.exp(new_log_probs - old_log_probs)
@@ -158,12 +151,11 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
         self._update_v_model(advantage)
 
-    def _step(
-        self, states, actions, returns, old_log_probs, available_actions_mask
-    ):
+    def _step(self, states, actions, returns, old_log_probs, available_actions_mask):
         advantage = self._get_advantage(returns, states)
-        self._make_policy_step(states, actions, advantage, old_log_probs, available_actions_mask)
-
+        self._make_policy_step(
+            states, actions, advantage, old_log_probs, available_actions_mask
+        )
 
     def fit(self, states, actions, rewards, dones, infos):
         data = self._prepare_data(states, actions, rewards, dones, infos)
@@ -228,4 +220,6 @@ class PPO_Discrete_Logits_Guided_Advantage(PPO_Discrete_Logits_Guided):
         available_actions_mask: np.ndarray,
     ):
         advantage = self._get_advantage(rewards, states, next_states)
-        self._make_policy_step(states, actions, advantage, old_log_probs, available_actions_mask)
+        self._make_policy_step(
+            states, actions, advantage, old_log_probs, available_actions_mask
+        )
