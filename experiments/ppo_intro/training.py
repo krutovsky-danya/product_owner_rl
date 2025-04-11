@@ -6,6 +6,8 @@ sys.path.append("..")
 sys.path.append("../..")
 sys.path.append("../../..")
 
+from algorithms.PolicyFunction import PolicyFunction
+from algorithms.ValueFunction import ValueFunction
 from algorithms.proximal_policy_optimization import (
     PPO_Discrete_Logits_Guided_Advantage,
     PPO_Discrete_Logits_Guided,
@@ -36,9 +38,14 @@ def make_credit_study(trajectory_max_len, episode_n, trajectory_n, agent_class) 
     state_dim = env.state_dim
     action_n = env.action_n
 
+    policy_function = PolicyFunction(state_dim, action_n, inner_layer=256)
+    value_function = ValueFunction(state_dim, inner_layer=256)
+
     agent = agent_class(
         state_dim,
         action_n,
+        pi_model=policy_function,
+        v_model=value_function,
         gamma=0.9,
         batch_size=128,
         epsilon=0.2,

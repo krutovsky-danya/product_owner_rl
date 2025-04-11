@@ -2,17 +2,17 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
+from torch.utils.data import TensorDataset, DataLoader
 
 from .PolicyFunction import PolicyFunction
-
-# from .ValueFunction import ValueFunction
+from .ValueFunction import ValueFunction
 
 
 class PPO_Base(nn.Module):
     def __init__(
         self,
         pi_model: PolicyFunction,
-        v_model: nn.Module,
+        v_model: ValueFunction,
         gamma,
         batch_size,
         epsilon,
@@ -21,14 +21,48 @@ class PPO_Base(nn.Module):
         v_lr,
     ):
         super().__init__()
-        self.pi_model: PolicyFunction = pi_model
-        self.v_model = v_model
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.pi_model: PolicyFunction = pi_model.to(self.device)
+        self.v_model: ValueFunction = v_model.to(self.device)
         self.gamma = gamma
         self.batch_size = batch_size
         self.epsilon = epsilon
         self.epoch_n = epoch_n
         self.pi_optimizer = torch.optim.Adam(self.pi_model.parameters(), lr=pi_lr)
         self.v_optimizer = torch.optim.Adam(self.v_model.parameters(), lr=v_lr)
+
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.dones = []
+        self.infos = []
+    
+    def fit(self, states, actions, rewards, dones, infos):
+        pass
+
+    def store_transition(self, state, action, reward, done, info):
+        self.states.append(state)
+        self.actions.append(action)
+        self.rewards.append(reward)
+        self.dones.append(done)
+        self.infos.append(info)
+
+    def update_policy(self):
+        states, actions, rewards, dones, infos = (
+            self.states,
+            self.actions,
+            self.rewards,
+            self.dones,
+            self.infos,
+        )
+        self.fit(states, actions, rewards, dones, infos)
+
+        # Clear the stored transitions after training
+        self.states.clear()
+        self.actions.clear()
+        self.rewards.clear()
+        self.dones.clear()
+        self.infos.clear()
 
     def _update_pi_model(self, advantage: torch.Tensor, ratio: torch.Tensor):
         pi_loss_1 = ratio * advantage.detach()
@@ -64,7 +98,7 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         state_dim,
         action_n,
         pi_model: PolicyFunction = None,
-        v_model: nn.Module = None,
+        v_model: ValueFunction = None,
         gamma=0.99,
         batch_size=128,
         epsilon=0.2,
@@ -73,17 +107,6 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         v_lr=5e-4,
     ):
         self.action_n = action_n
-        self.inner_layer = 256
-
-        v_model = nn.Sequential(
-            nn.Linear(state_dim, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, self.inner_layer),
-            nn.ReLU(),
-            nn.Linear(self.inner_layer, 1),
-        )
 
         super().__init__(
             pi_model, v_model, gamma, batch_size, epsilon, epoch_n, pi_lr, v_lr
@@ -96,28 +119,28 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
         available_actions_mask: np.ndarray,
     ) -> torch.Tensor:
         pi_values = self.pi_model.forward_guided(states, available_actions_mask)
-        dist = Categorical(logits=pi_values)
+        dist = Categorical(probs=pi_values)
         log_probs = dist.log_prob(actions)
         return log_probs
 
     def get_action(self, state, info):
-        state = torch.FloatTensor(state)
+        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
         available_actions_mask = self._convert_infos([info])
         pi_values = self.pi_model.forward_guided(state, available_actions_mask)
-        dist = Categorical(logits=pi_values)
+        dist = Categorical(probs=pi_values)
         action = dist.sample()
-        action = action.numpy()
+        action = action.item()
         return action
 
-    def _convert_infos(self, infos) -> torch.Tensor:
+    def _convert_infos(self, infos) -> torch.BoolTensor:
         """Converts infos to a mask of available actions."""
         infos_count = len(infos)
-        mask = np.full((infos_count, self.action_n), False)
+        mask = torch.zeros((infos_count, self.action_n), dtype=bool, device=self.device)
         for i, info in enumerate(infos):
             available_actions = info["actions"]
             mask[i, available_actions] = True
 
-        return torch.FloatTensor(mask)
+        return mask
 
     def _get_advantage(self, returns: torch.Tensor, states: torch.Tensor):
         advantage = returns.detach() - self.v_model(states)
@@ -131,7 +154,10 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
         returns = self._get_returns(rewards, dones)
 
-        states, actions, returns = map(torch.FloatTensor, [states, actions, returns])
+        to_float_tensor = lambda x: torch.tensor(
+            x, dtype=torch.float, device=self.device
+        )
+        states, actions, returns = map(to_float_tensor, [states, actions, returns])
 
         available_actions_mask = self._convert_infos(infos)
 
@@ -159,12 +185,12 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
     def fit(self, states, actions, rewards, dones, infos):
         data = self._prepare_data(states, actions, rewards, dones, infos)
-        states, *_ = data
+
+        dataset = TensorDataset(*data)
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+
         for epoch in range(self.epoch_n):
-            idxs = np.random.permutation(states.shape[0])
-            for i in range(0, idxs.shape[0] // self.batch_size):
-                batch_indexes = idxs[i * self.batch_size : (i + 1) * self.batch_size]
-                batch_data = map(lambda array: array[batch_indexes], data)
+            for batch_data in dataloader:
                 self._step(*batch_data)
 
 
@@ -186,7 +212,10 @@ class PPO_Discrete_Logits_Guided_Advantage(PPO_Discrete_Logits_Guided):
         rewards = rewards.reshape(-1, 1)
         undones = ~dones.flatten()
 
-        states, actions, rewards = map(torch.FloatTensor, [states, actions, rewards])
+        to_float_tensor = lambda x: torch.tensor(
+            x, dtype=torch.float, device=self.device
+        )
+        states, actions, rewards = map(to_float_tensor, [states, actions, rewards])
 
         available_actions_mask = self._convert_infos(infos)
 

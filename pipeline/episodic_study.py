@@ -14,12 +14,15 @@ class EpisodicPpoStudy:
         self.agent: PPO_Discrete_Logits_Guided = agent
         self.trajectory_max_len = trajectory_max_len
         self.rewards_log = []
+        self.q_value_log = []
+        self.discounted_rewards_log = []
 
     def play_trajectory(self):
-        total_reward = 0
-        state = self.env.reset()
+        initial_state = state = self.env.reset()
         info = self.env.get_info()
         states, actions, rewards, dones, infos = [], [], [], [], []
+        total_reward, discounted_reward, discount = 0, 0, 1
+
         for t in range(self.trajectory_max_len):
             states.append(state)
             infos.append(info)
@@ -32,19 +35,29 @@ class EpisodicPpoStudy:
             dones.append(done)
 
             total_reward += reward
+            discounted_reward += reward * discount
+            discount *= self.agent.gamma
 
             if done:
                 break
-        return total_reward, states, actions, rewards, dones, infos
+
+        self._log_trajectory(total_reward, discounted_reward, initial_state)
+        return states, actions, rewards, dones, infos
+
+    def _log_trajectory(self, total_reward, discounted_reward, state):
+        state = torch.FloatTensor(state).to(self.agent.device).unsqueeze(0)
+        v_value = self.agent.v_model.predict(state).detach().cpu().squeeze(0).item()
+        self.q_value_log.append(v_value)
+        self.rewards_log.append(total_reward)
+        self.discounted_rewards_log.append(discounted_reward)
 
     def play_batch_trajectories(self, trajectory_n: int):
         wins = 0
         containers = states, actions, rewards, dones, infos = [], [], [], [], []
 
         for _ in range(trajectory_n):
-            total_reward, *trajectory_data = self.play_trajectory()
+            trajectory_data = self.play_trajectory()
             wins += int(self.env.game.context.is_victory)
-            self.rewards_log.append(total_reward)
             for container, elements in zip(containers, trajectory_data):
                 container.extend(elements)
 
