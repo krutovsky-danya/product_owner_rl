@@ -1,5 +1,11 @@
+from .ValueFunction import ValueFunction
 from .q_function import QFunction
+from .PolicyFunction import PolicyFunction
 from .deep_q_networks import DQN, HardTargetDQN, SoftTargetDQN, DoubleDQN
+from .proximal_policy_optimization import (
+    PPO_Discrete_Logits_Guided,
+    PPO_Discrete_Logits_Guided_Advantage,
+)
 
 
 class DqnAgentsFactory:
@@ -63,4 +69,57 @@ class DqnAgentsFactory:
             epsilon_decrease=self.epsilon_decrease,
             epsilon_min=self.epsilon_min,
         )
+        return agent
+
+
+class PPOAgentsFactory:
+    def __init__(self):
+        self.gamma = 0.9
+        self.batch_size = 128
+        self.epsilon = 0.2
+        self.epoch_n = 5
+        self.pi_lr = 1e-4
+        self.v_lr = 5e-4
+        self.inner_layer = 256
+
+    def create_ppo_discrete_logits_guided(self, state_dim, action_n):
+        policy_function = PolicyFunction(
+            state_dim, action_n, inner_layer=self.inner_layer
+        )
+        value_function = ValueFunction(state_dim, inner_layer=self.inner_layer)
+
+        agent = PPO_Discrete_Logits_Guided(
+            state_dim,
+            action_n,
+            pi_model=policy_function,
+            v_model=value_function,
+            gamma=self.gamma,
+            batch_size=self.batch_size,
+            epsilon=self.epsilon,
+            epoch_n=self.epoch_n,
+            pi_lr=self.pi_lr,
+            v_lr=self.v_lr,
+        )
+
+        return agent
+
+    def create_ppo_discrete_logits_guided_advantage(self, state_dim, action_n):
+        policy_function = PolicyFunction(
+            state_dim, action_n, inner_layer=self.inner_layer
+        )
+        value_function = ValueFunction(state_dim, inner_layer=self.inner_layer)
+
+        agent = PPO_Discrete_Logits_Guided_Advantage(
+            state_dim,
+            action_n,
+            pi_model=policy_function,
+            v_model=value_function,
+            gamma=self.gamma,
+            batch_size=self.batch_size,
+            epsilon=self.epsilon,
+            epoch_n=self.epoch_n,
+            pi_lr=self.pi_lr,
+            v_lr=self.v_lr,
+        )
+
         return agent

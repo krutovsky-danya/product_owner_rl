@@ -42,7 +42,8 @@ def eval_agent(study: LoggingStudy):
 
 def eval_ppo_agent(study: EpisodicPpoStudy):
     study.agent.eval()
-    reward, *_ = study.play_trajectory()
+    study.play_trajectory()
+    reward = study.rewards_log[-1]
     play_forward_with_empty_sprints(study.env)
     game_context = study.env.game.context
     is_win = game_context.is_victory
