@@ -14,7 +14,7 @@ from experiments.show_utils import (
 
 
 def main():
-    experiments_names = ["remove_unnecessary_actions"]
+    experiments_names = ["remove_unnecessary_actions", "DoubleDQN_256"]
 
     data_postions = []
     for experiment_name in experiments_names:
@@ -39,4 +39,10 @@ def main():
 
 
 if __name__ == "__main__":
+    if not os.path.exists("data_DoubleDQN_256_1500.csv"):
+        df = pd.read_csv("../neural_net_size/data_DoubleDQN_256_1500.csv")
+        df.to_csv("data_DoubleDQN_256_1500.csv", index=False)
+    if not os.path.exists("evaluations_DoubleDQN_256.csv"):
+        df = pd.read_csv("../neural_net_size/evaluations_DoubleDQN_256.csv")
+        df.to_csv("evaluations_DoubleDQN_256.csv", index=False)
     main()
