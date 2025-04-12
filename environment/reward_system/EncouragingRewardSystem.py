@@ -1,7 +1,7 @@
 from environment.reward_system.base_reward_system import BaseRewardSystem
 
 
-class PunishingRewardSystem(BaseRewardSystem):
+class EncouragingRewardSystem(BaseRewardSystem):
     def __init__(self, config: dict) -> None:
         super().__init__(config)
 
@@ -17,5 +17,5 @@ class PunishingRewardSystem(BaseRewardSystem):
             return 5.0
 
         if action == 0:
-            return -1.0
+            return 1.0
         return 0.0
