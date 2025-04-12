@@ -9,3 +9,5 @@ web_interaction/game_states/**.png
 /experiments/knapsack/evaluations_DoubleDQN.csv
 /experiments/neural_net_size/data_DoubleDQN_512_1500.csv
 /experiments/neural_net_size/evaluations_DoubleDQN_512.csv
+/experiments/remove_unnecessary_actions/data_DoubleDQN_256_1500.csv
+/experiments/remove_unnecessary_actions/evaluations_DoubleDQN_256.csv
