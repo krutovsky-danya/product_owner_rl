@@ -7,7 +7,7 @@ from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import UserCardType
 from game.game_generators import get_buggy_game_1
-from .reward_sytem import BaseRewardSystem
+from .reward_system import BaseRewardSystem
 
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT

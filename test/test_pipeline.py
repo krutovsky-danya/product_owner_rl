@@ -1,7 +1,7 @@
 from algorithms.agents_factory import DqnAgentsFactory
 from environment.backlog_env import BacklogEnv
 from environment.environment import ProductOwnerEnv
-from environment.reward_sytem import BaseRewardSystem
+from environment.reward_system import BaseRewardSystem
 from pipeline.base_study import BaseStudy
 
 

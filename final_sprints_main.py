@@ -1,6 +1,6 @@
 from environment import ProductOwnerEnv
 from environment.backlog_env import BacklogEnv
-from environment.reward_sytem import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, \
+from environment.reward_system import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, \
     EmpiricalEndStageRewardSystem, PotentialEndStageRewardSystem
 from environment.userstory_env import UserstoryEnv
 from main import create_usual_agent

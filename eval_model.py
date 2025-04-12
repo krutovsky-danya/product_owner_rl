@@ -8,7 +8,7 @@ from pipeline.study_agent import load_dqn_agent
 from pipeline.base_study import MAX_INNER_SPRINT_ACTION_COUNT
 from pipeline import TUTORIAL, CREDIT_FULL, CREDIT_START, CREDIT_END, END
 from pipeline.aggregator_study import update_reward_system_config
-from environment.reward_sytem import (EmpiricalCreditStageRewardSystem,
+from environment.reward_system import (EmpiricalCreditStageRewardSystem,
                                       EmpiricalRewardSystem,
                                       FullPotentialCreditRewardSystem,
                                       PotentialEndStageRewardSystem)

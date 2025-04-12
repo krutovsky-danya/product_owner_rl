@@ -5,7 +5,7 @@ sys.path.insert(0, "..")
 
 from environment.backlog_env import BacklogEnv
 from environment.environment import ProductOwnerEnv
-from environment.reward_sytem.base_reward_system import BaseRewardSystem
+from environment.reward_system.base_reward_system import BaseRewardSystem
 from environment.userstory_env import UserstoryEnv
 
 from pipeline.study_agent import load_dqn_agent

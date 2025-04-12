@@ -1,7 +1,7 @@
 from environment import CreditPayerEnv, ProductOwnerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
-from environment.reward_sytem import FullPotentialCreditRewardSystem
+from environment.reward_system import FullPotentialCreditRewardSystem
 from pipeline.aggregator_study import update_reward_system_config
 
 

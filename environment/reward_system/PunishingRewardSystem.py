@@ -1,4 +1,4 @@
-from environment.reward_sytem.base_reward_system import BaseRewardSystem
+from environment.reward_system.base_reward_system import BaseRewardSystem
 
 
 class PunishingRewardSystem(BaseRewardSystem):

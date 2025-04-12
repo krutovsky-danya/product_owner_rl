@@ -1,7 +1,7 @@
 from environment import CreditPayerEnv
 from environment.backlog_env import BacklogEnv
-from environment.reward_sytem import FullPotentialCreditRewardSystem
-from environment.reward_sytem import EmpiricalCreditStageRewardSystem
+from environment.reward_system import FullPotentialCreditRewardSystem
+from environment.reward_system import EmpiricalCreditStageRewardSystem
 from pipeline import AggregatorStudy, STUDY, CREDIT_END, CREDIT_FULL, CREDIT_START, TUTORIAL
 from environment.userstory_env import UserstoryEnv
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent

@@ -8,7 +8,7 @@ sys.path.append("../..")
 from environment import CreditPayerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
-from environment.reward_sytem import (
+from environment.reward_system import (
     EmpiricalCreditStageRewardSystem,
     BoundedEmpiricalCreditStageRewardSystem,
 )

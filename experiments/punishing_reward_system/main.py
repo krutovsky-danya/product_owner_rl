@@ -9,7 +9,7 @@ sys.path.append("..")
 sys.path.append("../..")
 
 from algorithms.agents_factory import DqnAgentsFactory
-from environment.reward_sytem.PunishingRewardSystem import PunishingRewardSystem
+from environment.reward_system.PunishingRewardSystem import PunishingRewardSystem
 from environment.environments_factory import EnvironmentFactory
 from pipeline import LoggingStudy
 

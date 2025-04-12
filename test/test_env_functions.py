@@ -1,7 +1,7 @@
 import unittest
 from environment.environment import ProductOwnerEnv
 from environment.userstory_env import UserstoryEnv
-from environment.reward_sytem import BaseRewardSystem
+from environment.reward_system import BaseRewardSystem
 from game.game_constants import GlobalConstants
 import numpy as np
 from environment.environment import USER_SURVEY
