@@ -8,14 +8,24 @@ import pandas as pd
 from experiments.show_utils import (
     show_win_rate,
     show_win_sprint_hist,
-    show_win_rate_statistical_significance,
-    show_sprint_statistical_significance,
+    show_rewards_fitting,
+    show_estimate_reward_comparison,
 )
 
 
 def main():
-    experiments_names = ['remove_unnecessary_actions']
+    experiments_names = ["remove_unnecessary_actions"]
 
+    data_postions = []
+    for experiment_name in experiments_names:
+        data_frame = pd.read_csv(f"data_{experiment_name}_{1500}.csv")
+        data_postions.append(data_frame)
+
+    data = pd.concat(data_postions)
+
+    show_rewards_fitting(data)
+    for agent_name in experiments_names:
+        show_estimate_reward_comparison(data, agent_name)
 
     evaluation_data_portions = []
     for experiment_name in experiments_names:
