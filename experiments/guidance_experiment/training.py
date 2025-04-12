@@ -8,7 +8,7 @@ sys.path.append("../..")
 from environment import CreditPayerEnv
 from environment.backlog_env import BacklogEnv
 from environment.userstory_env import UserstoryEnv
-from environment.reward_sytem import EmpiricalCreditStageRewardSystem
+from environment.reward_system import EmpiricalCreditStageRewardSystem
 from pipeline.aggregator_study import update_reward_system_config
 from pipeline import LoggingStudy, CREDIT_END, CREDIT_START
 from main import create_usual_agent

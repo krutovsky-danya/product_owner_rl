@@ -1,6 +1,6 @@
-from environment.reward_sytem import BaseRewardSystem
-from environment.reward_sytem import EmpiricalRewardSystem, EmpiricalCreditStageRewardSystem
-from environment.reward_sytem import FullPotentialCreditRewardSystem
+from environment.reward_system import BaseRewardSystem
+from environment.reward_system import EmpiricalRewardSystem, EmpiricalCreditStageRewardSystem
+from environment.reward_system import FullPotentialCreditRewardSystem
 from pipeline.logging_study import LoggingStudy, KeyLogState
 from environment import TutorialSolverEnv, CreditPayerEnv, ProductOwnerEnv
 

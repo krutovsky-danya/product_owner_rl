@@ -1,4 +1,4 @@
-from environment.reward_sytem import EmpiricalRewardSystem
+from environment.reward_system import EmpiricalRewardSystem
 import torch
 
 

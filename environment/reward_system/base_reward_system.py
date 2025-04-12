@@ -1,4 +1,4 @@
-from environment.reward_sytem.reward_adapter import RewardAdapter
+from environment.reward_system.reward_adapter import RewardAdapter
 
 
 class BaseRewardSystem(RewardAdapter):

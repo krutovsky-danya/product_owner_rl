@@ -3,7 +3,7 @@ from environment.backlog_env import BacklogEnv
 from pipeline import LoggingStudy
 from main import create_usual_agent
 
-from environment.reward_sytem import BoundedEmpiricalRewardSystem, EmpiricalRewardSystem
+from environment.reward_system import BoundedEmpiricalRewardSystem, EmpiricalRewardSystem
 from pipeline.study_agent import save_dqn_agent
 from pipeline.aggregator_study import update_reward_system_config
 
