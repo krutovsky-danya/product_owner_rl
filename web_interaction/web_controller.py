@@ -238,6 +238,11 @@ class WebController:
 
         self.logger.info(f"User stories appeared: {self.game_coordinator.user_stories}")
 
+    def sort_cards_by_position(self, cards, positions):
+        sort_key = lambda card_position: tuple(reversed(card_position[1]))
+        card_position_pairs = zip(cards, positions)
+        return sorted(card_position_pairs, key=sort_key, reverse=True)
+
     def solve_knapsack(self, driver, iframe: WebElement, env: ProductOwnerEnv):
         self.logger.info("Solve knapsack")
         self.select_backlog_board(driver, iframe)
@@ -255,9 +260,8 @@ class WebController:
 
         self.logger.info(f"Found at positions {positions}")
 
-        ordered_cards = zip(cards, positions)
-        key = lambda x:  tuple(reversed(x[1]))
-        for card, position in sorted(ordered_cards, key=key, reverse=True):
+        sorted_cards = self.sort_cards_by_position(card, positions)
+        for card, position in sorted_cards:
             self.click_on_element(driver, iframe, *position)
             self.logger.info(f"Clicked on card {card} as position {position}")
             self.game_coordinator.remove_backlog_card_from_backlog(card.info)
