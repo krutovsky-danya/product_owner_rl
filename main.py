@@ -1,71 +1,36 @@
 import datetime
-import os
-import sys
 
 import pandas as pd
 
-from typing import List
-
+from algorithms.agents_factory import DqnAgentsFactory
+from environment.environments_factory import EnvironmentFactory
+from experiments.show_utils import show_win_rate
+from experiments.training_utils import make_evaluations, save_evaluation
+from pipeline import LoggingStudy
 from pipeline.study_agent import save_dqn_agent
 
-sys.path.append("..")
-sys.path.append("../..")
 
-from algorithms import DoubleDQN
-from environment import CreditPayerEnv
-from environment.backlog_env import BacklogEnv
-from environment.userstory_env import UserstoryEnv
-from environment.reward_system import (
-    EmpiricalCreditStageRewardSystem,
-    FullPotentialCreditRewardSystem,
-)
-from pipeline.aggregator_study import update_reward_system_config
-from pipeline import LoggingStudy
-
-
-def make_credit_study(trajectory_max_len, episode_n, potential):
-    userstory_env = UserstoryEnv(4, 0, 0)
-    backlog_env = BacklogEnv(12, 0, 0, 0, 0, 0)
-    if potential:
-        reward_system = FullPotentialCreditRewardSystem(config={}, coefficient=1)
-    else:
-        reward_system = EmpiricalCreditStageRewardSystem(True, config={})
-    env = CreditPayerEnv(
-        userstory_env,
-        backlog_env,
-        with_end=True,
-        with_info=True,
-        reward_system=reward_system,
-    )
-    update_reward_system_config(env, reward_system)
-
-    state_dim = env.state_dim
-    action_n = env.action_n
-
-    agent = DoubleDQN(
-        state_dim,
-        action_n,
-        gamma=0.9,
-        tau=0.001,
-        epsilon_decrease=1e-4,
-        batch_size=64,
-        lr=1e-3,
-        epsilon_min=0.01,
-    )
-
+def make_credit_study(trajectory_max_len, episode_n):
+    env = EnvironmentFactory().create_credit_env()
+    agent = DqnAgentsFactory().create_ddqn(env.state_dim, env.action_n)
     study = LoggingStudy(env, agent, trajectory_max_len)
     study.study_agent(episode_n)
-
     return study
 
 
-def main(potential):
+def main():
     episode_n = 1501
-    study = make_credit_study(200, episode_n, potential)
+    trajectory_max_len = 1000
+    study = make_credit_study(trajectory_max_len, episode_n)
     save_dqn_agent(study.agent, "models/credit_start_model.pt")
+
+    evaluations = make_evaluations(study, 1000)
+    now = datetime.datetime.now()
+    save_evaluation("credit_start", evaluations, now, "main")
+
+    evaluations = pd.read_csv("evaluations_credit_start.csv")
+    show_win_rate(evaluations)
 
 
 if __name__ == "__main__":
-    n = 1
-    for i in range(n):
-        main(True)
+    main()
