@@ -20,7 +20,7 @@ from environment.reward_system import (
 from pipeline.aggregator_study import update_reward_system_config
 from pipeline import LoggingStudy
 from training_utils import eval_agent, save_rewards, save_evaluation
-from main import create_usual_agent
+from train import create_usual_agent
 
 
 def make_credit_study(trajectory_max_len, episode_n, potential):
