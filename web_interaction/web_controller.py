@@ -3,12 +3,15 @@ import logging
 import os
 import time
 
+from operator import itemgetter
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
+from algorithms.deep_q_networks import DQN
+from environment.Action import Action
 from environment.environment import ProductOwnerEnv, ProductOwnerGame
 from .game_coordinator import GameCoordinator
 
@@ -236,6 +239,31 @@ class WebController:
 
         self.logger.info(f"User stories appeared: {self.game_coordinator.user_stories}")
 
+    def solve_knapsack(self, driver, iframe: WebElement, env: ProductOwnerEnv):
+        self.logger.info("Solve knapsack")
+        self.select_backlog_board(driver, iframe)
+
+        cards = env.get_backlog_cards_for_knapsack()
+        self.logger.info(f"Selected cards {cards}")
+
+        screenshot = self.take_screenshot(iframe)
+        self.game_coordinator.insert_backlog_cards_from_image(env.game, screenshot)
+
+        positions = []
+        for card in cards:
+            position = self.game_coordinator.find_backlog_card_position(card.info)
+            positions.append(position)
+
+        self.logger.info(f"Found at positions {positions}")
+
+        ordered_cards = zip(cards, positions)
+        for card, position in sorted(ordered_cards, key=itemgetter(1), reverse=True):
+            self.click_on_element(driver, iframe, *position)
+            self.logger.info(f"Clicked on card {card} as position {position}")
+            self.game_coordinator.remove_backlog_card_from_backlog(card.info)
+
+        env._perform_knapsack()
+
     def open_game(
         self,
         url: str = "https://npg-team.itch.io/product-owner-simulator",
@@ -325,6 +353,10 @@ class WebController:
             self.buy_statistical_research(driver, iframe, env)
             return
 
+        if action == Action.SOLVE_KNAPSACK:
+            self.solve_knapsack(driver, iframe, env)
+            return
+
         if action >= env.meta_action_dim:
             action -= env.meta_action_dim
         else:
@@ -365,7 +397,7 @@ class WebController:
 
         return driver
 
-    def play_credit_stage(self, env: ProductOwnerEnv, agent, driver, iframe):
+    def play_credit_stage(self, env: ProductOwnerEnv, agent: DQN, driver, iframe):
         while not env.game.context.done:
             self.game_coordinator.log_game_state(env.game, self.logger)
             state = env.recalculate_state()

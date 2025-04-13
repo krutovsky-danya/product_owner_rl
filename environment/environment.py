@@ -7,20 +7,11 @@ from game.backlog_card.backlog_card import Card
 from game.game import ProductOwnerGame
 from game.game_constants import UserCardType
 from game.game_generators import get_buggy_game_1
+from .Action import Action
 from .reward_system import BaseRewardSystem
 
 BUG = UserCardType.BUG
 TECH_DEBT = UserCardType.TECH_DEBT
-
-START_SPRINT = 0
-DECOMPOSE = 1
-RELEASE = 2
-BUY_ROBOT = 3
-BUY_ROOM = 4
-STATISTICAL_RESEARCH = 5
-USER_SURVEY = 6
-SOLVE_KNAPSACK = 7
-PLAY_BLANK_SPRINTS = 8
 
 
 class ProductOwnerEnv:
@@ -134,23 +125,23 @@ class ProductOwnerEnv:
     def _get_info_meta_actions(self):
         result = []
         if self.game.is_backlog_start_sprint_available():
-            result.append(START_SPRINT)
+            result.append(Action.START_SPRINT.value)
         if self.game.is_userstories_start_release_available():
-            result.append(DECOMPOSE)
+            result.append(Action.DECOMPOSE.value)
         if self.game.is_hud_release_product_available():
-            result.append(RELEASE)
+            result.append(Action.RELEASE.value)
         if self.game.is_buy_robot_available():
-            result.append(BUY_ROBOT)
+            result.append(Action.BUY_ROBOT.value)
         if self.game.is_buy_room_available():
-            result.append(BUY_ROOM)
+            result.append(Action.BUY_ROOM.value)
         if self.game.is_press_statistical_research_available():
-            result.append(STATISTICAL_RESEARCH)
+            result.append(Action.STATISTICAL_RESEARCH.value)
         if self.game.is_press_user_survey_available():
-            result.append(USER_SURVEY)
+            result.append(Action.USER_SURVEY.value)
         if self._is_knapsack_action_available():
-            result.append(SOLVE_KNAPSACK)
+            result.append(Action.SOLVE_KNAPSACK.value)
         if False and self._is_play_blank_sprint_available():
-            result.append(PLAY_BLANK_SPRINTS)
+            result.append(Action.PLAY_BLANK_SPRINTS.value)
         return result
 
     def _is_knapsack_action_available(self):
@@ -305,10 +296,7 @@ class ProductOwnerEnv:
         stories_after = len(self.game.userstories.stories_list)
         return stories_before != stories_after
 
-    def _perform_knapsack(self) -> bool:
-        if not self._is_knapsack_action_available():
-            return False
-
+    def get_backlog_cards_for_knapsack(self) -> list[Card]:
         backlog = self.game.backlog
 
         tasks = [card.info.hours for card in backlog.backlog]
@@ -316,11 +304,24 @@ class ProductOwnerEnv:
 
         knapsack = solve_knapsack(tasks, capacity)
 
-        for task in knapsack:
-            for card in backlog.backlog:
-                if card.info.hours == task:
-                    self.game.move_backlog_card(card)
-                    break
+        backlog_cards = []
+
+        for card in backlog.backlog:
+            if card.info.hours not in knapsack:
+                continue
+            backlog_cards.append(card)
+            knapsack.remove(card.info.hours)
+
+        return backlog_cards
+
+    def _perform_knapsack(self) -> bool:
+        if not self._is_knapsack_action_available():
+            return False
+
+        backlog_cards = self.get_backlog_cards_for_knapsack()
+
+        for card in backlog_cards:
+            self.game.move_backlog_card(card)
 
         return True
 
@@ -337,23 +338,23 @@ class ProductOwnerEnv:
 
     def _perform_action(self, action: int) -> bool:
         # we'll assume that action in range(0, max_action_num)
-        if action == START_SPRINT:
+        if action == Action.START_SPRINT.value:
             return self._perform_start_sprint_action()
-        if action == DECOMPOSE:
+        if action == Action.DECOMPOSE.value:
             return self._perform_decomposition()
-        if action == RELEASE:
+        if action == Action.RELEASE.value:
             return self._perform_release()
-        if action == BUY_ROBOT:
+        if action == Action.BUY_ROBOT.value:
             return self._perform_buy_robot()
-        if action == BUY_ROOM:
+        if action == Action.BUY_ROOM.value:
             return self._perform_buy_room()
-        if action == STATISTICAL_RESEARCH:
+        if action == Action.STATISTICAL_RESEARCH.value:
             return self._perform_statistical_research()
-        if action == USER_SURVEY:
+        if action == Action.USER_SURVEY.value:
             return self._perform_user_survey()
-        if action == SOLVE_KNAPSACK:
+        if action == Action.SOLVE_KNAPSACK.value:
             return self._perform_knapsack()
-        if action == PLAY_BLANK_SPRINTS:
+        if action == Action.PLAY_BLANK_SPRINTS.value:
             return self._play_blank_sprints_to_end()
 
         return self._perform_action_card(action - self.meta_action_dim)
