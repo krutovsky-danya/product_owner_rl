@@ -3,6 +3,7 @@ from algorithms.deep_q_networks import DQN
 
 
 def save_dqn_agent(agent: DQN, path):
+    agent.memory = None
     torch.save(agent, path)
 
 
