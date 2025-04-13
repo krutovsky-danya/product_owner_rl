@@ -10,7 +10,6 @@ from game import ProductOwnerGame
 
 def prepare_game(game: ProductOwnerGame):
     game.context.is_new_game = False
-    game.context.is_new_game = False
     game.is_first_release = False
     game.userstories.disable_restrictions()
     game.office.toggle_purchases(True)
