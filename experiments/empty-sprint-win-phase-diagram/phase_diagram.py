@@ -34,7 +34,7 @@ def get_win_sprint_from_initial_state(loyalty, customers):
     game = ProductOwnerGame()
     game = prepare_game(game)
 
-    game.context.set_money(200_000)
+    game.context.set_money(300_000)
 
     game.context.set_loyalty(loyalty)
     game.context.customers = customers
@@ -43,8 +43,8 @@ def get_win_sprint_from_initial_state(loyalty, customers):
 
 
 def main():
-    loyalty_range = np.linspace(1.0, 5.0, 100)
-    customers_range = np.linspace(30, 100, 100)
+    loyalty_range = np.linspace(3.0, 5.0, 100)
+    customers_range = np.linspace(30, 50, 100)
 
     phase_diagram = np.zeros((len(loyalty_range), len(customers_range)))
 

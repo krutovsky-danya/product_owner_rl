@@ -3,7 +3,6 @@ import logging
 import os
 import time
 
-from operator import itemgetter
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -257,7 +256,8 @@ class WebController:
         self.logger.info(f"Found at positions {positions}")
 
         ordered_cards = zip(cards, positions)
-        for card, position in sorted(ordered_cards, key=itemgetter(1), reverse=True):
+        key = lambda x:  tuple(reversed(x[1]))
+        for card, position in sorted(ordered_cards, key=key, reverse=True):
             self.click_on_element(driver, iframe, *position)
             self.logger.info(f"Clicked on card {card} as position {position}")
             self.game_coordinator.remove_backlog_card_from_backlog(card.info)
