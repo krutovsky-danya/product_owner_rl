@@ -11,7 +11,7 @@ from environment.userstory_env import UserstoryEnv
 from environment.reward_system import EmpiricalCreditStageRewardSystem
 from pipeline.aggregator_study import update_reward_system_config
 from pipeline import LoggingStudy, CREDIT_END, CREDIT_START
-from main import create_usual_agent
+from train import create_usual_agent
 
 
 def play_forward_with_empty_sprints(env: CreditPayerEnv):

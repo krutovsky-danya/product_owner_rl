@@ -3,7 +3,7 @@ from environment.backlog_env import BacklogEnv
 from environment.reward_system import EmpiricalRewardSystem, FullPotentialCreditRewardSystem, \
     EmpiricalEndStageRewardSystem, PotentialEndStageRewardSystem
 from environment.userstory_env import UserstoryEnv
-from main import create_usual_agent
+from train import create_usual_agent
 from pipeline import AggregatorStudy, STUDY, END, TUTORIAL, CREDIT_START, CREDIT_END
 from pipeline.study_agent import load_dqn_agent, save_dqn_agent
 from pipeline.aggregator_study import update_reward_system_config, KeyLogState
