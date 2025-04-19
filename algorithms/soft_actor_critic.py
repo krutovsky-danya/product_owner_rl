@@ -7,17 +7,17 @@ from .PolicyFunction import PolicyFunction
 from .q_function import QFunction
 
 
-def _take_optimization_step(optimizer: torch.optim.Optimizer, loss: torch.Tensor):
+def _take_optimization_step(optimizer: torch.optim.Optimizer, loss: torch.Tensor) -> None:
     loss.backward()
     optimizer.step()
     optimizer.zero_grad()
 
 
-def _convert_loss(loss: torch.Tensor):
+def _convert_loss(loss: torch.Tensor) -> np.ndarray:
     return loss.cpu().detach().numpy()
 
 
-class SAC(nn.Module):
+class SoftActorCritic(nn.Module):
     def __init__(
             self,
             state_dim,
@@ -108,7 +108,7 @@ class SAC(nn.Module):
                 self._convert_info(guide),
                 torch.tensor(action, dtype=torch.long),
                 torch.tensor(reward),
-                torch.tensor(int(done)),
+                torch.tensor(done, dtype=torch.long),
                 torch.tensor(next_state),
                 self._convert_info(next_guide)
             ]
@@ -212,9 +212,18 @@ class SAC(nn.Module):
 
     def eval(self):
         return self.train(False)
+    
+    @torch.no_grad()
+    def get_value(self, state, info):
+        state = torch.tensor(state, dtype=torch.float).to(self.device)
+        guide = torch.tensor(info["actions"], dtype=torch.long)
+        q_value_1 = self.q_function_1.forward(state)
+        q_value_2 = self.q_function_2.forward(state)
+        min_q_value = torch.min(q_value_1, q_value_2)
+        return min_q_value[guide].max().item()
 
 
-class SACWithLearnedTemperature(SAC):
+class SACWithLearnedTemperature(SoftActorCritic):
     def __init__(
             self,
             state_dim,

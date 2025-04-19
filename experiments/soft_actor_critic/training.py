@@ -1,0 +1,39 @@
+import datetime
+import sys
+
+sys.path.append("..")
+sys.path.append("../..")
+
+from algorithms.soft_actor_critic import SoftActorCritic
+from algorithms.SoftActorCriticFactory import SoftActorCriticFactory
+from environment import ProductOwnerEnv
+from environment.environments_factory import EnvironmentFactory
+from pipeline import LoggingStudy
+from training_utils import save_evaluation, save_study_data, make_evaluations
+
+
+def train(agents_factory: SoftActorCriticFactory, env_factory):
+    episode_n = 1500
+    trajectory_max_len = 1000
+
+    env: ProductOwnerEnv = env_factory()
+    agent: SoftActorCritic = agents_factory.create_soft_actor_critic(env.state_dim, env.action_n)
+    study = LoggingStudy(env, agent, trajectory_max_len)
+
+    study.study_agent(episode_n)
+
+    experiment_name = agent.__class__.__name__
+
+    save_study_data(study, experiment_name)
+
+    evaluations = make_evaluations(study, 1000)
+
+    now = datetime.datetime.now()
+    save_evaluation(experiment_name, evaluations, now, experiment_name)
+
+
+if __name__ == "__main__":
+    environment_factory = EnvironmentFactory()
+    agents_factory = SoftActorCriticFactory()
+    for i in range(5):
+        train(agents_factory, environment_factory.create_credit_env)

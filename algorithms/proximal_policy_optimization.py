@@ -90,6 +90,12 @@ class PPO_Base(nn.Module):
             returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
 
         return returns
+    
+    @torch.no_grad()
+    def get_value(self, state, info):
+        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
+        value = self.v_model.forward(state)
+        return value.item()
 
 
 class PPO_Discrete_Logits_Guided(PPO_Base):

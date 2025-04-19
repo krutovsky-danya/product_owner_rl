@@ -36,7 +36,7 @@ class PolicyFunction(BaseNeuralFunction):
         return logits
 
     @torch.no_grad()
-    def predict_guided(self, state, guide):
+    def predict_guided(self, state, guide) -> torch.Tensor:
         logits = super().predict(state)
         guide = guide.unsqueeze(dim=0)
         logits[~guide] = -torch.inf

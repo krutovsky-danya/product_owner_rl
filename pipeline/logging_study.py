@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 from typing import List, Tuple, Optional
+from environment.Action import Action
 from pipeline.logging_utils import KeyLogState, get_log_entry_creator
 
 loggers = {}
@@ -83,13 +84,13 @@ class LoggingStudy(MetricsStudy):
 
     def _log_after_action(self, action):
         message = None
-        if action == 0:
+        if action == Action.START_SPRINT:
             message = 'start sprint'
             money = self.env.game.context.get_money()
             loyalty = self.env.game.context.get_loyalty()
             customers = self.env.game.context.customers
             current_sprint = self.env.game.context.current_sprint
-            message += f" {current_sprint}: {money / 1e5:2.4f}, {loyalty:2.4f}, {customers:3.4f}"
+            message += f" {current_sprint}: Money = {money / 1e6:2.4f}, Loyalty = {loyalty:2.4f},  Customers = {customers:3.4f}"
         if action >= 7:
             message = 'move card'
             current_hours = self.env.game.backlog.calculate_hours_sum()
@@ -99,8 +100,8 @@ class LoggingStudy(MetricsStudy):
         if message:
             self.logger.debug(message)
 
-    def fit_agent(self, state, action, reward, done, next_state, next_info):
-        loss = super().fit_agent(state, action, reward, done, next_state, next_info)
+    def fit_agent(self, state, info, action, reward, done, next_state, next_info):
+        loss = super().fit_agent(state, info, action, reward, done, next_state, next_info)
         self._log_after_action(action)
         self.loss_log.append(loss)
         return loss

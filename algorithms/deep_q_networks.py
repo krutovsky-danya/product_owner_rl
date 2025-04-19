@@ -53,7 +53,7 @@ class DQN(nn.Module):
                                        mode="constant",
                                        value=guide[0].item())
 
-    def fit(self, state, action, reward, done, next_state, next_info):
+    def fit(self, state, info, action, reward, done, next_state, next_info):
         if not self.training:
             return
         next_guide = torch.tensor(next_info['actions'])
@@ -103,6 +103,13 @@ class DQN(nn.Module):
 
     def eval(self):
         return self.train(False)
+    
+    @torch.no_grad()
+    def get_value(self, state, info):
+        state = torch.tensor(state, dtype=torch.float).to(self.device)
+        guide = torch.tensor(info["actions"], dtype=torch.long)
+        q_values = self.q_function.forward(state).squeeze()
+        return q_values[guide].max().cpu().item()
 
 
 class TargetDQN(DQN):
@@ -131,10 +138,10 @@ class TargetDQN(DQN):
         return torch.max(self.target_q_function(next_states).take_along_dim(next_guides, dim=1),
                          dim=1).values
 
-    def fit(self, state, action, reward, done, next_state, next_actions):
+    def fit(self, state, info, action, reward, done, next_state, next_actions):
         if not self.training:
             return
-        loss = super().fit(state, action, reward, done, next_state, next_actions)
+        loss = super().fit(state, info, action, reward, done, next_state, next_actions)
 
         self.fit_calls += 1
         if self.fit_calls >= self.target_update:

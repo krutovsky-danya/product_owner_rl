@@ -2,9 +2,6 @@ from environment.environment import ProductOwnerEnv
 from .base_study import BaseStudy
 
 
-import torch
-
-
 from typing import List
 
 
@@ -16,13 +13,12 @@ class MetricsStudy(BaseStudy):
         self.q_value_log: List[float] = []
 
     def play_trajectory(self, init_state, init_info, init_discount=1):
-        with torch.no_grad():
-            state = torch.tensor(init_state).to(self.agent.device)
-            q_values: torch.Tensor = self.agent.q_function.predict(state)
-        estimates = q_values.max().detach().cpu().numpy()
+        estimates = self.agent.get_value(init_state, init_info)
         self.q_value_log.append(estimates)
 
-        reward, discounted_reward = super().play_trajectory(init_state, init_info, init_discount)
+        reward, discounted_reward = super().play_trajectory(
+            init_state, init_info, init_discount
+        )
         self.rewards_log.append(reward)
         self.discounted_rewards_log.append(discounted_reward)
         return reward, discounted_reward

@@ -22,3 +22,9 @@ class QFunction(BaseNeuralFunction):
             param.requires_grad = False
 
         return target_q_function
+
+    def update(self, source_q_function: "QFunction", tau: float = 0.1) -> None:
+        target_dict = self.state_dict()
+        for name, param in source_q_function.named_parameters():
+            target_dict[name] = tau * param.data + (1 - tau) * target_dict[name]
+        self.load_state_dict(target_dict)
