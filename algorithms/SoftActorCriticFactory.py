@@ -39,3 +39,9 @@ class SoftActorCriticFactory:
             alpha_learning_rate=self.alpha_lr,
         )
         return agent
+
+    def get_agents(self):
+        return [
+            self.create_soft_actor_critic,
+            self.create_soft_actor_critic_with_entropy,
+        ]

@@ -36,3 +36,6 @@ class EnvironmentFactory:
         update_reward_system_config(env, reward_system)
 
         return env
+
+    def get_environments(self):
+        return [self.create_credit_env, self.create_full_env]
