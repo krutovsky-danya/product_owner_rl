@@ -14,7 +14,7 @@ class BaseNeuralFunction(nn.Module):
         self.network = nn.Sequential(
             nn.Linear(state_dim, inner_dim),
             nn.ReLU(),
-            ResidualBlock(inner_dim, inner_dim),
+            ResidualBlock(inner_dim),
             nn.Linear(inner_dim, action_n),
         )
 
