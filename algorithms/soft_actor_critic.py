@@ -108,7 +108,7 @@ class SoftActorCritic(nn.Module):
                 self._convert_info(guide),
                 torch.tensor(action, dtype=torch.long),
                 torch.tensor(reward),
-                torch.tensor(done, dtype=torch.long),
+                torch.tensor(done, dtype=torch.bool),
                 torch.tensor(next_state),
                 self._convert_info(next_guide)
             ]
