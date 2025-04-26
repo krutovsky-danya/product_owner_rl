@@ -260,7 +260,7 @@ class WebController:
 
         self.logger.info(f"Found at positions {positions}")
 
-        sorted_cards = self.sort_cards_by_position(card, positions)
+        sorted_cards = self.sort_cards_by_position(cards, positions)
         for card, position in sorted_cards:
             self.click_on_element(driver, iframe, *position)
             self.logger.info(f"Clicked on card {card} as position {position}")
