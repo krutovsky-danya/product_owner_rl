@@ -11,7 +11,7 @@ class QFunction(BaseNeuralFunction):
 
     def get_target_copy(self, device: torch.device) -> "QFunction":
         target_q_function: nn.Module = QFunction(
-            self.state_dim, self.action_n, self.inner_layer
+            self.state_dim, self.action_n, self.inner_dim
         )
         target_q_function = target_q_function.to(device)
 
