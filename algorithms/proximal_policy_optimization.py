@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import torch.nn as nn
+
+from operator import itemgetter
 from torch.distributions import Categorical
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -36,7 +38,7 @@ class PPO_Base(nn.Module):
         self.rewards = []
         self.dones = []
         self.infos = []
-    
+
     def fit(self, states, actions, rewards, dones, infos):
         pass
 
@@ -90,12 +92,12 @@ class PPO_Base(nn.Module):
             returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
 
         return returns
-    
+
     @torch.no_grad()
     def get_value(self, state, info):
         state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
         value = self.v_model.forward(state)
-        return value.item()
+        return value
 
 
 class PPO_Discrete_Logits_Guided(PPO_Base):
@@ -140,12 +142,8 @@ class PPO_Discrete_Logits_Guided(PPO_Base):
 
     def _convert_infos(self, infos) -> torch.BoolTensor:
         """Converts infos to a mask of available actions."""
-        infos_count = len(infos)
-        mask = torch.zeros((infos_count, self.action_n), dtype=bool, device=self.device)
-        for i, info in enumerate(infos):
-            available_actions = info["actions"]
-            mask[i, available_actions] = True
-
+        guides = map(itemgetter("actions"), infos)
+        mask = torch.tensor(list(guides), dtype=torch.bool, device=self.device)
         return mask
 
     def _get_advantage(self, returns: torch.Tensor, states: torch.Tensor):

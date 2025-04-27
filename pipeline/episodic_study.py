@@ -45,8 +45,7 @@ class EpisodicPpoStudy:
         return states, actions, rewards, dones, infos
 
     def _log_trajectory(self, total_reward, discounted_reward, state):
-        state = torch.FloatTensor(state).to(self.agent.device).unsqueeze(0)
-        v_value = self.agent.v_model.predict(state).detach().cpu().squeeze(0).item()
+        v_value = self.agent.get_value(state, None).cpu().item()
         self.q_value_log.append(v_value)
         self.rewards_log.append(total_reward)
         self.discounted_rewards_log.append(discounted_reward)
