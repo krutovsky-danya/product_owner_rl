@@ -28,43 +28,41 @@ class DQN(nn.Module):
         self.memory = []
         self.optimizer = torch.optim.Adam(self.q_function.parameters(), lr=lr)
 
+    def get_probs(self, q_values: torch.Tensor, guides: torch.Tensor) -> torch.Tensor:
+        masked_q_values = q_values.masked_fill(~guides, -np.inf)
+        argmax_action = torch.argmax(masked_q_values)
+        probs = torch.tensor(guides, dtype=torch.float, device=self.device)
+        probs = self.epsilon * probs / guides.sum()
+        probs[argmax_action] += 1 - self.epsilon
+        return probs
+
+    
     @torch.no_grad()
     def get_action(self, state, info):
-        mask = info["actions"]
-        state = torch.FloatTensor(state).to(self.device)
-        q_values = self.q_function.predict(state).squeeze()
-        masked_q_values = q_values[mask]
-        masked_argmax_action = torch.argmax(masked_q_values)
-        probs = self.epsilon * np.ones_like(mask) / len(mask)
-        probs[masked_argmax_action] += 1 - self.epsilon
-        masked_action = np.random.choice(mask, p=probs)
+        guides = torch.tensor(info["actions"], dtype=torch.bool, device=self.device)
+        state = torch.tensor(state, dtype=torch.float, device=self.device)
+
+        probs = self.get_probs(self.q_function.predict(state), guides)
+        masked_action = np.random.choice(guides.size(dim=0), p=probs.cpu().numpy())
         return masked_action
 
     @torch.no_grad()
-    def get_max_q_values(self, next_states, next_guides):
-        return torch.max(self.q_function(next_states).take_along_dim(next_guides, dim=1),
-                         dim=1).values
-
-    def get_padded_to_action_n(self, guide: torch.Tensor):
-        if len(guide) == 0:
-            return torch.zeros(self.q_function.action_n, dtype=torch.long)
-        return torch.nn.functional.pad(guide,
-                                       pad=(0, self.q_function.action_n - guide.numel()),
-                                       mode="constant",
-                                       value=guide[0].item())
+    def get_max_q_values(self, states: torch.Tensor, guides: torch.Tensor):
+        q_values: torch.Tensor = self.q_function(states)
+        q_values = q_values.masked_fill(~guides, -np.inf)
+        return torch.max(q_values, dim=1).values
 
     def fit(self, state, info, action, reward, done, next_state, next_info):
         if not self.training:
             return
-        next_guide = torch.tensor(next_info['actions'])
         self.memory.append(
             [
                 torch.tensor(state),
                 torch.tensor(action, dtype=torch.long),
                 torch.tensor(reward),
-                torch.tensor(int(done)),
+                torch.tensor(done, dtype=torch.long),
                 torch.tensor(next_state),
-                self.get_padded_to_action_n(next_guide)
+                torch.tensor(next_info['actions'], dtype=torch.bool),
             ]
         )
 
@@ -106,10 +104,9 @@ class DQN(nn.Module):
     
     @torch.no_grad()
     def get_value(self, state, info):
-        state = torch.tensor(state, dtype=torch.float).to(self.device)
-        guide = torch.tensor(info["actions"], dtype=torch.long)
-        q_values = self.q_function.forward(state).squeeze()
-        return q_values[guide].max().cpu().item()
+        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
+        guides = torch.tensor(info["actions"], dtype=torch.bool, device=self.device).unsqueeze(0)
+        return self.get_max_q_values(state, guides).squeeze()
 
 
 class TargetDQN(DQN):
@@ -134,9 +131,10 @@ class TargetDQN(DQN):
         pass
 
     @torch.no_grad()
-    def get_max_q_values(self, next_states, next_guides):
-        return torch.max(self.target_q_function(next_states).take_along_dim(next_guides, dim=1),
-                         dim=1).values
+    def get_max_q_values(self, states: torch.Tensor, guides: torch.Tensor):
+        q_values: torch.Tensor = self.target_q_function(states)
+        q_values = q_values.masked_fill(~guides, -np.inf)
+        return torch.max(q_values, dim=1).values
 
     def fit(self, state, info, action, reward, done, next_state, next_actions):
         if not self.training:
@@ -180,23 +178,15 @@ class SoftTargetDQN(TargetDQN):
         self.tau = tau
 
     def update_target(self):
-        # theta' = tau * theta + (1 - tau) * theta'
-        target_dict = self.target_q_function.state_dict()
-        for name, param in self.q_function.named_parameters():
-            target_dict[name] = (
-                self.tau * param.data + (1 - self.tau) * target_dict[name]
-            )
-        self.target_q_function.load_state_dict(target_dict)
+        self.target_q_function.update(self.q_function, self.tau)
 
 
 class DoubleDQN(SoftTargetDQN):
-    def get_max_q_values(self, next_states, next_guides):
-        next_states_q = self.q_function.forward(next_states).take_along_dim(next_guides, dim=1)
-        best_actions = torch.argmax(next_states_q, axis=1)
-        best_actions = next_guides[torch.arange(self.batch_size), best_actions]
+    def get_max_q_values(self, states: torch.Tensor, guides: torch.Tensor):
+        q_values = self.q_function.forward(states).masked_fill(~guides, -np.inf)
+        best_actions: torch.Tensor = torch.argmax(q_values, axis=1)
 
-        max_q_values = self.target_q_function(next_states)[
-            np.arange(0, self.batch_size), best_actions
-        ]
+        target_q_values = self.target_q_function.forward(states)
+        max_q_values = target_q_values.gather(1, best_actions.unsqueeze(1))
 
-        return max_q_values
+        return max_q_values.squeeze(1)
