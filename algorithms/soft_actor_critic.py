@@ -62,9 +62,8 @@ class SoftActorCritic(nn.Module):
 
     @torch.no_grad()
     def get_action(self, state, info):
-        mask = info["actions"]
-        mask = self._convert_info(torch.tensor(mask))
-        state = torch.FloatTensor(state).to(device=self.device)
+        mask = torch.tensor(info["actions"], dtype=torch.bool, device=self.device).unsqueeze(0)
+        state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
         masked_probs = self.policy_function.predict_guided(state, mask).squeeze().cpu()
         if self.training:
             # had an error with probs sum not being equal to 1 due to problems with accuracy
@@ -75,11 +74,6 @@ class SoftActorCritic(nn.Module):
         else:
             action = torch.argmax(masked_probs).item()
         return action
-
-    def _convert_info(self, guide: torch.Tensor):
-        converted = torch.zeros(self.action_n, dtype=torch.bool)
-        converted[guide] = True
-        return converted
 
     def _sample_batch(self):
         batch = random.sample(self.memory, self.batch_size)
@@ -100,17 +94,15 @@ class SoftActorCritic(nn.Module):
     def fit(self, state, info, action, reward, done, next_state, next_info):
         if not self.training:
             return
-        guide = torch.tensor(info["actions"])
-        next_guide = torch.tensor(next_info["actions"])
         self.memory.append(
             [
                 torch.tensor(state),
-                self._convert_info(guide),
+                torch.tensor(info["actions"], dtype=torch.bool),
                 torch.tensor(action, dtype=torch.long),
                 torch.tensor(reward),
-                torch.tensor(done, dtype=torch.bool),
+                torch.tensor(done, dtype=torch.long),
                 torch.tensor(next_state),
-                self._convert_info(next_guide)
+                torch.tensor(next_info["actions"], dtype=torch.bool),
             ]
         )
 
@@ -199,12 +191,7 @@ class SoftActorCritic(nn.Module):
 
     def _update_target(self, q_function: QFunction, target_q_function: QFunction):
         # theta' = tau * theta + (1 - tau) * theta'
-        target_dict = target_q_function.state_dict()
-        for name, param in q_function.named_parameters():
-            target_dict[name] = (
-                self.tau * param.data + (1 - self.tau) * target_dict[name]
-            )
-        target_q_function.load_state_dict(target_dict)
+        target_q_function.update(q_function, self.tau)
 
     def train(self, mode: bool = True, epsilon: float = 0):
         super().train(mode)
@@ -216,11 +203,11 @@ class SoftActorCritic(nn.Module):
     @torch.no_grad()
     def get_value(self, state, info):
         state = torch.tensor(state, dtype=torch.float).to(self.device)
-        guide = torch.tensor(info["actions"], dtype=torch.long)
+        guide = torch.tensor(info["actions"], dtype=torch.bool).to(self.device)
         q_value_1 = self.q_function_1.forward(state)
         q_value_2 = self.q_function_2.forward(state)
         min_q_value = torch.min(q_value_1, q_value_2)
-        return min_q_value[guide].max().item()
+        return min_q_value[guide].max()
 
 
 class SACWithLearnedTemperature(SoftActorCritic):
