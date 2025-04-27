@@ -13,7 +13,7 @@ class MetricsStudy(BaseStudy):
         self.q_value_log: List[float] = []
 
     def play_trajectory(self, init_state, init_info, init_discount=1):
-        estimates = self.agent.get_value(init_state, init_info)
+        estimates = self.agent.get_value(init_state, init_info).cpu().item()
         self.q_value_log.append(estimates)
 
         reward, discounted_reward = super().play_trajectory(

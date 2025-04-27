@@ -115,33 +115,22 @@ class ProductOwnerEnv:
         return completed_us_count, completed_bug_count, completed_td_count
 
     def get_info(self):
-        if self.with_info:
-            result = self._get_info_meta_actions()
-            result += self._get_info_cards()
-        else:
-            result = list(range(self.action_n))
-        return {"actions": result}
+        if not self.with_info:
+            return {"actions": [True] * self.action_n}
+        return {"actions": self._get_info_meta_actions() + self._get_info_cards()}
 
-    def _get_info_meta_actions(self):
-        result = []
-        if self.game.is_backlog_start_sprint_available():
-            result.append(Action.START_SPRINT.value)
-        if self.game.is_userstories_start_release_available():
-            result.append(Action.DECOMPOSE.value)
-        if self.game.is_hud_release_product_available():
-            result.append(Action.RELEASE.value)
-        if self.game.is_buy_robot_available():
-            result.append(Action.BUY_ROBOT.value)
-        if self.game.is_buy_room_available():
-            result.append(Action.BUY_ROOM.value)
-        if self.game.is_press_statistical_research_available():
-            result.append(Action.STATISTICAL_RESEARCH.value)
-        if self.game.is_press_user_survey_available():
-            result.append(Action.USER_SURVEY.value)
-        if self._is_knapsack_action_available():
-            result.append(Action.SOLVE_KNAPSACK.value)
-        if False and self._is_play_blank_sprint_available():
-            result.append(Action.PLAY_BLANK_SPRINTS.value)
+    def _get_info_meta_actions(self) -> list[bool]:
+        result = [
+            self.game.is_backlog_start_sprint_available(),
+            self.game.is_userstories_start_release_available(),
+            self.game.is_hud_release_product_available(),
+            self.game.is_buy_robot_available(),
+            self.game.is_buy_room_available(),
+            self.game.is_press_statistical_research_available(),
+            self.game.is_press_user_survey_available(),
+            self._is_knapsack_action_available(),
+            False and self._is_play_blank_sprint_available(),
+        ]
         return result
 
     def _is_knapsack_action_available(self):
@@ -164,65 +153,15 @@ class ProductOwnerEnv:
             return False
         return self.game.is_backlog_start_sprint_available()
 
-    def _get_info_cards(self):
-        result = self._get_info_userstory_cards()
-        result += self._get_info_backlog_cards()
-        result += self._get_info_sprint_cards()
-        return result
-
-    def _get_info_userstory_cards(self):
-        result = []
-        predicate = self.game.is_move_userstory_card_available
-        offset = self.meta_action_dim
-        self._set_info_cards(
-            self.userstory_env.userstories_common, offset, predicate, result
+    def _get_info_cards(self) -> list[bool]:
+        user_story_predicate = self.game.is_move_userstory_card_available
+        backlog_predicate = self.game.is_move_backlog_card_available
+        sprint_predicate = self.game.is_move_sprint_card_available
+        return (
+            self.userstory_env.evaluate_card_actions(user_story_predicate)
+            + self.backlog_env.evaluate_backlog_card_actions(backlog_predicate)
+            + self.backlog_env.evaluate_sprint_card_actions(sprint_predicate)
         )
-        offset += self.userstory_env.us_common_count
-        self._set_info_cards(
-            self.userstory_env.userstories_bugs, offset, predicate, result
-        )
-        offset += self.userstory_env.us_bug_count
-        self._set_info_cards(
-            self.userstory_env.userstories_td, offset, predicate, result
-        )
-        return result
-
-    def _get_info_backlog_cards(self):
-        result = []
-        predicate = self.game.is_move_backlog_card_available
-        offset = self.meta_action_dim + self.userstory_env.max_action_num
-        self._set_info_cards(
-            self.backlog_env.backlog_commons, offset, predicate, result
-        )
-        offset += self.backlog_env.backlog_commons_count
-        self._set_info_cards(self.backlog_env.backlog_bugs, offset, predicate, result)
-        offset += self.backlog_env.backlog_bugs_count
-        self._set_info_cards(
-            self.backlog_env.backlog_tech_debt, offset, predicate, result
-        )
-        return result
-
-    def _get_info_sprint_cards(self):
-        result = []
-        predicate = self.game.is_move_sprint_card_available
-        offset = (
-            self.meta_action_dim
-            + self.userstory_env.max_action_num
-            + self.backlog_env.backlog_max_action_num
-        )
-        self._set_info_cards(self.backlog_env.sprint_commons, offset, predicate, result)
-        offset += self.backlog_env.sprint_commons_count
-        self._set_info_cards(self.backlog_env.sprint_bugs, offset, predicate, result)
-        offset += self.backlog_env.sprint_bugs_count
-        self._set_info_cards(
-            self.backlog_env.sprint_tech_debt, offset, predicate, result
-        )
-        return result
-
-    def _set_info_cards(self, cards, offset: int, predicate, result):
-        for value, card in enumerate(cards):
-            if predicate(card):
-                result.append(value + offset)
 
     def step(self, action: int):
         # new_state, reward, done, info
