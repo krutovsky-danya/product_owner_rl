@@ -78,6 +78,38 @@ class BacklogEnv:
         tech_debt_card_id = bug_card_id - self.backlog_bugs_count
         if 0 <= tech_debt_card_id < len(self.backlog_tech_debt):    
             return self.backlog_tech_debt[tech_debt_card_id]
+        
+    def evaluate_backlog_card_actions(self, predicate) -> list[bool]:
+        common_actions = [False] * self.backlog_commons_count
+        for i, card in enumerate(self.backlog_commons):
+            common_actions[i] = predicate(card)
+        
+        bug_actions = [False] * self.backlog_bugs_count
+        for i, card in enumerate(self.backlog_bugs):
+            bug_actions[i] = predicate(card)
+        
+        tech_debt_actions = [False] * self.backlog_tech_debt_count
+        for i, card in enumerate(self.backlog_tech_debt):
+            tech_debt_actions[i] = predicate(card)
+        
+        all_actions = common_actions + bug_actions + tech_debt_actions
+        return all_actions
+
+    def evaluate_sprint_card_actions(self, predicate) -> list[bool]:
+        common_actions = [False] * self.sprint_commons_count
+        for i, card in enumerate(self.sprint_commons):
+            common_actions[i] = predicate(card)
+
+        bug_actions = [False] * self.sprint_bugs_count
+        for i, card in enumerate(self.sprint_bugs):
+            bug_actions[i] = predicate(card)
+        
+        tech_debt_actions = [False] * self.sprint_tech_debt_count
+        for i, card in enumerate(self.sprint_tech_debt):
+            tech_debt_actions[i] = predicate(card)
+
+        all_actions = common_actions + bug_actions + tech_debt_actions
+        return all_actions
 
     def encode(self, backlog: Backlog, card_picker_random_generator: Generator) -> List[float]:
         self.backlog = backlog
