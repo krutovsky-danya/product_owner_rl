@@ -21,12 +21,12 @@ def main(env_class):
         experiment_name = agent_class + "_on_" + env_class
         experiments_names.append(experiment_name)
 
-    data_postions = []
+    data_positions = []
     for experiment_name in experiments_names:
         data_frame = pd.read_csv(f"data_{experiment_name}_{1500}.csv")
-        data_postions.append(data_frame)
+        data_positions.append(data_frame)
 
-    data = pd.concat(data_postions)
+    data = pd.concat(data_positions)
 
     show_rewards_fitting(data)
     for agent_name in experiments_names:
