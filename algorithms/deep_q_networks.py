@@ -36,7 +36,6 @@ class DQN(nn.Module):
         probs[argmax_action] += 1 - self.epsilon
         return probs
 
-    
     @torch.no_grad()
     def get_action(self, state, info):
         guides = torch.tensor(info["actions"], dtype=torch.bool, device=self.device)
@@ -62,7 +61,7 @@ class DQN(nn.Module):
                 torch.tensor(reward),
                 torch.tensor(done, dtype=torch.long),
                 torch.tensor(next_state),
-                torch.tensor(next_info['actions'], dtype=torch.bool),
+                torch.tensor(next_info["actions"], dtype=torch.bool),
             ]
         )
 
@@ -101,11 +100,13 @@ class DQN(nn.Module):
 
     def eval(self):
         return self.train(False)
-    
+
     @torch.no_grad()
     def get_value(self, state, info):
         state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
-        guides = torch.tensor(info["actions"], dtype=torch.bool, device=self.device).unsqueeze(0)
+        guides = torch.tensor(
+            info["actions"], dtype=torch.bool, device=self.device
+        ).unsqueeze(0)
         return self.get_max_q_values(state, guides).squeeze()
 
 
