@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 from numpy.random import Generator
 
 from game.common_methods import sample_n_or_zero
@@ -55,6 +55,22 @@ class UserstoryEnv:
         if 0 <= index < len(self.userstories_td):
             return self.userstories_td[index]
         return None
+    
+    def evaluate_card_actions(self, predicate: Callable[[UserStoryCard], bool]) -> list[bool]:
+        commons_actions = [False] * self.us_common_count
+        for i, card in enumerate(self.userstories_common):
+            commons_actions[i] = predicate(card)
+
+        bugs_actions = [False] * self.us_bug_count
+        for i, card in enumerate(self.userstories_bugs):
+            bugs_actions[i] = predicate(card)
+        
+        tech_debt_actions = [False] * self.us_td_count
+        for i, card in enumerate(self.userstories_td):
+            tech_debt_actions[i] = predicate(card)
+        
+        return commons_actions + bugs_actions + tech_debt_actions
+        
 
     def _encode_queue(self, userstories: UserStories, count_common, count_bug, count_td,
                       card_picker_random_generator: Generator):
