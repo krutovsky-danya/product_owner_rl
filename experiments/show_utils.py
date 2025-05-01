@@ -4,6 +4,7 @@ import pandas as pd
 
 from typing import List
 from scipy.stats import chi2_contingency, mannwhitneyu
+import seaborn as sns
 
 
 def moving_average(x, w):
@@ -84,20 +85,24 @@ def show_win_sprints(evals_df: pd.DataFrame):
 def show_win_sprint_hist(data: pd.DataFrame, sprints_count=None):
     win_data = data[data["Win"]].drop(columns=["Win"])
 
-    hist = (
-        win_data.groupby(["Sprint", "ExperimentName"])
-        .size()
-        .unstack()
-        .plot(kind="bar", stacked=False)
+    win_counts = win_data.groupby(["Sprint", "ExperimentName"]).size().reset_index(name="Count")
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(
+        data=win_counts,
+        x="Sprint",
+        y="Count",
+        hue="ExperimentName",
+        dodge=True
     )
-    hist.set_ylabel("Number of wins")
-    hist.set_xlabel("Sprint")
-    hist.set_xlim(-1, sprints_count)
-    hist.set_title("Number of wins per sprint")
-    hist.legend(title="Experiment")
-    hist.grid()
-    hist.get_figure().savefig("wins.png")
-    hist.get_figure().show()
+    plt.ylabel("Number of wins")
+    plt.xlabel("Sprint")
+    plt.xlim(-1, sprints_count)
+    plt.title("Number of wins per sprint")
+    plt.legend(title="Experiment")
+    plt.grid(axis="y")
+    plt.savefig("wins.png")
+    plt.show()
 
 
 def show_win_rate_statistical_significance(
