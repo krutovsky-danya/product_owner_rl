@@ -34,12 +34,13 @@ def train(agents_factory: DqnAgentsFactory, env_factory, episode_n=1500, traject
 
 def main():
     """Main function to run training experiments."""
+    agents_factory = DqnAgentsFactory()
     environment_factory = EnvironmentFactory()
     embeding_sizes = [8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     num_experiments = 5
 
     for embeding_size in embeding_sizes:
-        agents_factory = DqnAgentsFactory(q_function_embeding_size=embeding_size)
+        agents_factory.q_function_embeding_size = embeding_size
         for i in range(num_experiments):
             print(f"Running experiment {i + 1}/{num_experiments} for embedding size {embeding_size}")
             train(agents_factory, environment_factory.create_full_env)
