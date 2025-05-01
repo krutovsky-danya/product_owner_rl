@@ -1,3 +1,4 @@
+import os
 import sys
 
 sys.path.append("..")
@@ -43,4 +44,10 @@ def main():
 
 
 if __name__ == "__main__":
+    if not os.path.exists("data_DoubleDQN_1500.csv"):
+        df = pd.read_csv("../DQN-comparison/data_DoubleDQN_1500.csv")
+        df.to_csv("data_DoubleDQN_1500.csv", index=False)
+    if not os.path.exists("evaluations_DoubleDQN.csv"):
+        df = pd.read_csv("../DQN-comparison/evaluations_DoubleDQN_1500.csv")
+        df.to_csv("evaluations_DoubleDQN.csv", index=False)
     main()
