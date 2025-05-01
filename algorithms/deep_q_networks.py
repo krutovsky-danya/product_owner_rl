@@ -31,8 +31,8 @@ class DQN(nn.Module):
     def get_probs(self, q_values: torch.Tensor, guides: torch.Tensor) -> torch.Tensor:
         masked_q_values = q_values.masked_fill(~guides, -np.inf)
         argmax_action = torch.argmax(masked_q_values)
-        probs = torch.tensor(guides, dtype=torch.float, device=self.device)
-        probs = self.epsilon * probs / guides.sum()
+        probs = guides.float() / guides.sum()
+        probs = self.epsilon * probs
         probs[argmax_action] += 1 - self.epsilon
         return probs
 
