@@ -95,6 +95,7 @@ def show_win_sprint_hist(data: pd.DataFrame, sprints_count=None):
     hist.set_xlim(-1, sprints_count)
     hist.set_title("Number of wins per sprint")
     hist.legend(title="Experiment")
+    hist.grid()
     hist.get_figure().savefig("wins.png")
     hist.get_figure().show()
 
