@@ -19,6 +19,7 @@ class EpisodicPpoStudy:
         self.q_value_log = []
         self.discounted_rewards_log = []
         self.episode = 0
+        self.trajectory_i = 0
         self.logger = logger if logger else get_logger(agent.__class__.__name__)
 
     def play_trajectory(self):
@@ -55,13 +56,14 @@ class EpisodicPpoStudy:
         self.discounted_rewards_log.append(discounted_reward)
 
         message = build_end_game_message(self.env.game, total_reward, self.episode)
-        self.logger.info(message)
+        self.logger.info(f"trajecoty {self.trajectory_i}\t" + message)
 
     def play_batch_trajectories(self, trajectory_n: int):
         wins = 0
         containers = states, actions, rewards, dones, infos = [], [], [], [], []
 
-        for _ in range(trajectory_n):
+        for i in range(trajectory_n):
+            self.trajectory_i = i
             trajectory_data = self.play_trajectory()
             wins += int(self.env.game.context.is_victory)
             for container, elements in zip(containers, trajectory_data):
