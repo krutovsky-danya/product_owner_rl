@@ -31,7 +31,7 @@ def make_credit_study(
 def main(agent_class):
     episode_n = 1000
     trajectory_max_len = 1000
-    trajectory_n = 5
+    trajectory_n = 1
     study = make_credit_study(trajectory_max_len, episode_n, trajectory_n, agent_class)
     experiment_name = study.agent.__class__.__name__
     save_study_data(study, experiment_name)
@@ -48,6 +48,7 @@ def main(agent_class):
 if __name__ == "__main__":
     n = 1
     agent_factory = PPOAgentsFactory()
+    agent_factory.epoch_n = 1
     for i in range(n):
         main(agent_factory.create_ppo_discrete_logits_guided)
         main(agent_factory.create_ppo_discrete_logits_guided_advantage)

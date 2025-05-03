@@ -15,7 +15,7 @@ from show_utils import (
 
 
 def main():
-    sub_name = f"2500"
+    sub_name = f"1000"
     experiments_names = ["PPO_Discrete_Logits_Guided", "PPO_Discrete_Logits_Guided_Advantage"]
 
     data_postions = []
