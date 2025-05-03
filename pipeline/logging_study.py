@@ -9,7 +9,8 @@ import sys
 import logging
 from typing import List, Tuple, Optional
 from environment.Action import Action
-from pipeline.logging_utils import KeyLogState, get_log_entry_creator
+from pipeline.logging_utils import KeyLogState, get_log_entry_creator, build_end_game_message
+from pet_logging import get_logger
 
 loggers = {}
 
@@ -38,7 +39,7 @@ class LoggingStudy(MetricsStudy):
         self.time_log: List[datetime.datetime] = []
         self.save_rate = save_rate
         self.save_memory = save_memory
-        self.logger = self._get_logger(agent.__class__.__name__, log_level)
+        self.logger = get_logger(agent.__class__.__name__, log_level)
         create_log_entry = get_log_entry_creator(base_epoch_log_state, base_end_log_state)
         self._logs = {
             self.REWARDS_LOG_KEY: create_log_entry(self.rewards_log),
@@ -47,20 +48,6 @@ class LoggingStudy(MetricsStudy):
             self.SPRINTS_LOG_KEY: create_log_entry(self.sprints_log),
             self.LOSS_LOG_KEY: create_log_entry(self.loss_log),
         }
-
-    def _get_logger(self, name, log_level):
-        if name in loggers:
-            return loggers.get(name)
-        
-        logger = logging.getLogger(name)
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(name)s %(asctime)s %(message)s"))
-        logger.addHandler(handler)
-        logger.setLevel(log_level)
-
-        loggers[name] = logger
-
-        return logger
 
     def _log_before_action(self, action):
         message = None
@@ -113,29 +100,12 @@ class LoggingStudy(MetricsStudy):
         return reward, discounted_reward
 
     def _log_trajectory_end(self, reward):
-        sprint_n = self.env.game.context.current_sprint
+        game = self.env.game
 
+        sprint_n = game.context.current_sprint
         self.sprints_log.append(sprint_n)
 
-        credit = self.env.game.context.credit
-
-        termination = "none"
-        if not self.env.game.context.is_new_game:
-            termination = 'tutorial'
-        if self.env.game.context.credit == 0:
-            termination = 'credit paid'
-        if self.env.game.context.is_victory:
-            termination = "victory"
-        if self.env.game.context.is_loss:
-            termination = "lose"
-
-        message = (
-                f"episode: {(self.episode + 1):03d}\t"
-                + f"total_reward: {reward:.2f}\t"
-                + f"sprint_n: {sprint_n:02d}\t"
-                + f"credit: {credit: 6d}\t"
-                + f"termination: {termination}\t"
-        )
+        message = build_end_game_message(game, reward, self.episode)
         self.logger.info(message)
         self.episode += 1
 

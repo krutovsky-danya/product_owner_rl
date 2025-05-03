@@ -1,5 +1,32 @@
 from typing import List
 
+from game.game import ProductOwnerGame
+
+def build_end_game_message(game: ProductOwnerGame, reward, episode):
+    sprint_n = game.context.current_sprint
+
+    credit = game.context.credit
+
+    termination = "none"
+    if not game.context.is_new_game:
+        termination = 'tutorial'
+    if game.context.credit == 0:
+        termination = 'credit paid'
+    if game.context.customers <= 0:
+        termination = 'customers lost'
+    if game.context.is_victory:
+        termination = "victory"
+    if game.context.is_loss:
+        termination = "lose"
+
+    message = (
+            f"episode: {(episode + 1):03d}\t"
+            + f"total_reward: {reward:.2f}\t"
+            + f"sprint_n: {sprint_n:02d}\t"
+            + f"credit: {credit: 6d}\t"
+            + f"termination: {termination}\t"
+    )
+    return message
 
 def get_log_entry_creator(base_epoch_log_state, base_end_epoch_log_state):
     def create_log_entry(data):
