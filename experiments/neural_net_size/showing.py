@@ -19,16 +19,8 @@ def get_embedings_size(experiment_name: str) -> int:
     """
     Get the embedding size from the experiment name.
     """
-    if "256" in experiment_name:
-        return 256
-    elif "512" in experiment_name:
-        return 512
-    elif "1024" in experiment_name:
-        return 1024
-    elif "2048" in experiment_name:
-        return 2048
-    else:
-        raise ValueError(f"Unknown experiment name: {experiment_name}")
+    _, embed_size, *_ = experiment_name.split("_")
+    return int(embed_size)
 
 
 def calculate_win_rate(evaluation_data: pd.DataFrame) -> pd.DataFrame:
@@ -48,13 +40,16 @@ def calculate_win_rate(evaluation_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
-    cpu_experiment_names = ["DoubleDQN_256", "DoubleDQN_512"]
-    gpu_experiment_names = [
-        "DoubleDQN_256_GPU",
-        "DoubleDQN_512_GPU",
-        "DoubleDQN_1024",
-        "DoubleDQN_2048",
-    ]
+    cpu_experiment_names = []
+    gpu_experiment_names = []
+    for embedding_size in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
+        if embedding_size < 2048:
+            cpu_experiment_name = f"DoubleDQN_{embedding_size}_CPU"
+        gpu_experiment_name = f"DoubleDQN_{embedding_size}_CUDA"
+
+        cpu_experiment_names.append(cpu_experiment_name)
+        gpu_experiment_names.append(gpu_experiment_name)
+
     experiments_names = cpu_experiment_names + gpu_experiment_names
 
     evaluation_data_portions = []
@@ -109,13 +104,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print(__file__)
-    if not os.path.exists("data_DoubleDQN_512_1500.csv"):
-        df = pd.read_csv("../end-game/data_full_game_baseline_1500.csv")
-        df["ExperimentName"] = "DoubleDQN_512"
-        df.to_csv("data_DoubleDQN_512_1500.csv", index=False)
-    if not os.path.exists("evaluations_DoubleDQN_512.csv"):
-        df = pd.read_csv("../end-game/evaluations_full_game_baseline.csv")
-        df["ExperimentName"] = "DoubleDQN_512"
-        df.to_csv("evaluations_DoubleDQN_512.csv", index=False)
     main()
