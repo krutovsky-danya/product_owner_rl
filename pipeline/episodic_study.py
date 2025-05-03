@@ -1,6 +1,7 @@
-import torch
 from environment import ProductOwnerEnv
 from algorithms.proximal_policy_optimization import PPO_Discrete_Logits_Guided
+from pipeline.logging_utils import build_end_game_message
+from pet_logging import get_logger
 
 
 class EpisodicPpoStudy:
@@ -9,6 +10,7 @@ class EpisodicPpoStudy:
         env: ProductOwnerEnv,
         agent: PPO_Discrete_Logits_Guided,
         trajectory_max_len: int,
+        logger=None,
     ) -> None:
         self.env: ProductOwnerEnv = env
         self.agent: PPO_Discrete_Logits_Guided = agent
@@ -16,6 +18,8 @@ class EpisodicPpoStudy:
         self.rewards_log = []
         self.q_value_log = []
         self.discounted_rewards_log = []
+        self.episode = 0
+        self.logger = logger if logger else get_logger(agent.__class__.__name__)
 
     def play_trajectory(self):
         initial_state = state = self.env.reset()
@@ -50,6 +54,9 @@ class EpisodicPpoStudy:
         self.rewards_log.append(total_reward)
         self.discounted_rewards_log.append(discounted_reward)
 
+        message = build_end_game_message(self.env.game, total_reward, self.episode)
+        self.logger.info(message)
+
     def play_batch_trajectories(self, trajectory_n: int):
         wins = 0
         containers = states, actions, rewards, dones, infos = [], [], [], [], []
@@ -60,18 +67,17 @@ class EpisodicPpoStudy:
             for container, elements in zip(containers, trajectory_data):
                 container.extend(elements)
 
-        print(f"Wins count: {wins}")
         return states, actions, rewards, dones, infos
 
     def study_agent(self, episode_n: int, trajectory_n: int):
         for episode in range(episode_n):
-            print(f"Started episode {episode + 1}")
+            self.episode = episode
             data = self.play_batch_trajectories(trajectory_n)
             self.agent.fit(*data)
         return self.rewards_log
 
 
-def study_ppo_agent(env, agent: torch.nn.Module, episode_n=50, trajectory_n=20):
+def study_ppo_agent(env, agent, episode_n=50, trajectory_n=20):
     total_rewards = []
 
     for episode in range(episode_n):
