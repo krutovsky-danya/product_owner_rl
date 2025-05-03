@@ -21,6 +21,7 @@ def make_credit_study(
     action_n = env.action_n
 
     agent = agent_factory(state_dim, action_n)
+    env.reward_system.gamma = agent.gamma
 
     study = EpisodicPpoStudy(env, agent, trajectory_max_len)
     study.study_agent(episode_n, trajectory_n)
