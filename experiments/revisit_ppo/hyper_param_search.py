@@ -41,9 +41,9 @@ def ppo_objective(trial: optuna.Trial):
     return win_rate / 1000
 
 
-def main():
+def main(n_trials: int = 100):
     ppo_study = optuna.create_study(direction="maximize")
-    ppo_study.optimize(ppo_objective, n_trials=1)
+    ppo_study.optimize(ppo_objective, n_trials=n_trials)
 
     trial = ppo_study.best_trial
 
@@ -62,4 +62,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(n_trials=100)
