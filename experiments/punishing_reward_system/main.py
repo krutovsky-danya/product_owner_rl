@@ -29,7 +29,7 @@ def make_credit_study(trajectory_max_len, episode_n) -> LoggingStudy:
 
 
 def main():
-    episode_n = 100
+    episode_n = 1000
     study = make_credit_study(200, episode_n)
     pd.DataFrame(study.sprints_log).to_csv("sprints.csv")
 
