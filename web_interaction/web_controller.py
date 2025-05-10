@@ -3,6 +3,8 @@ import logging
 import os
 import time
 
+from enum import Enum
+
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -15,6 +17,12 @@ from environment.environment import ProductOwnerEnv, ProductOwnerGame
 from .game_coordinator import GameCoordinator
 
 
+class ScreenState(Enum):
+    NONE = 0
+    BACKLOG = 1
+    USER_STORY = 2
+
+
 class WebController:
     def __init__(
         self,
@@ -25,6 +33,7 @@ class WebController:
         self.game = game
         self.game_coordinator = game_coordinator
         self.logger = logger
+        self.current_screen = ScreenState.BACKLOG
         self.board_icons_positions = {
             (540, 960): {
                 "x_on": 700,
@@ -84,23 +93,29 @@ class WebController:
         self.click_on_element(driver, iframe, x, y)
 
     def select_user_story_board(self, driver, iframe: WebElement):
+        if self.current_screen == ScreenState.USER_STORY:
+            return
         height = iframe.rect["height"]
         width = iframe.rect["width"]
         position = self.board_icons_positions[(height, width)]
         x = position["x_off"]
         y = position["user_stories_y"]
         self.click_on_element(driver, iframe, x, y)
+        self.current_screen = ScreenState.USER_STORY
 
         self.game_coordinator.clear_backlog_sprint(self.game)
         time.sleep(1)
 
     def select_backlog_board(self, driver, iframe: WebElement):
+        if self.current_screen == ScreenState.BACKLOG:
+            return
         height = iframe.rect["height"]
         width = iframe.rect["width"]
         position = self.board_icons_positions[(height, width)]
         x = position["x_off"]
         y = position["backlog_y"]
         self.click_on_element(driver, iframe, x, y)
+        self.current_screen = ScreenState.BACKLOG
         time.sleep(1)
 
     def click_user_story(self, driver, iframe: WebElement, x: int, y: int):
@@ -176,7 +191,7 @@ class WebController:
         time.sleep(1)
 
         self.click_board_button(driver, iframe)
-        time.sleep(1)
+        time.sleep(2)
 
         if env.game.context.current_sprint == 34:
             ActionChains(driver).move_to_element(iframe).click().perform()
@@ -199,6 +214,7 @@ class WebController:
         x = position["x"]
         y = position["y"]
         self.click_on_element(driver, iframe, x, y)
+        self.current_screen = ScreenState.NONE
         time.sleep(1)
 
         game_image = self.take_screenshot(iframe)
